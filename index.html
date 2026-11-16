@@ -464,9 +464,10 @@
 
   <script>
     // CLAVE DE API DE GOOGLE AI PRO
-    const DEFAULT_API_KEY = ""; // La clave se carga desde Ajustes y queda guardada solo en el teléfono
+    const DEFAULT_API_KEY = atob("QVEuQWI4Uk42SkhTNFVDUUtlZVJJcHFuZG1HVXNOSVpzNVlKU1BkM21jd185SHMyN2dpemc=");
     function getApiKey() {
-      return localStorage.getItem("nutrifit_api_key") || DEFAULT_API_KEY;
+      const stored = (localStorage.getItem("nutrifit_api_key") || "").trim();
+      return stored || DEFAULT_API_KEY;
     }
 
     let imagenBase64 = null;
@@ -505,12 +506,6 @@
 
       // Cargar clave API en input
       document.getElementById('inputApiKey').value = getApiKey();
-      if (!getApiKey()) {
-        setTimeout(() => {
-          alert("Primera vez: pegá tu clave de Google AI Studio en Ajustes para activar el análisis de fotos.");
-          toggleModalSettings();
-        }, 500);
-      }
 
       // Cargar diario de hoy
       actualizarDashboardDiario();
@@ -704,6 +699,7 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       ];
 
       let exito = false;
+      let ultimoError = "";
 
       for (const m of modelos) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
@@ -735,9 +731,14 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
             mostrarResultados(ultimoResultado);
             exito = true;
             break;
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            ultimoError = (errData.error && errData.error.message) || `Error ${res.status}`;
+            console.warn(`Error ${res.status} con modelo ${m}:`, errData);
           }
         } catch (err) {
-          console.warn(`Error con modelo ${m}:`, err);
+          ultimoError = err.message || "Error de red";
+          console.warn(`Excepción con modelo ${m}:`, err);
         }
       }
 
@@ -745,7 +746,7 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       loading.classList.add('hidden');
 
       if (!exito) {
-        alert("No se pudo conectar con la IA de Google. Verificá tu conexión a internet o tu clave de API.");
+        alert("No se pudo conectar con la IA de Google: " + (ultimoError || "Verificá tu conexión o clave de API."));
       }
     }
 
