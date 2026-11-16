@@ -1,0 +1,25 @@
+{
+  "name": "NutriFit AI - Scanner Nutricional y Dieta",
+  "short_name": "NutriFit AI",
+  "description": "Scanner nutricional inteligente con estimacion en gramos y dieta adaptativa estilo hipertrofia.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
