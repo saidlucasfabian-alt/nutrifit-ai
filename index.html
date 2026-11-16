@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NutriFit AI - Scanner Nutricional y Dieta Adaptativa</title>
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NutriFit AI">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0b1120">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b1120; color: #f8fafc; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-screen pb-24 select-none">
+
+  <!-- Header Superior -->
+  <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-black border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+          <i class="fa-solid fa-fire-flame-curved"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+            NutriFit AI
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="toggleModalSettings()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm transition">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MODAL DE CONFIGURACIÓN Y CLAVE API -->
+  <div id="modalSettings" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl relative">
+      <button onclick="toggleModalSettings()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✕</button>
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-sliders text-emerald-400"></i> Configuración de la App
+      </h3>
+      <p class="text-xs text-slate-400">
+        Esta app se conecta directamente desde tu celular a los servidores de Google Gemini con tu suscripción de Google AI Pro.
+      </p>
+
+      <div>
+        <label class="text-xs font-semibold text-slate-300 mb-1 block">Tu Clave de Gemini API:</label>
+        <input type="password" id="inputApiKey" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono">
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="guardarClaveApi()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2 rounded-xl text-xs transition">
+          Guardar Clave
+        </button>
+        <button onclick="toggleModalSettings()" class="px-4 bg-slate-800 text-slate-300 py-2 rounded-xl text-xs">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-4xl mx-auto px-4 pt-4 space-y-6">
+
+    <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL) -->
+    <div id="sec-scanner" class="space-y-5">
+      <!-- Tarjeta Resumen Rápido de Hoy -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+              Meta Hipertrofia (+12%)
+            </span>
+            <p class="text-xs text-slate-400 mt-1">Calorías Restantes Hoy</p>
+          </div>
+          <button onclick="cambiarSeccion('perfil')" class="text-[11px] text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-pen-to-square"></i> Ajustar
+          </button>
+        </div>
+
+        <div class="flex items-baseline justify-between">
+          <div>
+            <span id="dashCalRestantes" class="text-3xl font-black text-white tracking-tight">2,982</span>
+            <span class="text-xs text-slate-400 ml-1">kcal</span>
+          </div>
+          <span id="dashCalConsumidas" class="text-xs font-semibold text-slate-400">0 consumidas</span>
+        </div>
+
+        <!-- 3 Barras de Macros Principales (Foco Vedrovnik: Gramos de proteína y carbos) -->
+        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800">
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold mb-1">
+              <span class="text-blue-400">Proteína</span>
+              <span id="dashProtText" class="text-slate-300">0/150g</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div id="dashProtBar" class="bg-blue-400 h-full rounded-full transition-all" style="width: 0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold mb-1">
+              <span class="text-amber-400">Carbos</span>
+              <span id="dashCarbText" class="text-slate-300">0/427g</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div id="dashCarbBar" class="bg-amber-400 h-full rounded-full transition-all" style="width: 0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[11px] font-semibold mb-1">
+              <span class="text-rose-400">Grasas</span>
+              <span id="dashGrasText" class="text-slate-300">0/75g</span>
+            </div>
+            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+              <div id="dashGrasBar" class="bg-rose-400 h-full rounded-full transition-all" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Escaneo con Cámara / Galería -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-camera text-emerald-400"></i>
+            Escanear Plato
+          </h2>
+          <span class="text-[11px] text-slate-400">Desglose de gramos reales</span>
+        </div>
+
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
+        <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="manejarArchivo(event)">
+
+        <!-- Botones de captura -->
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition">
+            <i class="fa-solid fa-camera text-lg"></i> Tomar Foto
+          </button>
+          <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 border border-slate-700 transition">
+            <i class="fa-regular fa-image text-lg text-emerald-400"></i> Galería
+          </button>
+        </div>
+
+        <!-- Preview de la foto -->
+        <div id="previewContainer" class="hidden relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 max-h-64 flex items-center justify-center">
+          <img id="imagePreview" src="" alt="Comida" class="max-h-60 w-full object-cover">
+          <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] text-emerald-400 font-bold border border-slate-700">
+            ✓ Foto lista
+          </div>
+        </div>
+
+        <button id="btnAnalizar" onclick="analizarFotoAutonoma()" disabled class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Gramos y Macros con IA
+        </button>
+
+        <div id="loadingIndicator" class="hidden py-8 text-center space-y-2">
+          <div class="inline-block w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p class="text-sm font-bold text-white">Analizando plato con Gemini Vision...</p>
+          <p class="text-xs text-slate-400">Identificando ingredientes, gramos y aceites ocultos.</p>
+        </div>
+
+        <!-- Resultado del análisis -->
+        <div id="analysisResult" class="hidden pt-4 border-t border-slate-800 space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <span id="dishCategory" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Almuerzo</span>
+              <h3 id="dishName" class="text-lg font-extrabold text-white mt-1">Plato detectado</h3>
+            </div>
+            <div class="text-right">
+              <span id="totalCalories" class="text-2xl font-black text-emerald-400">0</span>
+              <span class="text-xs text-slate-400 block font-medium">kcal</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+              <span class="text-[10px] text-blue-400 font-bold block">PROTEÍNA</span>
+              <span id="totalProtein" class="text-base font-extrabold text-white">0g</span>
+            </div>
+            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+              <span class="text-[10px] text-amber-400 font-bold block">CARBOS</span>
+              <span id="totalCarbs" class="text-base font-extrabold text-white">0g</span>
+            </div>
+            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+              <span class="text-[10px] text-rose-400 font-bold block">GRASAS</span>
+              <span id="totalFats" class="text-base font-extrabold text-white">0g</span>
+            </div>
+          </div>
+
+          <!-- Evaluación de Hipertrofia (Ezequiel Vedrovnik coaching style) -->
+          <div class="bg-slate-950 p-3.5 rounded-2xl border border-emerald-500/30 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-emerald-400 text-lg mt-0.5"></i>
+            <div>
+              <p class="text-xs font-bold text-white">Evaluación Nutricional:</p>
+              <p id="muscleEvaluation" class="text-xs text-slate-300 mt-0.5 leading-relaxed">-</p>
+            </div>
+          </div>
+
+          <!-- Alerta de aceites e ingredientes ocultos -->
+          <div id="boxOcultos" class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-2xl flex items-start gap-2.5 text-xs text-amber-300">
+            <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+            <div>
+              <span class="font-bold block">Ojo con los ingredientes ocultos:</span>
+              <span id="hiddenWarnings" class="text-[11px] text-amber-200">-</span>
+            </div>
+          </div>
+
+          <!-- Tabla de gramos de ingredientes -->
+          <div>
+            <h4 class="text-xs font-bold text-slate-300 mb-2">Desglose de Gramos:</h4>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-400 border-b border-slate-800">
+                    <th class="pb-2">Alimento</th>
+                    <th class="pb-2 text-right">Porción</th>
+                    <th class="pb-2 text-right">Proteína</th>
+                    <th class="pb-2 text-right">Calorías</th>
+                  </tr>
+                </thead>
+                <tbody id="ingredientsBody" class="divide-y divide-slate-800/50"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800 flex items-center gap-2">
+            <select id="guardarTiempoComida" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-xs text-white">
+              <option value="Desayuno">Desayuno</option>
+              <option value="Almuerzo" selected>Almuerzo</option>
+              <option value="Merienda">Merienda</option>
+              <option value="Cena">Cena</option>
+            </select>
+            <button onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-bookmark"></i> Guardar en mi Diario
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: DIARIO DE COMIDAS -->
+    <div id="sec-diario" class="hidden space-y-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-calendar-check text-emerald-400"></i> Diario de Comidas
+            </h2>
+            <p class="text-xs text-slate-400">Registro guardado en tu teléfono</p>
+          </div>
+          <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300">
+            Reiniciar Día
+          </button>
+        </div>
+
+        <div id="listaComidasDiario" class="space-y-3">
+          <!-- Se llena dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: MIS COSTUMBRES (CUESTIONARIO VEDROVNIK) -->
+    <div id="sec-cuestionario" class="hidden space-y-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            Tu Estilo de Vida
+          </span>
+          <h2 class="text-base font-bold text-white mt-1">Cuestionario de Costumbres</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Adaptado a tus gustos culturales para que no sea una dieta rígida.</p>
+        </div>
+
+        <form id="formCostumbres" class="space-y-3 text-xs">
+          <div>
+            <label class="font-bold text-slate-300 block mb-1">1. Región / País Cultural</label>
+            <select id="prefPais" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
+              <option value="Argentina / Cono Sur" selected>🇦🇷 Argentina / Cono Sur (Carnes, pastas, arroz, huevos, mate)</option>
+              <option value="México">🇲🇽 México (Pollo, frijoles, huevos, tortillas de maíz)</option>
+              <option value="Colombia / Caribe">🇨🇴 Colombia / Caribe (Arepas, carnes, plátano, frijoles)</option>
+              <option value="España / Mediterráneo">🇪🇸 España (Aceite de oliva, pescados, legumbres)</option>
+              <option value="Internacional">🌎 Otra región</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-bold text-slate-300 block mb-1">2. Tipo de Alimentación</label>
+            <select id="prefDieta" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
+              <option value="omnivoro" selected>🥩 Omnívoro (Carnes magras, huevos, arroz, pastas)</option>
+              <option value="vegetariano">🥚 Vegetariano</option>
+              <option value="vegano">🌱 Vegano</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="font-bold text-slate-300 block mb-1">3. Tus comidas favoritas</label>
+            <input type="text" id="prefFavoritos" value="Bife de carne vacuna, pollo al horno, arroz blanco, fideos, huevos revueltos, banana, avena" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+
+          <div>
+            <label class="font-bold text-slate-300 block mb-1">4. Lo que NO te gusta o alergias</label>
+            <input type="text" id="prefNoDeseados" value="Pescado con espinas, hígado, mariscos, comida picante" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="font-bold text-slate-300 block mb-1">5. Comidas al día</label>
+              <select id="prefComidasDia" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="3">3 comidas</option>
+                <option value="4" selected>4 comidas fijas</option>
+                <option value="5">5 comidas</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold text-slate-300 block mb-1">6. Tiempo para cocinar</label>
+              <select id="prefTiempoCocina" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="rapido_20min" selected>⚡ Rápido (< 20 min)</option>
+                <option value="meal_prep">📦 Meal Prep</option>
+                <option value="elaborado">👨‍🍳 Con tiempo</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="font-bold text-slate-300 block mb-1">7. Suplementación</label>
+            <input type="text" id="prefSuplementos" value="Proteína de suero (Whey), Creatina monohidrato" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+          </div>
+
+          <button type="button" onclick="guardarCostumbresLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
+            Guardar Costumbres en el Teléfono
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 4: PLAN ADAPTATIVO SEMANAL -->
+    <div id="sec-dieta" class="hidden space-y-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-utensils text-emerald-400"></i> Plan Adaptativo Semanal
+            </h2>
+            <p class="text-xs text-slate-400">Nutrición estructurada en 4 tiempos</p>
+          </div>
+          <button id="btnGenerarDieta" onclick="generarDietaAutonoma()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Reajustar con IA
+          </button>
+        </div>
+
+        <div id="loadingDieta" class="hidden text-center py-8 space-y-2">
+          <div class="inline-block w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
+          <p class="text-sm font-bold text-white">Generando plan adaptado a tus costumbres...</p>
+        </div>
+
+        <div id="contenidoDieta" class="space-y-4">
+          <div class="p-6 text-center border-2 border-dashed border-slate-800 rounded-2xl">
+            <i class="fa-solid fa-utensils text-2xl text-slate-600 mb-2"></i>
+            <p class="text-xs font-medium text-slate-300">Tocá en <strong>"Reajustar con IA"</strong> para generar tu menú semanal adaptado.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 5: PERFIL FISIOLÓGICO -->
+    <div id="sec-perfil" class="hidden space-y-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-user text-emerald-400"></i> Perfil & Metas Fisiológicas
+        </h2>
+
+        <form id="profileForm" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-slate-400 mb-1 block">Edad</label>
+              <input type="number" id="edad" value="28" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 mb-1 block">Género</label>
+              <select id="genero" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-slate-400 mb-1 block">Peso (kg)</label>
+              <input type="number" id="peso" step="0.5" value="75" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+            <div>
+              <label class="text-slate-400 mb-1 block">Altura (cm)</label>
+              <input type="number" id="altura" value="178" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            </div>
+          </div>
+
+          <div>
+            <label class="text-slate-400 mb-1 block">Nivel de Actividad</label>
+            <select id="actividad" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+              <option value="sedentario">Sedentario</option>
+              <option value="ligero">Ligero (1-3 días)</option>
+              <option value="moderado" selected>Moderado (entreno 3-5 días)</option>
+              <option value="intenso">Intenso (entreno 6-7 días)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-slate-400 mb-1 block">Objetivo</label>
+            <select id="objetivo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 font-bold text-emerald-400">
+              <option value="ganar_masa_muscular" selected>💪 Ganar Masa Muscular (Hipertrofia)</option>
+              <option value="definicion_perder_grasa">🔥 Definición (Perder Grasa)</option>
+              <option value="mantenimiento">⚖️ Mantenimiento</option>
+            </select>
+          </div>
+
+          <button type="button" onclick="guardarPerfilLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
+            Recalcular Metas Fisiológicas
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR NATIVA (DOCK MÓVIL) -->
+  <nav class="fixed bottom-0 inset-x-0 h-16 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center justify-around px-2 z-40">
+    <button onclick="cambiarSeccion('scanner')" id="mob-scanner" class="flex flex-col items-center gap-1 text-emerald-400">
+      <i class="fa-solid fa-camera text-base"></i>
+      <span class="text-[10px] font-bold">Scanner</span>
+    </button>
+    <button onclick="cambiarSeccion('diario')" id="mob-diario" class="flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-calendar-check text-base"></i>
+      <span class="text-[10px] font-medium">Diario</span>
+    </button>
+    <button onclick="cambiarSeccion('cuestionario')" id="mob-cuestionario" class="flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-clipboard-question text-base"></i>
+      <span class="text-[10px] font-medium">Costumbres</span>
+    </button>
+    <button onclick="cambiarSeccion('dieta')" id="mob-dieta" class="flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-utensils text-base"></i>
+      <span class="text-[10px] font-medium">Dieta</span>
+    </button>
+    <button onclick="cambiarSeccion('perfil')" id="mob-perfil" class="flex flex-col items-center gap-1 text-slate-400">
+      <i class="fa-solid fa-user text-base"></i>
+      <span class="text-[10px] font-medium">Perfil</span>
+    </button>
+  </nav>
+
+  <script>
+    // CLAVE DE API DE GOOGLE AI PRO
+    const DEFAULT_API_KEY = ""; // La clave se carga desde Ajustes y queda guardada solo en el teléfono
+    function getApiKey() {
+      return localStorage.getItem("nutrifit_api_key") || DEFAULT_API_KEY;
+    }
+
+    let imagenBase64 = null;
+    let ultimoResultado = null;
+    let perfil = {
+      edad: 28,
+      genero: "masculino",
+      peso: 75,
+      altura: 178,
+      actividad: "moderado",
+      objetivo: "ganar_masa_muscular",
+      caloriasMeta: 2982,
+      proteinas: 150,
+      carbos: 427,
+      grasas: 75
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Cargar perfil local
+      const p = localStorage.getItem("nutrifit_profile");
+      if (p) perfil = JSON.parse(p);
+      actualizarUiPerfil();
+
+      // Cargar costumbres locales
+      const c = localStorage.getItem("nutrifit_costumbres");
+      if (c) {
+        const cost = JSON.parse(c);
+        if (cost.pais) document.getElementById('prefPais').value = cost.pais;
+        if (cost.dieta) document.getElementById('prefDieta').value = cost.dieta;
+        if (cost.favoritos) document.getElementById('prefFavoritos').value = cost.favoritos;
+        if (cost.noDeseados) document.getElementById('prefNoDeseados').value = cost.noDeseados;
+        if (cost.comidasDia) document.getElementById('prefComidasDia').value = cost.comidasDia;
+        if (cost.tiempoCocina) document.getElementById('prefTiempoCocina').value = cost.tiempoCocina;
+        if (cost.suplementos) document.getElementById('prefSuplementos').value = cost.suplementos;
+      }
+
+      // Cargar clave API en input
+      document.getElementById('inputApiKey').value = getApiKey();
+      if (!getApiKey()) {
+        setTimeout(() => {
+          alert("Primera vez: pegá tu clave de Google AI Studio en Ajustes para activar el análisis de fotos.");
+          toggleModalSettings();
+        }, 500);
+      }
+
+      // Cargar diario de hoy
+      actualizarDashboardDiario();
+    });
+
+    function toggleModalSettings() {
+      document.getElementById('modalSettings').classList.toggle('hidden');
+    }
+
+    function guardarClaveApi() {
+      const val = document.getElementById('inputApiKey').value.trim();
+      if (val) {
+        localStorage.setItem("nutrifit_api_key", val);
+        alert("Clave guardada con éxito.");
+        toggleModalSettings();
+      }
+    }
+
+    function cambiarSeccion(seccion) {
+      ['scanner', 'diario', 'cuestionario', 'dieta', 'perfil'].forEach(s => {
+        const secEl = document.getElementById(`sec-${s}`);
+        if (secEl) secEl.classList.add('hidden');
+        const m = document.getElementById(`mob-${s}`);
+        if (m) {
+          m.classList.remove('text-emerald-400');
+          m.classList.add('text-slate-400');
+        }
+      });
+
+      const activa = document.getElementById(`sec-${seccion}`);
+      if (activa) activa.classList.remove('hidden');
+
+      const mActivo = document.getElementById(`mob-${seccion}`);
+      if (mActivo) {
+        mActivo.classList.remove('text-slate-400');
+        mActivo.classList.add('text-emerald-400');
+      }
+
+      if (seccion === 'diario') renderizarDiario();
+    }
+
+    // CÁLCULO FISIOLÓGICO MIFFLIN-ST JEOR
+    function guardarPerfilLocal() {
+      perfil.edad = parseInt(document.getElementById('edad').value);
+      perfil.genero = document.getElementById('genero').value;
+      perfil.peso = parseFloat(document.getElementById('peso').value);
+      perfil.altura = parseFloat(document.getElementById('altura').value);
+      perfil.actividad = document.getElementById('actividad').value;
+      perfil.objetivo = document.getElementById('objetivo').value;
+
+      // BMR
+      let bmr = (10 * perfil.peso) + (6.25 * perfil.altura) - (5 * perfil.edad);
+      bmr += (perfil.genero === "masculino") ? 5 : -161;
+
+      const actFactors = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725 };
+      let tdee = bmr * (actFactors[perfil.actividad] || 1.55);
+
+      if (perfil.objetivo === "ganar_masa_muscular") {
+        perfil.caloriasMeta = Math.round(tdee * 1.12); // +12% superávit
+        perfil.proteinas = Math.round(perfil.peso * 2.0); // 2.0g/kg
+        perfil.grasas = Math.round(perfil.peso * 1.0);
+      } else if (perfil.objetivo === "definicion_perder_grasa") {
+        perfil.caloriasMeta = Math.round(tdee * 0.80); // -20% déficit
+        perfil.proteinas = Math.round(perfil.peso * 2.2);
+        perfil.grasas = Math.round(perfil.peso * 0.8);
+      } else {
+        perfil.caloriasMeta = Math.round(tdee);
+        perfil.proteinas = Math.round(perfil.peso * 1.8);
+        perfil.grasas = Math.round(perfil.peso * 0.9);
+      }
+
+      let calProt = perfil.proteinas * 4;
+      let calGras = perfil.grasas * 9;
+      perfil.carbos = Math.round(Math.max(0, perfil.caloriasMeta - (calProt + calGras)) / 4);
+
+      localStorage.setItem("nutrifit_profile", JSON.stringify(perfil));
+      actualizarUiPerfil();
+      alert("Metas fisiológicas calculadas y guardadas.");
+      cambiarSeccion('scanner');
+    }
+
+    function actualizarUiPerfil() {
+      document.getElementById('dashCalRestantes').innerText = perfil.caloriasMeta.toLocaleString();
+      document.getElementById('dashProtText').innerText = `0/${perfil.proteinas}g`;
+      document.getElementById('dashCarbText').innerText = `0/${perfil.carbos}g`;
+      document.getElementById('dashGrasText').innerText = `0/${perfil.grasas}g`;
+      actualizarDashboardDiario();
+    }
+
+    function guardarCostumbresLocal() {
+      const costumbres = {
+        pais: document.getElementById('prefPais').value,
+        dieta: document.getElementById('prefDieta').value,
+        favoritos: document.getElementById('prefFavoritos').value,
+        noDeseados: document.getElementById('prefNoDeseados').value,
+        comidasDia: document.getElementById('prefComidasDia').value,
+        tiempoCocina: document.getElementById('prefTiempoCocina').value,
+        suplementos: document.getElementById('prefSuplementos').value
+      };
+      localStorage.setItem("nutrifit_costumbres", JSON.stringify(costumbres));
+      alert("Costumbres guardadas. Ahora tu plan nutricional se adaptará a esto.");
+      cambiarSeccion('dieta');
+    }
+
+    // MANEJO Y REDIMENSIÓN DE IMÁGENES (CANVAS CLIENT-SIDE)
+    function manejarArchivo(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Redimensionar a max 1024px para carga ultra rápida
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1024;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          imagenBase64 = dataUrl.split(',')[1];
+          document.getElementById('imagePreview').src = dataUrl;
+          document.getElementById('previewContainer').classList.remove('hidden');
+          document.getElementById('btnAnalizar').disabled = false;
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ANÁLISIS DIRECTO AUTÓNOMO CON GEMINI (MÉTODO EZEQUIEL VEDROVNIK)
+    async function analizarFotoAutonoma() {
+      if (!imagenBase64) return;
+      const btn = document.getElementById('btnAnalizar');
+      const loading = document.getElementById('loadingIndicator');
+      const resultBox = document.getElementById('analysisResult');
+
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      resultBox.classList.add('hidden');
+
+      const apiKey = getApiKey();
+      const prompt = `
+Sos un nutricionista deportivo de élite especializado en composición corporal e hipertrofia (siguiendo el enfoque pedagógico de cuantificación de porciones, gramos exactos y hábitos de Ezequiel Vedrovnik).
+Analiza esta foto de comida y devuelve ÚNICAMENTE un JSON válido con esta estructura:
+{
+  "plato": "Nombre representativo del plato",
+  "tiempo_comida": "Almuerzo | Desayuno | Merienda | Cena",
+  "ingredientes": [
+    {
+      "nombre": "Alimento",
+      "porcion_estimada_g": 180,
+      "calorias": 280,
+      "proteinas_g": 35.0,
+      "carbohidratos_g": 0.0,
+      "grasas_g": 6.0
+    }
+  ],
+  "totales": {
+    "calorias": 650,
+    "proteinas_g": 48.0,
+    "carbohidratos_g": 70.0,
+    "grasas_g": 15.0
+  },
+  "evaluacion_muscular": {
+    "observacion": "Comentario práctico estilo coaching sobre cómo encaja este plato en una meta de hipertrofia o recomposición"
+  },
+  "advertencias_ingredientes_ocultos": "Aclaración sobre aceites de cocción, aderezos o salsas invisibles que suman calorías sin saciedad"
+}
+Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
+`;
+
+      const modelos = [
+        "gemini-3-flash-preview",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-lite-latest",
+        "gemini-3.5-flash-lite"
+      ];
+
+      let exito = false;
+
+      for (const m of modelos) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: "image/jpeg", data: imagenBase64 } }
+            ]
+          }],
+          generationConfig: { temperature: 0.2 }
+        };
+
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            let texto = data.candidates[0].content.parts[0].text.trim();
+            if (texto.startsWith("```json")) texto = texto.substring(7);
+            if (texto.startsWith("```")) texto = texto.substring(3);
+            if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
+            
+            ultimoResultado = JSON.parse(texto.trim());
+            mostrarResultados(ultimoResultado);
+            exito = true;
+            break;
+          }
+        } catch (err) {
+          console.warn(`Error con modelo ${m}:`, err);
+        }
+      }
+
+      btn.disabled = false;
+      loading.classList.add('hidden');
+
+      if (!exito) {
+        alert("No se pudo conectar con la IA de Google. Verificá tu conexión a internet o tu clave de API.");
+      }
+    }
+
+    function mostrarResultados(data) {
+      document.getElementById('dishCategory').innerText = data.tiempo_comida || 'Almuerzo';
+      document.getElementById('dishName').innerText = data.plato || 'Plato analizado';
+      document.getElementById('totalCalories').innerText = data.totales?.calorias || 0;
+      document.getElementById('totalProtein').innerText = (data.totales?.proteinas_g || 0) + 'g';
+      document.getElementById('totalCarbs').innerText = (data.totales?.carbohidratos_g || 0) + 'g';
+      document.getElementById('totalFats').innerText = (data.totales?.grasas_g || 0) + 'g';
+
+      if (data.evaluacion_muscular) {
+        document.getElementById('muscleEvaluation').innerText = data.evaluacion_muscular.observacion || 'Aporte nutricional completo';
+      }
+
+      if (data.advertencias_ingredientes_ocultos) {
+        document.getElementById('hiddenWarnings').innerText = data.advertencias_ingredientes_ocultos;
+        document.getElementById('boxOcultos').classList.remove('hidden');
+      } else {
+        document.getElementById('boxOcultos').classList.add('hidden');
+      }
+
+      const tbody = document.getElementById('ingredientsBody');
+      tbody.innerHTML = '';
+      if (data.ingredientes && data.ingredientes.length > 0) {
+        data.ingredientes.forEach(ing => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-slate-800/40';
+          row.innerHTML = `
+            <td class="py-2 text-white font-medium">${ing.nombre}</td>
+            <td class="py-2 text-right text-slate-300 font-semibold">${ing.porcion_estimada_g}g</td>
+            <td class="py-2 text-right text-blue-400 font-bold">${ing.proteinas_g}g</td>
+            <td class="py-2 text-right text-emerald-400 font-bold">${ing.calorias} kcal</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      document.getElementById('analysisResult').classList.remove('hidden');
+    }
+
+    // PERSISTENCIA LOCAL DEL DIARIO
+    function getDiarioHoy() {
+      const hoy = new Date().toISOString().split('T')[0];
+      const guardado = localStorage.getItem(`nutrifit_diario_${hoy}`);
+      return guardado ? JSON.parse(guardado) : [];
+    }
+
+    function guardarComidaLocal() {
+      if (!ultimoResultado) return;
+      const tiempo = document.getElementById('guardarTiempoComida').value;
+      const hoy = new Date().toISOString().split('T')[0];
+      const comida = {
+        id: Date.now(),
+        tiempo: tiempo,
+        plato: ultimoResultado.plato || 'Comida',
+        calorias: ultimoResultado.totales?.calorias || 0,
+        proteinas: ultimoResultado.totales?.proteinas_g || 0,
+        carbos: ultimoResultado.totales?.carbohidratos_g || 0,
+        grasas: ultimoResultado.totales?.grasas_g || 0
+      };
+
+      const diario = getDiarioHoy();
+      diario.push(comida);
+      localStorage.setItem(`nutrifit_diario_${hoy}`, JSON.stringify(diario));
+
+      actualizarDashboardDiario();
+      alert("¡Comida guardada en tu teléfono!");
+      cambiarSeccion('diario');
+    }
+
+    function actualizarDashboardDiario() {
+      const comidas = getDiarioHoy();
+      let totCal = 0, totProt = 0, totCarb = 0, totGras = 0;
+      comidas.forEach(c => {
+        totCal += c.calorias;
+        totProt += c.proteinas;
+        totCarb += c.carbos;
+        totGras += c.grasas;
+      });
+
+      const restCal = Math.max(0, perfil.caloriasMeta - totCal);
+      document.getElementById('dashCalRestantes').innerText = restCal.toLocaleString();
+      document.getElementById('dashCalConsumidas').innerText = `${totCal.toLocaleString()} consumidas`;
+
+      document.getElementById('dashProtText').innerText = `${Math.round(totProt)}/${perfil.proteinas}g`;
+      document.getElementById('dashCarbText').innerText = `${Math.round(totCarb)}/${perfil.carbos}g`;
+      document.getElementById('dashGrasText').innerText = `${Math.round(totGras)}/${perfil.grasas}g`;
+
+      document.getElementById('dashProtBar').style.width = Math.min(100, Math.round((totProt / perfil.proteinas) * 100)) + '%';
+      document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / perfil.carbos) * 100)) + '%';
+      document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
+    }
+
+    function renderizarDiario() {
+      const comidas = getDiarioHoy();
+      const cont = document.getElementById('listaComidasDiario');
+      cont.innerHTML = '';
+
+      if (comidas.length === 0) {
+        cont.innerHTML = '<p class="text-xs text-slate-500 py-8 text-center">No registraste comidas hoy todavía.<br>¡Sacale una foto a tu plato en el Scanner!</p>';
+        return;
+      }
+
+      comidas.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between';
+        item.innerHTML = `
+          <div>
+            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded">${c.tiempo}</span>
+            <h4 class="text-sm font-bold text-white mt-1">${c.plato}</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
+              Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
+              Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
+            </p>
+          </div>
+          <div class="text-right">
+            <span class="text-base font-black text-white">${c.calorias}</span>
+            <span class="text-[10px] text-slate-400 block">kcal</span>
+          </div>
+        `;
+        cont.appendChild(item);
+      });
+    }
+
+    function limpiarDiarioHoy() {
+      if (confirm("¿Querés reiniciar las comidas de hoy?")) {
+        const hoy = new Date().toISOString().split('T')[0];
+        localStorage.removeItem(`nutrifit_diario_${hoy}`);
+        actualizarDashboardDiario();
+        renderizarDiario();
+      }
+    }
+
+    // GENERADOR DE PLAN SEMANAL ADAPTATIVO CON GEMINI
+    async function generarDietaAutonoma() {
+      const btn = document.getElementById('btnGenerarDieta');
+      const loading = document.getElementById('loadingDieta');
+      const cont = document.getElementById('contenidoDieta');
+
+      btn.disabled = true;
+      loading.classList.remove('hidden');
+      cont.classList.add('hidden');
+
+      const costumbres = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}");
+      const comidasPrevias = getDiarioHoy();
+      let resumenFotos = comidasPrevias.map(c => `${c.tiempo}: ${c.plato} (${c.calorias} kcal, ${c.proteinas}g prot)`).join(', ');
+      if (!resumenFotos) resumenFotos = "Aún no ha fotografiado comidas hoy.";
+
+      const prompt = `
+Sos un nutricionista deportivo especializado en hipertrofia y adherencia a largo plazo (siguiendo el enfoque de Ezequiel Vedrovnik: foco en gramos clave, porciones sin ambigüedad y adaptación a la vida cotidiana de la persona).
+Crea un plan semanal estructurado de 7 días (Lunes a Domingo) para:
+- Meta: ${perfil.caloriasMeta} kcal/día (${perfil.proteinas}g proteína, ${perfil.carbos}g carbohidratos, ${perfil.grasas}g grasas)
+- Región / Cultura: ${costumbres.pais || 'Argentina / Cono Sur'}
+- Tipo de dieta: ${costumbres.dieta || 'Omnívoro'}
+- Comidas favoritas: ${costumbres.favoritos || 'Carne vacuna, pollo, arroz, pastas, huevos'}
+- Descartados / Alergias: ${costumbres.noDeseados || 'Ninguno'}
+- Comidas al día: ${costumbres.comidasDia || 4} comidas fijas
+- Comidas que fotografió recientemente: ${resumenFotos}
+
+Devuelve ÚNICAMENTE un JSON con:
+{
+  "diagnostico_adaptativo": {
+    "estrategia": "Breve explicación estilo coaching de cómo se adaptó a sus costumbres y gramos necesarios"
+  },
+  "dias": [
+    {
+      "dia": "Lunes",
+      "calorias_dia": ${perfil.caloriasMeta},
+      "comidas": [
+        {
+          "nombre": "Desayuno",
+          "hora_sugerida": "08:30",
+          "plato": "Nombre del plato",
+          "ingredientes": "Ingredientes con gramos específicos",
+          "calorias": 650,
+          "proteinas_g": 40
+        }
+      ]
+    }
+  ],
+  "lista_supermercado": [
+    "Ingrediente y cantidad semanal"
+  ]
+}
+Solo el JSON sin markdown ni explicaciones.
+`;
+
+      const apiKey = getApiKey();
+      const modelos = ["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemini-flash-lite-latest"];
+
+      let exito = false;
+      for (const m of modelos) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.3 }
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            let texto = data.candidates[0].content.parts[0].text.trim();
+            if (texto.startsWith("```json")) texto = texto.substring(7);
+            if (texto.startsWith("```")) texto = texto.substring(3);
+            if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
+
+            const plan = JSON.parse(texto.trim());
+            localStorage.setItem("nutrifit_plan_semanal", JSON.stringify(plan));
+            renderizarPlanSemanal(plan);
+            exito = true;
+            break;
+          }
+        } catch (e) {
+          console.warn("Fallo en modelo dieta:", e);
+        }
+      }
+
+      btn.disabled = false;
+      loading.classList.add('hidden');
+      cont.classList.remove('hidden');
+
+      if (!exito) {
+        alert("Error al generar el plan. Verificá tu conexión a internet.");
+      }
+    }
+
+    function renderizarPlanSemanal(plan) {
+      const cont = document.getElementById('contenidoDieta');
+      cont.innerHTML = '';
+
+      if (plan.diagnostico_adaptativo) {
+        const diag = document.createElement('div');
+        diag.className = 'bg-slate-950 border border-emerald-500/30 p-4 rounded-2xl text-xs space-y-1';
+        diag.innerHTML = `
+          <div class="flex items-center gap-1.5 text-emerald-400 font-bold">
+            <i class="fa-solid fa-lightbulb"></i> Estrategia Nutricional Adaptada:
+          </div>
+          <p class="text-slate-300 leading-relaxed">${plan.diagnostico_adaptativo.estrategia}</p>
+        `;
+        cont.appendChild(diag);
+      }
+
+      if (plan.dias && plan.dias.length > 0) {
+        plan.dias.forEach(d => {
+          const diaDiv = document.createElement('div');
+          diaDiv.className = 'bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5';
+          let comidasHtml = '';
+          d.comidas.forEach(c => {
+            comidasHtml += `
+              <div class="p-3 bg-slate-900 rounded-xl border border-slate-800/80">
+                <div class="flex justify-between text-xs font-semibold text-white mb-1">
+                  <span class="text-emerald-400">${c.nombre} (${c.hora_sugerida})</span>
+                  <span>${c.calorias} kcal • ${c.proteinas_g}g Prot</span>
+                </div>
+                <h5 class="text-xs font-bold text-white">${c.plato}</h5>
+                <p class="text-[11px] text-slate-400 mt-1">${c.ingredientes}</p>
+              </div>
+            `;
+          });
+          diaDiv.innerHTML = `
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+              <h4 class="text-sm font-extrabold text-white">${d.dia}</h4>
+              <span class="text-xs text-slate-400 font-medium">${d.calorias_dia} kcal</span>
+            </div>
+            <div class="space-y-2 pt-1">
+              ${comidasHtml}
+            </div>
+          `;
+          cont.appendChild(diaDiv);
+        });
+      }
+    }
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+          console.log('NutriFit PWA activo:', reg.scope);
+        }).catch(err => {
+          console.log('SW no registrado:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
