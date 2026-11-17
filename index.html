@@ -177,12 +177,12 @@
 
         <!-- Resultado del análisis -->
         <div id="analysisResult" class="hidden pt-4 border-t border-slate-800 space-y-4">
-          <div class="flex items-start justify-between">
-            <div>
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0">
               <span id="dishCategory" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Almuerzo</span>
-              <h3 id="dishName" class="text-lg font-extrabold text-white mt-1">Plato detectado</h3>
+              <input id="dishName" type="text" value="Plato detectado" oninput="if(ultimoResultado) ultimoResultado.plato = this.value;" class="w-full bg-transparent border-b border-slate-800 focus:border-emerald-500 focus:outline-none text-lg font-extrabold text-white mt-1 pb-0.5" aria-label="Nombre del plato">
             </div>
-            <div class="text-right">
+            <div class="text-right shrink-0">
               <span id="totalCalories" class="text-2xl font-black text-emerald-400">0</span>
               <span class="text-xs text-slate-400 block font-medium">kcal</span>
             </div>
@@ -221,17 +221,21 @@
             </div>
           </div>
 
-          <!-- Tabla de gramos de ingredientes -->
+          <!-- Tabla de gramos de ingredientes (editable) -->
           <div>
-            <h4 class="text-xs font-bold text-slate-300 mb-2">Desglose de Gramos:</h4>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-xs font-bold text-slate-300">Desglose de Gramos:</h4>
+              <span class="text-[10px] text-slate-500">Tocá los gramos para ajustar o ✕ para quitar</span>
+            </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
                 <thead>
                   <tr class="text-slate-400 border-b border-slate-800">
                     <th class="pb-2">Alimento</th>
-                    <th class="pb-2 text-right">Porción</th>
-                    <th class="pb-2 text-right">Proteína</th>
-                    <th class="pb-2 text-right">Calorías</th>
+                    <th class="pb-2 text-right">Gramos</th>
+                    <th class="pb-2 text-right">Prot</th>
+                    <th class="pb-2 text-right">Kcal</th>
+                    <th class="pb-2 w-7"></th>
                   </tr>
                 </thead>
                 <tbody id="ingredientsBody" class="divide-y divide-slate-800/50"></tbody>
@@ -286,10 +290,10 @@
           <p class="text-xs text-slate-400 mt-0.5">Adaptado a tus gustos culturales para que no sea una dieta rígida.</p>
         </div>
 
-        <form id="formCostumbres" class="space-y-3 text-xs">
+        <form id="formCostumbres" onsubmit="event.preventDefault(); guardarCostumbresLocal();" class="space-y-3 text-xs">
           <div>
             <label class="font-bold text-slate-300 block mb-1">1. Región / País Cultural</label>
-            <select id="prefPais" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
+            <select id="prefPais" onchange="guardarCostumbresSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
               <option value="Argentina / Cono Sur" selected>🇦🇷 Argentina / Cono Sur (Carnes, pastas, arroz, huevos, mate)</option>
               <option value="México">🇲🇽 México (Pollo, frijoles, huevos, tortillas de maíz)</option>
               <option value="Colombia / Caribe">🇨🇴 Colombia / Caribe (Arepas, carnes, plátano, frijoles)</option>
@@ -300,7 +304,7 @@
 
           <div>
             <label class="font-bold text-slate-300 block mb-1">2. Tipo de Alimentación</label>
-            <select id="prefDieta" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
+            <select id="prefDieta" onchange="guardarCostumbresSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white">
               <option value="omnivoro" selected>🥩 Omnívoro (Carnes magras, huevos, arroz, pastas)</option>
               <option value="vegetariano">🥚 Vegetariano</option>
               <option value="vegano">🌱 Vegano</option>
@@ -309,18 +313,18 @@
 
           <div>
             <label class="font-bold text-slate-300 block mb-1">3. Tus comidas favoritas</label>
-            <input type="text" id="prefFavoritos" value="Bife de carne vacuna, pollo al horno, arroz blanco, fideos, huevos revueltos, banana, avena" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            <input type="text" id="prefFavoritos" oninput="guardarCostumbresSilencioso()" value="Bife de carne vacuna, pollo al horno, arroz blanco, fideos, huevos revueltos, banana, avena" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
           </div>
 
           <div>
             <label class="font-bold text-slate-300 block mb-1">4. Lo que NO te gusta o alergias</label>
-            <input type="text" id="prefNoDeseados" value="Pescado con espinas, hígado, mariscos, comida picante" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            <input type="text" id="prefNoDeseados" oninput="guardarCostumbresSilencioso()" value="Pescado con espinas, hígado, mariscos, comida picante" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="font-bold text-slate-300 block mb-1">5. Comidas al día</label>
-              <select id="prefComidasDia" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+              <select id="prefComidasDia" onchange="guardarCostumbresSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                 <option value="3">3 comidas</option>
                 <option value="4" selected>4 comidas fijas</option>
                 <option value="5">5 comidas</option>
@@ -328,7 +332,7 @@
             </div>
             <div>
               <label class="font-bold text-slate-300 block mb-1">6. Tiempo para cocinar</label>
-              <select id="prefTiempoCocina" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+              <select id="prefTiempoCocina" onchange="guardarCostumbresSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
                 <option value="rapido_20min" selected>⚡ Rápido (< 20 min)</option>
                 <option value="meal_prep">📦 Meal Prep</option>
                 <option value="elaborado">👨‍🍳 Con tiempo</option>
@@ -338,7 +342,7 @@
 
           <div>
             <label class="font-bold text-slate-300 block mb-1">7. Suplementación</label>
-            <input type="text" id="prefSuplementos" value="Proteína de suero (Whey), Creatina monohidrato" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            <input type="text" id="prefSuplementos" oninput="guardarCostumbresSilencioso()" value="Proteína de suero (Whey), Creatina monohidrato" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
           </div>
 
           <button type="button" onclick="guardarCostumbresLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
@@ -384,15 +388,15 @@
           <i class="fa-solid fa-user text-emerald-400"></i> Perfil & Metas Fisiológicas
         </h2>
 
-        <form id="profileForm" class="space-y-3 text-xs">
+        <form id="profileForm" onsubmit="event.preventDefault(); guardarPerfilLocal();" class="space-y-3 text-xs">
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="text-slate-400 mb-1 block">Edad</label>
-              <input type="number" id="edad" value="28" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+              <input type="number" id="edad" value="28" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
             </div>
             <div>
               <label class="text-slate-400 mb-1 block">Género</label>
-              <select id="genero" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+              <select id="genero" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
                 <option value="masculino">Masculino</option>
                 <option value="femenino">Femenino</option>
               </select>
@@ -402,17 +406,17 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="text-slate-400 mb-1 block">Peso (kg)</label>
-              <input type="number" id="peso" step="0.5" value="75" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+              <input type="number" id="peso" step="0.5" value="75" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
             </div>
             <div>
               <label class="text-slate-400 mb-1 block">Altura (cm)</label>
-              <input type="number" id="altura" value="178" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+              <input type="number" id="altura" value="178" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
             </div>
           </div>
 
           <div>
             <label class="text-slate-400 mb-1 block">Nivel de Actividad</label>
-            <select id="actividad" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+            <select id="actividad" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
               <option value="sedentario">Sedentario</option>
               <option value="ligero">Ligero (1-3 días)</option>
               <option value="moderado" selected>Moderado (entreno 3-5 días)</option>
@@ -422,7 +426,7 @@
 
           <div>
             <label class="text-slate-400 mb-1 block">Objetivo</label>
-            <select id="objetivo" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 font-bold text-emerald-400">
+            <select id="objetivo" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 font-bold text-emerald-400">
               <option value="ganar_masa_muscular" selected>💪 Ganar Masa Muscular (Hipertrofia)</option>
               <option value="definicion_perder_grasa">🔥 Definición (Perder Grasa)</option>
               <option value="mantenimiento">⚖️ Mantenimiento</option>
@@ -430,7 +434,7 @@
           </div>
 
           <button type="button" onclick="guardarPerfilLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
-            Recalcular Metas Fisiológicas
+            Guardar y Recalcular Metas
           </button>
         </form>
       </div>
@@ -552,6 +556,14 @@
       // Cargar clave API en input
       document.getElementById('inputApiKey').value = getApiKey();
 
+      // Cargar plan semanal guardado
+      try {
+        const planGuardado = localStorage.getItem("nutrifit_plan_semanal");
+        if (planGuardado) renderizarPlanSemanal(JSON.parse(planGuardado));
+      } catch (e) {
+        console.warn("Error leyendo plan semanal:", e);
+      }
+
       // Cargar diario de hoy
       actualizarDashboardDiario();
     });
@@ -592,21 +604,25 @@
       if (seccion === 'diario') renderizarDiario();
     }
 
-    // CÁLCULO FISIOLÓGICO MIFFLIN-ST JEOR
-    function guardarPerfilLocal() {
-      perfil.edad = parseInt(document.getElementById('edad').value);
-      perfil.genero = document.getElementById('genero').value;
-      perfil.peso = parseFloat(document.getElementById('peso').value);
-      perfil.altura = parseFloat(document.getElementById('altura').value);
-      perfil.actividad = document.getElementById('actividad').value;
-      perfil.objetivo = document.getElementById('objetivo').value;
+    // CÁLCULO FISIOLÓGICO MIFFLIN-ST JEOR (AUTO-GUARDADO SILENCIOSO + MANUAL)
+    function recalcularPerfilSilencioso() {
+      const edadVal = parseInt(document.getElementById('edad').value);
+      const pesoVal = parseFloat(document.getElementById('peso').value);
+      const alturaVal = parseFloat(document.getElementById('altura').value);
+
+      if (!Number.isNaN(edadVal) && edadVal > 0) perfil.edad = edadVal;
+      if (!Number.isNaN(pesoVal) && pesoVal > 0) perfil.peso = pesoVal;
+      if (!Number.isNaN(alturaVal) && alturaVal > 0) perfil.altura = alturaVal;
+      perfil.genero = document.getElementById('genero').value || perfil.genero;
+      perfil.actividad = document.getElementById('actividad').value || perfil.actividad;
+      perfil.objetivo = document.getElementById('objetivo').value || perfil.objetivo;
 
       // BMR
       let bmr = (10 * perfil.peso) + (6.25 * perfil.altura) - (5 * perfil.edad);
       bmr += (perfil.genero === "masculino") ? 5 : -161;
 
       const actFactors = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725 };
-      let tdee = bmr * (actFactors[perfil.actividad] || 1.55);
+      const tdee = bmr * (actFactors[perfil.actividad] || 1.55);
 
       if (perfil.objetivo === "ganar_masa_muscular") {
         perfil.caloriasMeta = Math.round(tdee * 1.12); // +12% superávit
@@ -622,11 +638,16 @@
         perfil.grasas = Math.round(perfil.peso * 0.9);
       }
 
-      let calProt = perfil.proteinas * 4;
-      let calGras = perfil.grasas * 9;
+      const calProt = perfil.proteinas * 4;
+      const calGras = perfil.grasas * 9;
       perfil.carbos = Math.round(Math.max(0, perfil.caloriasMeta - (calProt + calGras)) / 4);
 
       localStorage.setItem("nutrifit_profile", JSON.stringify(perfil));
+      actualizarDashboardDiario();
+    }
+
+    function guardarPerfilLocal() {
+      recalcularPerfilSilencioso();
       actualizarUiPerfil();
       alert("Metas fisiológicas calculadas y guardadas.");
       cambiarSeccion('scanner');
@@ -639,14 +660,10 @@
         const el = document.getElementById(id);
         if (el && val !== undefined && val !== null && !Number.isNaN(val)) el.value = val;
       });
-      document.getElementById('dashCalRestantes').innerText = perfil.caloriasMeta.toLocaleString();
-      document.getElementById('dashProtText').innerText = `0/${perfil.proteinas}g`;
-      document.getElementById('dashCarbText').innerText = `0/${perfil.carbos}g`;
-      document.getElementById('dashGrasText').innerText = `0/${perfil.grasas}g`;
       actualizarDashboardDiario();
     }
 
-    function guardarCostumbresLocal() {
+    function guardarCostumbresSilencioso() {
       const costumbres = {
         pais: document.getElementById('prefPais').value,
         dieta: document.getElementById('prefDieta').value,
@@ -657,6 +674,10 @@
         suplementos: document.getElementById('prefSuplementos').value
       };
       localStorage.setItem("nutrifit_costumbres", JSON.stringify(costumbres));
+    }
+
+    function guardarCostumbresLocal() {
+      guardarCostumbresSilencioso();
       alert("Costumbres guardadas. Ahora tu plan nutricional se adaptará a esto.");
       cambiarSeccion('dieta');
     }
@@ -803,11 +824,17 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
 
     function mostrarResultados(data) {
       document.getElementById('dishCategory').innerText = data.tiempo_comida || 'Almuerzo';
-      document.getElementById('dishName').innerText = data.plato || 'Plato analizado';
-      document.getElementById('totalCalories').innerText = data.totales?.calorias || 0;
-      document.getElementById('totalProtein').innerText = (data.totales?.proteinas_g || 0) + 'g';
-      document.getElementById('totalCarbs').innerText = (data.totales?.carbohidratos_g || 0) + 'g';
-      document.getElementById('totalFats').innerText = (data.totales?.grasas_g || 0) + 'g';
+      document.getElementById('dishName').value = data.plato || 'Plato analizado';
+      document.getElementById('totalCalories').innerText = Math.round(data.totales?.calorias || 0);
+      document.getElementById('totalProtein').innerText = Math.round(data.totales?.proteinas_g || 0) + 'g';
+      document.getElementById('totalCarbs').innerText = Math.round(data.totales?.carbohidratos_g || 0) + 'g';
+      document.getElementById('totalFats').innerText = Math.round(data.totales?.grasas_g || 0) + 'g';
+
+      const selTiempo = document.getElementById('guardarTiempoComida');
+      if (selTiempo && data.tiempo_comida) {
+        const match = Array.from(selTiempo.options).find(o => o.value.toLowerCase() === data.tiempo_comida.toLowerCase().trim());
+        if (match) selTiempo.value = match.value;
+      }
 
       if (data.evaluacion_muscular) {
         document.getElementById('muscleEvaluation').innerText = data.evaluacion_muscular.observacion || 'Aporte nutricional completo';
@@ -823,20 +850,70 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       const tbody = document.getElementById('ingredientsBody');
       tbody.innerHTML = '';
       if (data.ingredientes && data.ingredientes.length > 0) {
-        data.ingredientes.forEach(ing => {
+        data.ingredientes.forEach((ing, idx) => {
           const row = document.createElement('tr');
           row.className = 'hover:bg-slate-800/40';
           row.innerHTML = `
-            <td class="py-2 text-white font-medium">${ing.nombre}</td>
-            <td class="py-2 text-right text-slate-300 font-semibold">${ing.porcion_estimada_g}g</td>
-            <td class="py-2 text-right text-blue-400 font-bold">${ing.proteinas_g}g</td>
-            <td class="py-2 text-right text-emerald-400 font-bold">${ing.calorias} kcal</td>
+            <td class="py-2 pr-1 text-white font-medium">${ing.nombre}</td>
+            <td class="py-2 text-right">
+              <input type="number" min="0" step="5" value="${Math.round(ing.porcion_estimada_g || 0)}" onchange="actualizarGramosIngrediente(${idx}, this.value)" class="w-16 bg-slate-950 border border-slate-700 rounded-lg px-1.5 py-1 text-right text-slate-200 font-semibold text-xs">
+              <span class="text-slate-400">g</span>
+            </td>
+            <td class="py-2 text-right text-blue-400 font-bold">${Math.round(ing.proteinas_g || 0)}g</td>
+            <td class="py-2 text-right text-emerald-400 font-bold">${Math.round(ing.calorias || 0)}</td>
+            <td class="py-2 text-right">
+              <button type="button" onclick="eliminarIngredienteScan(${idx})" class="text-rose-400 hover:text-rose-300 px-1.5 py-0.5 rounded bg-slate-800/80 text-[11px] font-bold" title="Quitar ingrediente">✕</button>
+            </td>
           `;
           tbody.appendChild(row);
         });
+      } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-3 text-center text-slate-500">Sin ingredientes</td></tr>';
       }
 
       document.getElementById('analysisResult').classList.remove('hidden');
+    }
+
+    function recalcularTotalesScan() {
+      if (!ultimoResultado || !ultimoResultado.ingredientes) return;
+      const dn = document.getElementById('dishName');
+      if (dn && dn.value.trim()) ultimoResultado.plato = dn.value.trim();
+      const tot = { calorias: 0, proteinas_g: 0, carbohidratos_g: 0, grasas_g: 0 };
+      ultimoResultado.ingredientes.forEach(ing => {
+        tot.calorias += Number(ing.calorias) || 0;
+        tot.proteinas_g += Number(ing.proteinas_g) || 0;
+        tot.carbohidratos_g += Number(ing.carbohidratos_g) || 0;
+        tot.grasas_g += Number(ing.grasas_g) || 0;
+      });
+      ultimoResultado.totales = {
+        calorias: Math.round(tot.calorias),
+        proteinas_g: Math.round(tot.proteinas_g),
+        carbohidratos_g: Math.round(tot.carbohidratos_g),
+        grasas_g: Math.round(tot.grasas_g)
+      };
+      mostrarResultados(ultimoResultado);
+    }
+
+    function actualizarGramosIngrediente(idx, nuevosGramos) {
+      if (!ultimoResultado || !ultimoResultado.ingredientes || !ultimoResultado.ingredientes[idx]) return;
+      const ing = ultimoResultado.ingredientes[idx];
+      const viejoG = Number(ing.porcion_estimada_g) || 0;
+      const nuevoG = Math.max(0, parseFloat(nuevosGramos) || 0);
+      if (viejoG > 0) {
+        const factor = nuevoG / viejoG;
+        ing.calorias = Math.round((Number(ing.calorias) || 0) * factor);
+        ing.proteinas_g = Math.round((Number(ing.proteinas_g) || 0) * factor * 10) / 10;
+        ing.carbohidratos_g = Math.round((Number(ing.carbohidratos_g) || 0) * factor * 10) / 10;
+        ing.grasas_g = Math.round((Number(ing.grasas_g) || 0) * factor * 10) / 10;
+      }
+      ing.porcion_estimada_g = nuevoG;
+      recalcularTotalesScan();
+    }
+
+    function eliminarIngredienteScan(idx) {
+      if (!ultimoResultado || !ultimoResultado.ingredientes) return;
+      ultimoResultado.ingredientes.splice(idx, 1);
+      recalcularTotalesScan();
     }
 
     // PERSISTENCIA LOCAL DEL DIARIO
@@ -863,14 +940,16 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
     function guardarComidaLocal() {
       if (!ultimoResultado) return;
       const tiempo = document.getElementById('guardarTiempoComida').value;
+      const nombrePlato = (document.getElementById('dishName').value || '').trim() || ultimoResultado.plato || 'Comida';
       const comida = {
         id: Date.now(),
         tiempo: tiempo,
-        plato: ultimoResultado.plato || 'Comida',
+        plato: nombrePlato,
         calorias: Math.round(ultimoResultado.totales?.calorias || 0),
         proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
         carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
-        grasas: Math.round(ultimoResultado.totales?.grasas_g || 0)
+        grasas: Math.round(ultimoResultado.totales?.grasas_g || 0),
+        ingredientes: ultimoResultado.ingredientes || []
       };
 
       const diario = getDiarioHoy();
