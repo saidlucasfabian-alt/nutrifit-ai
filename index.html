@@ -146,6 +146,13 @@
 
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
         <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="manejarArchivo(event)">
+        <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="manejarArchivoAudio(event)">
+
+        <!-- Banner si viene de una comida vacía del Diario -->
+        <div id="targetSlotBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-emerald-300">
+          <span>📌 Cargando para: <strong id="targetSlotName" class="text-emerald-400">Almuerzo</strong></span>
+          <button type="button" onclick="limpiarSlotPreseleccionado()" class="text-slate-400 hover:text-white px-1.5">✕</button>
+        </div>
 
         <!-- Botones de captura -->
         <div class="grid grid-cols-2 gap-3">
@@ -155,6 +162,36 @@
           <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 border border-slate-700 transition">
             <i class="fa-regular fa-image text-lg text-emerald-400"></i> Galería
           </button>
+        </div>
+
+        <!-- Carga sin foto (Audio / Voz / Texto) -->
+        <div id="seccionAudioScanner" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-300">¿Sin foto? Cargá por Audio o Texto</span>
+            <span class="text-[10px] text-emerald-400 font-semibold">La IA calcula gramos</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btnGrabarAudio" onclick="toggleGrabacionAudio()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-microphone"></i> Grabar Audio
+            </button>
+            <button type="button" onclick="document.getElementById('audioInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-semibold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+              <i class="fa-solid fa-file-audio text-amber-400"></i> Subir Audio
+            </button>
+          </div>
+          <div id="boxGrabandoAudio" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs text-rose-300 font-bold">
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <span>Grabando... <span id="timerAudio">0s</span></span>
+            </div>
+            <div class="flex gap-1.5">
+              <button type="button" onclick="cancelarGrabacionAudio()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-semibold">Cancelar</button>
+              <button type="button" onclick="detenerYAnalizarAudio()" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-extrabold">⏹️ Analizar</button>
+            </div>
+          </div>
+          <div class="flex gap-1.5">
+            <input id="inputTextoComida" type="text" placeholder="O escribí qué comiste (ej: 2 huevos, 1 tostada)" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+            <button type="button" onclick="analizarTextoComida()" class="px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs active:scale-95">Analizar</button>
+          </div>
         </div>
 
         <!-- Preview de la foto -->
@@ -171,7 +208,7 @@
 
         <div id="loadingIndicator" class="hidden py-8 text-center space-y-2">
           <div class="inline-block w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-          <p class="text-sm font-bold text-white">Analizando plato con Gemini Vision...</p>
+          <p id="loadingTitle" class="text-sm font-bold text-white">Analizando plato con Gemini AI...</p>
           <p class="text-xs text-slate-400">Identificando ingredientes, gramos y aceites ocultos.</p>
         </div>
 
@@ -249,6 +286,7 @@
               <option value="Almuerzo" selected>Almuerzo</option>
               <option value="Merienda">Merienda</option>
               <option value="Cena">Cena</option>
+              <option value="Colación">Colación</option>
             </select>
             <button onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
               <i class="fa-solid fa-bookmark"></i> Guardar en mi Diario
@@ -266,7 +304,7 @@
             <h2 class="text-base font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-calendar-check text-emerald-400"></i> Diario de Comidas
             </h2>
-            <p class="text-xs text-slate-400">Registro guardado en tu teléfono</p>
+            <p id="fechaDiarioLabel" class="text-[11px] text-emerald-400 font-semibold mt-0.5">Hoy • Se reinicia automático a las 00:00</p>
           </div>
           <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300">
             Reiniciar Día
@@ -484,6 +522,7 @@
             <option value="Almuerzo">Almuerzo</option>
             <option value="Merienda">Merienda</option>
             <option value="Cena">Cena</option>
+            <option value="Colación">Colación</option>
             <option value="Snack">Snack</option>
           </select>
         </label>
@@ -521,6 +560,13 @@
 
     let imagenBase64 = null;
     let ultimoResultado = null;
+    let slotPreseleccionado = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioTimerInterval = null;
+    let segundosGrabados = 0;
+    let audioCancelado = false;
+    let fechaActiva = null;
     let perfil = {
       edad: 28,
       genero: "masculino",
@@ -564,8 +610,14 @@
         console.warn("Error leyendo plan semanal:", e);
       }
 
-      // Cargar diario de hoy
+      // Cargar diario de hoy y activar vigilancia de cambio de día (00:00)
+      fechaActiva = fechaHoyLocal();
       actualizarDashboardDiario();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) verificarCambioDeDia();
+      });
+      window.addEventListener('focus', verificarCambioDeDia);
+      setInterval(verificarCambioDeDia, 30000);
     });
 
     function toggleModalSettings() {
@@ -721,24 +773,16 @@
       reader.readAsDataURL(file);
     }
 
-    // ANÁLISIS DIRECTO AUTÓNOMO CON GEMINI (MÉTODO EZEQUIEL VEDROVNIK)
-    async function analizarFotoAutonoma() {
-      if (!imagenBase64) return;
-      const btn = document.getElementById('btnAnalizar');
-      const loading = document.getElementById('loadingIndicator');
-      const resultBox = document.getElementById('analysisResult');
-
-      btn.disabled = true;
-      loading.classList.remove('hidden');
-      resultBox.classList.add('hidden');
-
-      const apiKey = getApiKey();
-      const prompt = `
+    // ANÁLISIS DIRECTO AUTÓNOMO CON GEMINI (FOTO, AUDIO O TEXTO)
+    function construirPromptAnalisis(fuenteDesc) {
+      return `
 Sos un nutricionista deportivo de élite especializado en composición corporal e hipertrofia (siguiendo el enfoque pedagógico de cuantificación de porciones, gramos exactos y hábitos de Ezequiel Vedrovnik).
-Analiza esta foto de comida y devuelve ÚNICAMENTE un JSON válido con esta estructura:
+${fuenteDesc}
+Si no se especifican gramos exactos en un audio o texto, estimá porciones típicas estándar (ej: Argentina) en gramos reales y calculá sus calorías y macros.
+Devolvé ÚNICAMENTE un JSON válido con esta estructura:
 {
   "plato": "Nombre representativo del plato",
-  "tiempo_comida": "Almuerzo | Desayuno | Merienda | Cena",
+  "tiempo_comida": "${slotPreseleccionado || 'Almuerzo | Desayuno | Merienda | Cena | Colación'}",
   "ingredientes": [
     {
       "nombre": "Alimento",
@@ -760,9 +804,22 @@ Analiza esta foto de comida y devuelve ÚNICAMENTE un JSON válido con esta estr
   },
   "advertencias_ingredientes_ocultos": "Aclaración sobre aceites de cocción, aderezos o salsas invisibles que suman calorías sin saciedad"
 }
-Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
+Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 `;
+    }
 
+    async function ejecutarAnalisisGemini(parts, loadingMsg) {
+      const btn = document.getElementById('btnAnalizar');
+      const loading = document.getElementById('loadingIndicator');
+      const loadingTitle = document.getElementById('loadingTitle');
+      const resultBox = document.getElementById('analysisResult');
+
+      btn.disabled = true;
+      if (loadingTitle) loadingTitle.innerText = loadingMsg || "Analizando plato con Gemini AI...";
+      loading.classList.remove('hidden');
+      resultBox.classList.add('hidden');
+
+      const apiKey = getApiKey();
       const modelos = [
         "gemini-3-flash-preview",
         "gemini-3.1-flash-lite-preview",
@@ -776,12 +833,7 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       for (const m of modelos) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
         const payload = {
-          contents: [{
-            parts: [
-              { text: prompt },
-              { inline_data: { mime_type: "image/jpeg", data: imagenBase64 } }
-            ]
-          }],
+          contents: [{ parts }],
           generationConfig: { temperature: 0.2 }
         };
 
@@ -798,8 +850,9 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
             if (texto.startsWith("```json")) texto = texto.substring(7);
             if (texto.startsWith("```")) texto = texto.substring(3);
             if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
-            
+
             ultimoResultado = JSON.parse(texto.trim());
+            if (slotPreseleccionado) ultimoResultado.tiempo_comida = slotPreseleccionado;
             mostrarResultados(ultimoResultado);
             exito = true;
             break;
@@ -814,12 +867,133 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
         }
       }
 
-      btn.disabled = false;
+      btn.disabled = !imagenBase64;
       loading.classList.add('hidden');
 
       if (!exito) {
         alert("No se pudo conectar con la IA de Google: " + (ultimoError || "Verificá tu conexión o clave de API."));
       }
+    }
+
+    async function analizarFotoAutonoma() {
+      if (!imagenBase64) return;
+      const prompt = construirPromptAnalisis("Analizá esta foto de comida e identificá cada alimento y sus gramos estimados.");
+      await ejecutarAnalisisGemini([
+        { text: prompt },
+        { inline_data: { mime_type: "image/jpeg", data: imagenBase64 } }
+      ], "Analizando foto con Gemini Vision...");
+    }
+
+    async function analizarAudioBase64(audioB64, mimeType) {
+      if (!audioB64) return;
+      const cleanMime = (mimeType || "audio/webm").split(";")[0].trim();
+      const prompt = construirPromptAnalisis("Escuchá este audio donde la persona describe qué comida ingirió y las cantidades aproximadas.");
+      await ejecutarAnalisisGemini([
+        { text: prompt },
+        { inline_data: { mime_type: cleanMime, data: audioB64 } }
+      ], "Escuchando audio y calculando gramos con Gemini...");
+    }
+
+    async function analizarTextoComida() {
+      const inp = document.getElementById('inputTextoComida');
+      const texto = (inp ? inp.value : '').trim();
+      if (!texto) {
+        alert("Escribí o dictá qué comiste antes de tocar Analizar.");
+        return;
+      }
+      const prompt = construirPromptAnalisis(`Analizá esta descripción de comida contada por el usuario: "${texto}"`);
+      await ejecutarAnalisisGemini([{ text: prompt }], "Interpretando comida con Gemini AI...");
+    }
+
+    function manejarArchivoAudio(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (ev) => {
+        const dataUrl = ev.target.result || "";
+        const b64 = dataUrl.split(",")[1];
+        const mime = file.type || "audio/mpeg";
+        await analizarAudioBase64(b64, mime);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    }
+
+    async function toggleGrabacionAudio() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        detenerYAnalizarAudio();
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Tu navegador no permite grabar audio directo. Podés usar 'Subir Audio' o escribir qué comiste abajo.");
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunks = [];
+        audioCancelado = false;
+        segundosGrabados = 0;
+
+        const candidatosMime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+        const mimeSoportado = candidatosMime.find(m => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m));
+        mediaRecorder = mimeSoportado ? new MediaRecorder(stream, { mimeType: mimeSoportado }) : new MediaRecorder(stream);
+
+        mediaRecorder.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) audioChunks.push(ev.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          clearInterval(audioTimerInterval);
+          document.getElementById('boxGrabandoAudio').classList.add('hidden');
+          document.getElementById('btnGrabarAudio').disabled = false;
+
+          if (audioCancelado || audioChunks.length === 0) return;
+          const mime = (mediaRecorder.mimeType || mimeSoportado || "audio/webm").split(";")[0];
+          const blob = new Blob(audioChunks, { type: mime });
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const b64 = (reader.result || "").split(",")[1];
+            await analizarAudioBase64(b64, mime);
+          };
+          reader.readAsDataURL(blob);
+        };
+
+        mediaRecorder.start();
+        document.getElementById('timerAudio').innerText = "0s";
+        document.getElementById('boxGrabandoAudio').classList.remove('hidden');
+        document.getElementById('btnGrabarAudio').disabled = true;
+        audioTimerInterval = setInterval(() => {
+          segundosGrabados++;
+          document.getElementById('timerAudio').innerText = `${segundosGrabados}s`;
+        }, 1000);
+      } catch (err) {
+        alert("No se pudo acceder al micrófono (" + (err.message || "permiso denegado") + "). Podés usar 'Subir Audio' o escribir la comida abajo.");
+      }
+    }
+
+    function detenerYAnalizarAudio() {
+      audioCancelado = false;
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    }
+
+    function cancelarGrabacionAudio() {
+      audioCancelado = true;
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      } else {
+        clearInterval(audioTimerInterval);
+        document.getElementById('boxGrabandoAudio').classList.add('hidden');
+        document.getElementById('btnGrabarAudio').disabled = false;
+      }
+    }
+
+    function limpiarSlotPreseleccionado() {
+      slotPreseleccionado = null;
+      const b = document.getElementById('targetSlotBanner');
+      if (b) b.classList.add('hidden');
     }
 
     function mostrarResultados(data) {
@@ -956,6 +1130,9 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       diario.push(comida);
       setDiarioHoy(diario);
 
+      limpiarSlotPreseleccionado();
+      const inpTxt = document.getElementById('inputTextoComida');
+      if (inpTxt) inpTxt.value = '';
       actualizarDashboardDiario();
       alert("¡Comida guardada en tu teléfono!");
       cambiarSeccion('diario');
@@ -1041,41 +1218,113 @@ Regla: Devuelve SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
     }
 
+    function verificarCambioDeDia() {
+      const hoy = fechaHoyLocal();
+      if (fechaActiva && fechaActiva !== hoy) {
+        fechaActiva = hoy;
+        limpiarSlotPreseleccionado();
+        actualizarDashboardDiario();
+        renderizarDiario();
+      }
+    }
+
+    function obtenerComidasEstablecidas() {
+      let cost = {};
+      try { cost = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}"); } catch (e) {}
+      const n = String(cost.comidasDia || "4");
+      if (n === "3") return ["Desayuno", "Almuerzo", "Cena"];
+      if (n === "5") return ["Desayuno", "Almuerzo", "Merienda", "Cena", "Colación"];
+      return ["Desayuno", "Almuerzo", "Merienda", "Cena"];
+    }
+
+    function irACargarSlot(slot, modo) {
+      slotPreseleccionado = slot;
+      const sel = document.getElementById('guardarTiempoComida');
+      if (sel) sel.value = slot;
+      const banner = document.getElementById('targetSlotBanner');
+      const nameEl = document.getElementById('targetSlotName');
+      if (nameEl) nameEl.innerText = slot;
+      if (banner) banner.classList.remove('hidden');
+
+      cambiarSeccion('scanner');
+      setTimeout(() => {
+        if (modo === 'audio') {
+          const box = document.getElementById('seccionAudioScanner');
+          if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }, 80);
+    }
+
     function renderizarDiario() {
+      const hoyStr = fechaHoyLocal();
+      const partes = hoyStr.split('-');
+      const fechaLbl = document.getElementById('fechaDiarioLabel');
+      if (fechaLbl && partes.length === 3) {
+        fechaLbl.innerText = `Hoy ${partes[2]}/${partes[1]}/${partes[0]} • Se reinicia automático a las 00:00`;
+      }
+
       const comidas = getDiarioHoy();
+      const slots = obtenerComidasEstablecidas();
+      // Incluir cualquier comida cargada bajo un momento extra (ej. Snack)
+      comidas.forEach(c => {
+        const t = (c.tiempo || '').trim();
+        if (t && !slots.some(s => s.toLowerCase() === t.toLowerCase())) {
+          slots.push(t);
+        }
+      });
+
       const cont = document.getElementById('listaComidasDiario');
       cont.innerHTML = '';
 
-      if (comidas.length === 0) {
-        cont.innerHTML = '<p class="text-xs text-slate-500 py-8 text-center">No registraste comidas hoy todavía.<br>¡Sacale una foto a tu plato en el Scanner!</p>';
-        return;
-      }
+      slots.forEach(slot => {
+        const comidasSlot = comidas.filter(c => (c.tiempo || '').toLowerCase() === slot.toLowerCase());
 
-      comidas.forEach(c => {
-        const item = document.createElement('div');
-        item.className = 'bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between';
-        item.innerHTML = `
-          <div>
-            <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded">${c.tiempo}</span>
-            <h4 class="text-sm font-bold text-white mt-1">${c.plato}</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">
-              Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
-              Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
-              Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
-            </p>
-          </div>
-          <div class="text-right flex flex-col items-end gap-1.5">
+        if (comidasSlot.length === 0) {
+          const vacio = document.createElement('div');
+          vacio.className = 'bg-slate-950/50 p-3.5 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-between gap-2';
+          vacio.innerHTML = `
             <div>
-              <span class="text-base font-black text-white">${c.calorias}</span>
-              <span class="text-[10px] text-slate-400">kcal</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800 px-2 py-0.5 rounded">${slot}</span>
+              <p class="text-xs text-slate-500 mt-1.5 font-medium">Sin cargar (Vacío)</p>
             </div>
-            <div class="flex gap-1.5">
-              <button onclick="abrirEditorComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️ Editar</button>
-              <button onclick="borrarComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
+            <div class="flex gap-1.5 shrink-0">
+              <button type="button" onclick="irACargarSlot('${slot}', 'foto')" class="text-[11px] font-bold px-2.5 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:scale-95">📷 Foto</button>
+              <button type="button" onclick="irACargarSlot('${slot}', 'audio')" class="text-[11px] font-bold px-2.5 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 active:scale-95">🎤 Audio</button>
             </div>
-          </div>
-        `;
-        cont.appendChild(item);
+          `;
+          cont.appendChild(vacio);
+        } else {
+          comidasSlot.forEach((c, idx) => {
+            const item = document.createElement('div');
+            item.className = 'bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between gap-2';
+            const btnSumar = idx === 0 ? `<button type="button" onclick="irACargarSlot('${slot}', 'audio')" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-amber-300 active:scale-95" title="Sumar otra comida a ${slot}">+ Sumar</button>` : '';
+            item.innerHTML = `
+              <div class="min-w-0">
+                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded">${c.tiempo}</span>
+                <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
+                  Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
+                  Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
+                </p>
+              </div>
+              <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
+                <div>
+                  <span class="text-base font-black text-white">${c.calorias}</span>
+                  <span class="text-[10px] text-slate-400">kcal</span>
+                </div>
+                <div class="flex gap-1.5">
+                  ${btnSumar}
+                  <button onclick="abrirEditorComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️ Editar</button>
+                  <button onclick="borrarComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
+                </div>
+              </div>
+            `;
+            cont.appendChild(item);
+          });
+        }
       });
     }
 
