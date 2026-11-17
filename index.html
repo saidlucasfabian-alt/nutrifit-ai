@@ -1029,8 +1029,13 @@ Solo el JSON sin markdown ni explicaciones.
 
   <script>
     if ('serviceWorker' in navigator) {
+      let recargado = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!recargado) { recargado = true; window.location.reload(); }
+      });
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
+        navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
+          reg.update();
           console.log('NutriFit PWA activo:', reg.scope);
         }).catch(err => {
           console.log('SW no registrado:', err);
