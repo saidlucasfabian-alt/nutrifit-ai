@@ -1,5 +1,5 @@
-// v3: primero busca la versión nueva en internet; usa la copia guardada solo si no hay conexión
-const CACHE_NAME = 'nutrifit-v3';
+﻿// v3: primero busca la versiÃ³n nueva en internet; usa la copia guardada solo si no hay conexiÃ³n
+const CACHE_NAME = 'nutrifit-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -27,3 +27,4 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
   );
 });
+
