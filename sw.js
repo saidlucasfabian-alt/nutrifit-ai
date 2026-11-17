@@ -1,5 +1,5 @@
-﻿// v3: primero busca la versiÃ³n nueva en internet; usa la copia guardada solo si no hay conexiÃ³n
-const CACHE_NAME = 'nutrifit-v6';
+﻿// v7: busca primero la versión nueva en internet y fuerza recarga en clientes viejos
+const CACHE_NAME = 'nutrifit-v7';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -12,6 +12,10 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then((clients) => Promise.all(
+        clients.map((c) => ('navigate' in c ? c.navigate(c.url).catch(() => {}) : Promise.resolve()))
+      ))
   );
 });
 
@@ -27,4 +31,3 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
   );
 });
-
