@@ -33,9 +33,10 @@
           <i class="fa-solid fa-fire-flame-curved"></i>
         </div>
         <div>
-          <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+          <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v7 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -390,30 +391,61 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 4: PLAN ADAPTATIVO SEMANAL -->
+    <!-- SECCIÓN 4: PLAN ADAPTATIVO SEMANAL DINÁMICO -->
     <div id="sec-dieta" class="hidden space-y-5">
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-utensils text-emerald-400"></i> Plan Adaptativo Semanal
+              <i class="fa-solid fa-utensils text-emerald-400"></i> Dieta Dinámica
             </h2>
-            <p class="text-xs text-slate-400">Nutrición estructurada en 4 tiempos</p>
+            <p class="text-xs text-slate-400">3 opciones por comida, cambios con IA y equivalencias</p>
           </div>
-          <button id="btnGenerarDieta" onclick="generarDietaAutonoma()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Reajustar con IA
+          <div class="flex gap-1.5">
+            <button type="button" id="btnAdaptarHoy" onclick="adaptarRestoDelDiaConIA()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold px-2.5 py-2 rounded-xl text-[11px] flex items-center gap-1 transition" title="Reajusta lo que te falta comer hoy según tu Diario">
+              <i class="fa-solid fa-bolt"></i> Adaptar HOY
+            </button>
+            <button type="button" id="btnGenerarDieta" onclick="generarDietaAutonoma()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Generar Plan
+            </button>
+          </div>
+        </div>
+
+        <!-- Selector por Día (Lunes a Domingo + Todos) -->
+        <div id="barraDiasDieta" class="hidden flex gap-1.5 overflow-x-auto no-scrollbar pb-1"></div>
+
+        <!-- Calculadora Rápida de Equivalencias en Gramos (Método Vedrovnik) -->
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-3 space-y-2">
+          <button type="button" onclick="document.getElementById('boxEquivalenciasBody').classList.toggle('hidden')" class="w-full flex items-center justify-between text-xs font-bold text-slate-200">
+            <span class="flex items-center gap-1.5"><i class="fa-solid fa-scale-balanced text-emerald-400"></i> Calculadora de Equivalencias en Gramos</span>
+            <span class="text-[10px] text-emerald-400">Abrir / Cerrar ▾</span>
           </button>
+          <div id="boxEquivalenciasBody" class="hidden pt-2 border-t border-slate-800/80 space-y-2">
+            <div class="grid grid-cols-3 gap-2">
+              <select id="eqAlimento" onchange="calcularEquivalenciaRapida()" class="col-span-2 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white">
+                <option value="pollo">Pechuga de pollo (crudo)</option>
+                <option value="carne">Carne magra / bife (crudo)</option>
+                <option value="huevos">Huevo entero (unidades ~55g)</option>
+                <option value="arroz">Arroz / Fideos (en crudo)</option>
+                <option value="papa">Papa / Batata</option>
+                <option value="avena">Avena</option>
+              </select>
+              <input id="eqGramos" type="number" min="1" value="150" oninput="calcularEquivalenciaRapida()" class="bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-emerald-400 font-bold text-right">
+            </div>
+            <div id="eqResultado" class="text-[11px] text-slate-300 bg-slate-900/70 rounded-xl p-2.5 space-y-1"></div>
+          </div>
         </div>
 
         <div id="loadingDieta" class="hidden text-center py-8 space-y-2">
           <div class="inline-block w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin"></div>
-          <p class="text-sm font-bold text-white">Generando plan adaptado a tus costumbres...</p>
+          <p id="loadingDietaMsg" class="text-sm font-bold text-white">Generando plan dinámico con 3 opciones por comida...</p>
+          <p class="text-[11px] text-slate-400">No cierres la app mientras arma los 7 días (demora ~25–35 seg) y queda guardado solo.</p>
         </div>
 
         <div id="contenidoDieta" class="space-y-4">
           <div class="p-6 text-center border-2 border-dashed border-slate-800 rounded-2xl">
             <i class="fa-solid fa-utensils text-2xl text-slate-600 mb-2"></i>
-            <p class="text-xs font-medium text-slate-300">Tocá en <strong>"Reajustar con IA"</strong> para generar tu menú semanal adaptado.</p>
+            <p class="text-xs font-medium text-slate-300">Tocá en <strong>"Generar Plan"</strong> para crear tu menú semanal con 3 opciones por comida y guardarlo en tu teléfono.</p>
           </div>
         </div>
       </div>
@@ -567,6 +599,27 @@
     let segundosGrabados = 0;
     let audioCancelado = false;
     let fechaActiva = null;
+    let planSemanalActual = null;
+    let diaDietaSeleccionado = obtenerNombreDiaHoy();
+
+    function obtenerNombreDiaHoy() {
+      const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      return dias[new Date().getDay()] || "Lunes";
+    }
+
+    async function forzarActualizacionApp() {
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) {}
+      window.location.href = window.location.pathname + '?v=' + Date.now();
+    }
     let perfil = {
       edad: 28,
       genero: "masculino",
@@ -603,12 +656,8 @@
       document.getElementById('inputApiKey').value = getApiKey();
 
       // Cargar plan semanal guardado
-      try {
-        const planGuardado = localStorage.getItem("nutrifit_plan_semanal");
-        if (planGuardado) renderizarPlanSemanal(JSON.parse(planGuardado));
-      } catch (e) {
-        console.warn("Error leyendo plan semanal:", e);
-      }
+      cargarYRenderizarPlanGuardado();
+      calcularEquivalenciaRapida();
 
       // Cargar diario de hoy y activar vigilancia de cambio de día (00:00)
       fechaActiva = fechaHoyLocal();
@@ -654,6 +703,7 @@
       }
 
       if (seccion === 'diario') renderizarDiario();
+      if (seccion === 'dieta') cargarYRenderizarPlanGuardado();
     }
 
     // CÁLCULO FISIOLÓGICO MIFFLIN-ST JEOR (AUTO-GUARDADO SILENCIOSO + MANUAL)
@@ -1337,64 +1387,12 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }
     }
 
-    // GENERADOR DE PLAN SEMANAL ADAPTATIVO CON GEMINI
-    async function generarDietaAutonoma() {
-      const btn = document.getElementById('btnGenerarDieta');
-      const loading = document.getElementById('loadingDieta');
-      const cont = document.getElementById('contenidoDieta');
-
-      btn.disabled = true;
-      loading.classList.remove('hidden');
-      cont.classList.add('hidden');
-
-      const costumbres = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}");
-      const comidasPrevias = getDiarioHoy();
-      let resumenFotos = comidasPrevias.map(c => `${c.tiempo}: ${c.plato} (${c.calorias} kcal, ${c.proteinas}g prot)`).join(', ');
-      if (!resumenFotos) resumenFotos = "Aún no ha fotografiado comidas hoy.";
-
-      const prompt = `
-Sos un nutricionista deportivo especializado en hipertrofia y adherencia a largo plazo (siguiendo el enfoque de Ezequiel Vedrovnik: foco en gramos clave, porciones sin ambigüedad y adaptación a la vida cotidiana de la persona).
-Crea un plan semanal estructurado de 7 días (Lunes a Domingo) para:
-- Meta: ${perfil.caloriasMeta} kcal/día (${perfil.proteinas}g proteína, ${perfil.carbos}g carbohidratos, ${perfil.grasas}g grasas)
-- Región / Cultura: ${costumbres.pais || 'Argentina / Cono Sur'}
-- Tipo de dieta: ${costumbres.dieta || 'Omnívoro'}
-- Comidas favoritas: ${costumbres.favoritos || 'Carne vacuna, pollo, arroz, pastas, huevos'}
-- Descartados / Alergias: ${costumbres.noDeseados || 'Ninguno'}
-- Comidas al día: ${costumbres.comidasDia || 4} comidas fijas
-- Comidas que fotografió recientemente: ${resumenFotos}
-
-Devuelve ÚNICAMENTE un JSON con:
-{
-  "diagnostico_adaptativo": {
-    "estrategia": "Breve explicación estilo coaching de cómo se adaptó a sus costumbres y gramos necesarios"
-  },
-  "dias": [
-    {
-      "dia": "Lunes",
-      "calorias_dia": ${perfil.caloriasMeta},
-      "comidas": [
-        {
-          "nombre": "Desayuno",
-          "hora_sugerida": "08:30",
-          "plato": "Nombre del plato",
-          "ingredientes": "Ingredientes con gramos específicos",
-          "calorias": 650,
-          "proteinas_g": 40
-        }
-      ]
-    }
-  ],
-  "lista_supermercado": [
-    "Ingrediente y cantidad semanal"
-  ]
-}
-Solo el JSON sin markdown ni explicaciones.
-`;
-
+    // HELPER COMPARTIDO PARA LLAMADAS JSON A GEMINI (PLAN, CAMBIOS Y REAJUSTES)
+    async function llamarGeminiJson(prompt, temperature = 0.3) {
       const apiKey = getApiKey();
       const modelos = ["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemini-flash-lite-latest"];
+      let ultimoError = "";
 
-      let exito = false;
       for (const m of modelos) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
         try {
@@ -1403,7 +1401,7 @@ Solo el JSON sin markdown ni explicaciones.
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.3 }
+              generationConfig: { temperature, responseMimeType: "application/json" }
             })
           });
 
@@ -1413,37 +1411,372 @@ Solo el JSON sin markdown ni explicaciones.
             if (texto.startsWith("```json")) texto = texto.substring(7);
             if (texto.startsWith("```")) texto = texto.substring(3);
             if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
-
-            const plan = JSON.parse(texto.trim());
-            localStorage.setItem("nutrifit_plan_semanal", JSON.stringify(plan));
-            renderizarPlanSemanal(plan);
-            exito = true;
-            break;
+            return { ok: true, data: JSON.parse(texto.trim()) };
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            ultimoError = (errData.error && errData.error.message) || `Error ${res.status}`;
           }
         } catch (e) {
-          console.warn("Fallo en modelo dieta:", e);
+          ultimoError = e.message || "Error de conexión";
+          console.warn(`Fallo en ${m}:`, e);
         }
       }
+      return { ok: false, error: ultimoError };
+    }
 
+    function normalizarComidaPlan(c) {
+      if (!Array.isArray(c.opciones) || c.opciones.length === 0) {
+        c.opciones = [
+          { plato: c.plato || c.nombre || "Opción principal", ingredientes: c.ingredientes || "" },
+          { plato: `Alternativa rápida (${c.nombre || "Comida"})`, ingredientes: "Equivalente proteico: huevos / atún / whey + carbohidrato rápido en mismos gramos" },
+          { plato: `Variante liviana (${c.nombre || "Comida"})`, ingredientes: "Pollo o carne magra en igual proteína + papa o ensalada" }
+        ];
+      }
+      const idx = Number.isInteger(c.opcion_activa) ? c.opcion_activa : 0;
+      c.opcion_activa = (idx >= 0 && idx < c.opciones.length) ? idx : 0;
+      const activa = c.opciones[c.opcion_activa];
+      c.plato = activa.plato || c.plato;
+      c.ingredientes = activa.ingredientes || c.ingredientes;
+      return c;
+    }
+
+    function normalizarPlanSemanal(plan) {
+      if (!plan || !Array.isArray(plan.dias)) return plan;
+      plan.dias.forEach(d => {
+        if (Array.isArray(d.comidas)) {
+          d.comidas = d.comidas.map(normalizarComidaPlan);
+        }
+      });
+      return plan;
+    }
+
+    function guardarPlanSemanal(plan) {
+      planSemanalActual = normalizarPlanSemanal(plan);
+      try {
+        localStorage.setItem("nutrifit_plan_semanal", JSON.stringify(planSemanalActual));
+      } catch (e) {
+        console.warn("No se pudo guardar plan en localStorage:", e);
+      }
+      renderizarPlanSemanal(planSemanalActual);
+    }
+
+    function cargarYRenderizarPlanGuardado() {
+      if (!planSemanalActual) {
+        try {
+          const g = localStorage.getItem("nutrifit_plan_semanal");
+          if (g) planSemanalActual = normalizarPlanSemanal(JSON.parse(g));
+        } catch (e) {
+          console.warn("Error leyendo plan guardado:", e);
+        }
+      }
+      if (planSemanalActual) renderizarPlanSemanal(planSemanalActual);
+    }
+
+    // GENERADOR DE PLAN SEMANAL DINÁMICO (3 OPCIONES POR COMIDA)
+    async function generarDietaAutonoma() {
+      const btn = document.getElementById('btnGenerarDieta');
+      const loading = document.getElementById('loadingDieta');
+      const msgEl = document.getElementById('loadingDietaMsg');
+      const cont = document.getElementById('contenidoDieta');
+
+      btn.disabled = true;
+      if (msgEl) msgEl.innerText = "Generando plan de 7 días con 3 opciones por comida...";
+      loading.classList.remove('hidden');
+      cont.classList.add('hidden');
+
+      const costumbres = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}");
+      const slots = obtenerComidasEstablecidas();
+      const comidasPrevias = getDiarioHoy();
+      const resumenFotos = comidasPrevias.length
+        ? comidasPrevias.map(c => `${c.tiempo}: ${c.plato} (${c.calorias} kcal, ${c.proteinas}g prot)`).join(', ')
+        : "Sin comidas registradas hoy todavía.";
+
+      const prompt = `
+Sos un nutricionista deportivo especialista en hipertrofia y adherencia (método Ezequiel Vedrovnik: precisión en gramos, equivalencias intercambiables para no aburrirse).
+Armá un plan semanal de 7 días ("Lunes" a "Domingo") con exactamente estas comidas por día: ${slots.join(', ')}.
+Meta diaria: ${perfil.caloriasMeta} kcal (${perfil.proteinas}g prot, ${perfil.carbos}g carbos, ${perfil.grasas}g grasas).
+Región: ${costumbres.pais || 'Argentina / Cono Sur'} | Tipo: ${costumbres.dieta || 'Omnívoro'}
+Favoritos: ${costumbres.favoritos || 'Carne vacuna, pollo, arroz, pastas, huevos, avena, banana'}
+Evitar: ${costumbres.noDeseados || 'Ninguno'} | Tiempo cocina: ${costumbres.tiempoCocina || 'rapido_20min'} | Suplementos: ${costumbres.suplementos || 'Whey, Creatina'}
+Hoy comió: ${resumenFotos}
+
+IMPORTANTE: Para que sea DINÁMICO, cada comida debe traer "opciones" con 3 alternativas equivalentes en calorías y proteína (ej. 1 clásica, 1 rápida de armar, 1 alternativa distinta). Sé conciso en los textos para no pasarte de largo.
+
+Devolvé ÚNICAMENTE JSON válido con esta estructura exacta:
+{
+  "diagnostico_adaptativo": {
+    "estrategia": "Resumen corto de estrategia en gramos y porciones para su meta."
+  },
+  "dias": [
+    {
+      "dia": "Lunes",
+      "calorias_dia": ${perfil.caloriasMeta},
+      "comidas": [
+        {
+          "nombre": "${slots[0]}",
+          "hora_sugerida": "08:30",
+          "calorias": 650,
+          "proteinas_g": 40,
+          "carbos_g": 70,
+          "grasas_g": 18,
+          "opcion_activa": 0,
+          "opciones": [
+            { "plato": "Nombre opción A", "ingredientes": "Gramos exactos concisos" },
+            { "plato": "Nombre opción B", "ingredientes": "Gramos exactos concisos" },
+            { "plato": "Nombre opción C", "ingredientes": "Gramos exactos concisos" }
+          ]
+        }
+      ]
+    }
+  ],
+  "lista_supermercado": ["Alimento y cantidad semanal"]
+}`;
+
+      const res = await llamarGeminiJson(prompt, 0.3);
       btn.disabled = false;
       loading.classList.add('hidden');
       cont.classList.remove('hidden');
 
-      if (!exito) {
-        alert("Error al generar el plan. Verificá tu conexión a internet.");
+      if (res.ok && res.data && Array.isArray(res.data.dias)) {
+        diaDietaSeleccionado = obtenerNombreDiaHoy();
+        guardarPlanSemanal(res.data);
+      } else {
+        alert("No se pudo generar el plan: " + (res.error || "Revisá tu conexión e intentá de nuevo."));
       }
     }
 
+    function seleccionarDiaDieta(dia) {
+      diaDietaSeleccionado = dia;
+      if (planSemanalActual) renderizarPlanSemanal(planSemanalActual);
+    }
+
+    function seleccionarOpcionComidaDieta(diaIdx, comidaIdx, opIdx) {
+      if (!planSemanalActual?.dias?.[diaIdx]?.comidas?.[comidaIdx]) return;
+      const comida = planSemanalActual.dias[diaIdx].comidas[comidaIdx];
+      if (!comida.opciones || !comida.opciones[opIdx]) return;
+      comida.opcion_activa = opIdx;
+      comida.plato = comida.opciones[opIdx].plato;
+      comida.ingredientes = comida.opciones[opIdx].ingredientes;
+      guardarPlanSemanal(planSemanalActual);
+    }
+
+    async function cambiarPlatoDietaConIA(diaIdx, comidaIdx) {
+      if (!planSemanalActual?.dias?.[diaIdx]?.comidas?.[comidaIdx]) return;
+      const c = planSemanalActual.dias[diaIdx].comidas[comidaIdx];
+      const pedido = prompt(
+        `Cambiar ${c.nombre} (${c.calorias} kcal • ${c.proteinas_g}g prot):\n¿Qué te gustaría comer o qué tenés en la heladera? (Dejá vacío para 3 ideas nuevas)`,
+        ""
+      );
+      if (pedido === null) return;
+
+      const loading = document.getElementById('loadingDieta');
+      const msgEl = document.getElementById('loadingDietaMsg');
+      if (msgEl) msgEl.innerText = `Buscando 3 reemplazos para ${c.nombre}...`;
+      loading.classList.remove('hidden');
+
+      const costumbres = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}");
+      const promptSwap = `
+Necesito 3 opciones NUEVAS y distintas para reemplazar esta comida del plan (${c.nombre}):
+- Objetivo calórico y proteico a respetar: ~${c.calorias} kcal, ~${c.proteinas_g}g proteína.
+- País/costumbres: ${costumbres.pais || 'Argentina / Cono Sur'}, evitar: ${costumbres.noDeseados || 'Nada'}.
+- Pedido del usuario: "${pedido.trim() || 'Sorprendeme con 3 opciones prácticas y variadas'}".
+- Plato actual a descartar: "${c.plato}".
+Devolvé ÚNICAMENTE JSON:
+{
+  "opciones": [
+    { "plato": "Opción 1", "ingredientes": "Gramos exactos" },
+    { "plato": "Opción 2", "ingredientes": "Gramos exactos" },
+    { "plato": "Opción 3", "ingredientes": "Gramos exactos" }
+  ]
+}`;
+
+      const res = await llamarGeminiJson(promptSwap, 0.5);
+      loading.classList.add('hidden');
+
+      if (res.ok && res.data && Array.isArray(res.data.opciones) && res.data.opciones.length > 0) {
+        c.opciones = res.data.opciones.slice(0, 3);
+        c.opcion_activa = 0;
+        c.plato = c.opciones[0].plato;
+        c.ingredientes = c.opciones[0].ingredientes;
+        guardarPlanSemanal(planSemanalActual);
+      } else {
+        alert("No se pudo generar el cambio: " + (res.error || "Intentá de nuevo."));
+      }
+    }
+
+    function registrarComidaDeDietaEnDiario(diaIdx, comidaIdx) {
+      if (!planSemanalActual?.dias?.[diaIdx]?.comidas?.[comidaIdx]) return;
+      const c = planSemanalActual.dias[diaIdx].comidas[comidaIdx];
+      const op = (c.opciones && c.opciones[c.opcion_activa || 0]) || c;
+      const cal = Math.round(Number(c.calorias) || 0);
+      const prot = Math.round(Number(c.proteinas_g) || 0);
+      const restKcal = Math.max(0, cal - prot * 4);
+      const carb = c.carbos_g !== undefined ? Math.round(Number(c.carbos_g)) : Math.round((restKcal * 0.65) / 4);
+      const gras = c.grasas_g !== undefined ? Math.round(Number(c.grasas_g)) : Math.round((restKcal * 0.35) / 9);
+
+      const diario = getDiarioHoy();
+      diario.push({
+        id: Date.now(),
+        tiempo: c.nombre || "Almuerzo",
+        plato: op.plato || c.plato || c.nombre,
+        calorias: cal,
+        proteinas: prot,
+        carbos: carb,
+        grasas: gras,
+        ingredientes: [{ nombre: op.ingredientes || op.plato, porcion_estimada_g: 0, calorias: cal, proteinas_g: prot, carbohidratos_g: carb, grasas_g: gras }]
+      });
+      setDiarioHoy(diario);
+      actualizarDashboardDiario();
+      renderizarDiario();
+      alert(`✅ "${op.plato}" sumado a tu Diario de hoy.`);
+    }
+
+    async function adaptarRestoDelDiaConIA() {
+      cargarYRenderizarPlanGuardado();
+      if (!planSemanalActual || !Array.isArray(planSemanalActual.dias) || planSemanalActual.dias.length === 0) {
+        alert("Primero generá tu plan con el botón 'Generar Plan' para poder adaptarlo.");
+        return;
+      }
+
+      const hoyNombre = obtenerNombreDiaHoy();
+      let diaIdx = planSemanalActual.dias.findIndex(d => d.dia.toLowerCase() === hoyNombre.toLowerCase());
+      if (diaIdx === -1) diaIdx = 0;
+      const diaObj = planSemanalActual.dias[diaIdx];
+
+      const comidasHoy = getDiarioHoy();
+      let consCal = 0, consProt = 0, consCarb = 0, consGras = 0;
+      comidasHoy.forEach(m => { consCal += m.calorias; consProt += m.proteinas; consCarb += m.carbos; consGras += m.grasas; });
+
+      const restCal = Math.max(300, perfil.caloriasMeta - consCal);
+      const restProt = Math.max(20, perfil.proteinas - consProt);
+      const tiemposCargados = comidasHoy.map(m => (m.tiempo || "").toLowerCase());
+      const faltantes = (diaObj.comidas || []).filter(c => !tiemposCargados.includes((c.nombre || "").toLowerCase()));
+
+      if (faltantes.length === 0) {
+        alert("Ya tenés cargadas todas las comidas de hoy en tu Diario.");
+        return;
+      }
+
+      const btn = document.getElementById('btnAdaptarHoy');
+      const loading = document.getElementById('loadingDieta');
+      const msgEl = document.getElementById('loadingDietaMsg');
+      if (btn) btn.disabled = true;
+      if (msgEl) msgEl.innerText = `Reajustando tus ${faltantes.length} comidas restantes (${restCal} kcal, ${Math.round(restProt)}g prot)...`;
+      loading.classList.remove('hidden');
+
+      const costumbres = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}");
+      const promptAdapt = `
+Hoy es ${diaObj.dia}. El usuario ya consumió ${consCal} kcal y ${Math.round(consProt)}g proteína en su Diario.
+Para cumplir su meta diaria (${perfil.caloriasMeta} kcal, ${perfil.proteinas}g prot), todavía le falta ingerir en el resto del día:
+- Calorías restantes: ${restCal} kcal
+- Proteína restante: ${Math.round(restProt)}g
+- Comidas que faltan: ${faltantes.map(f => f.nombre).join(', ')}
+- Gustos: ${costumbres.favoritos || 'Carne, pollo, arroz, huevos'} | Evitar: ${costumbres.noDeseados || 'Nada'}
+
+Reajustá las porciones en gramos de esas comidas restantes para cubrir lo que falta (cada una con 3 opciones equivalentes).
+Devolvé ÚNICAMENTE JSON:
+{
+  "nota_reajuste": "Explicación corta de cómo se equilibró el resto del día",
+  "comidas": [
+    {
+      "nombre": "${faltantes[0].nombre}",
+      "hora_sugerida": "${faltantes[0].hora_sugerida || '20:00'}",
+      "calorias": 600,
+      "proteinas_g": 45,
+      "carbos_g": 60,
+      "grasas_g": 15,
+      "opcion_activa": 0,
+      "opciones": [
+        { "plato": "Opción A", "ingredientes": "Gramos exactos ajustados" },
+        { "plato": "Opción B", "ingredientes": "Gramos exactos ajustados" },
+        { "plato": "Opción C", "ingredientes": "Gramos exactos ajustados" }
+      ]
+    }
+  ]
+}`;
+
+      const res = await llamarGeminiJson(promptAdapt, 0.3);
+      if (btn) btn.disabled = false;
+      loading.classList.add('hidden');
+
+      if (res.ok && res.data && Array.isArray(res.data.comidas)) {
+        res.data.comidas.forEach(nueva => {
+          const i = diaObj.comidas.findIndex(orig => orig.nombre.toLowerCase() === (nueva.nombre || "").toLowerCase());
+          if (i !== -1) diaObj.comidas[i] = normalizarComidaPlan(nueva);
+        });
+        if (res.data.nota_reajuste && planSemanalActual.diagnostico_adaptativo) {
+          planSemanalActual.diagnostico_adaptativo.estrategia = `⚡ Reajuste de ${diaObj.dia}: ${res.data.nota_reajuste}`;
+        }
+        diaDietaSeleccionado = diaObj.dia;
+        guardarPlanSemanal(planSemanalActual);
+      } else {
+        alert("No se pudo adaptar el resto del día: " + (res.error || "Intentá de nuevo."));
+      }
+    }
+
+    function calcularEquivalenciaRapida() {
+      const alimento = document.getElementById('eqAlimento')?.value || 'pollo';
+      const g = Math.max(0, parseFloat(document.getElementById('eqGramos')?.value) || 0);
+      const out = document.getElementById('eqResultado');
+      if (!out) return;
+
+      // Tablas por cada 100g (proteína aprox / carbohidrato aprox)
+      const protMap = {
+        pollo: { label: "Pechuga de pollo (crudo)", p100: 22 },
+        carne: { label: "Carne vacuna magra (nalga/peceto)", p100: 21 },
+        huevos: { label: "Huevos enteros", p100: 12.6 }
+      };
+      const carbMap = {
+        arroz: { label: "Arroz o Fideos (en crudo)", c100: 78 },
+        papa: { label: "Papa / Batata", c100: 18 },
+        avena: { label: "Avena arrollada", c100: 66 }
+      };
+
+      if (protMap[alimento]) {
+        const protTotal = Math.round((g * protMap[alimento].p100) / 100);
+        const huevosUnid = Math.max(1, Math.round((protTotal / 6.3) * 2) / 2);
+        const eqPollo = Math.round((protTotal / 22) * 100);
+        const eqCarne = Math.round((protTotal / 21) * 100);
+        const eqAtun = Math.round((protTotal / 24) * 100);
+        const eqWhey = Math.round((protTotal / 80) * 100);
+        out.innerHTML = `
+          <div class="text-emerald-400 font-bold mb-1">≈ ${protTotal}g de proteína neta equivalen a:</div>
+          <div>• <strong>${eqPollo}g</strong> pechuga de pollo (cruda) • <strong>${eqCarne}g</strong> carne magra</div>
+          <div>• <strong>${eqAtun}g</strong> atún al natural • <strong>${huevosUnid} huevos</strong> • <strong>${eqWhey}g</strong> whey protein</div>
+        `;
+      } else {
+        const carbTotal = Math.round((g * (carbMap[alimento]?.c100 || 78)) / 100);
+        const eqArroz = Math.round((carbTotal / 78) * 100);
+        const eqPapa = Math.round((carbTotal / 18) * 100);
+        const eqAvena = Math.round((carbTotal / 66) * 100);
+        const eqPan = Math.round((carbTotal / 50) * 100);
+        out.innerHTML = `
+          <div class="text-amber-400 font-bold mb-1">≈ ${carbTotal}g de carbohidratos netos equivalen a:</div>
+          <div>• <strong>${eqArroz}g</strong> arroz/fideos en crudo (≈${Math.round(eqArroz * 2.7)}g cocido)</div>
+          <div>• <strong>${eqPapa}g</strong> papa o batata • <strong>${eqAvena}g</strong> avena • <strong>${eqPan}g</strong> pan integral</div>
+        `;
+      }
+    }
+
+    function toggleItemSupermercado(idx) {
+      let checks = {};
+      try { checks = JSON.parse(localStorage.getItem("nutrifit_super_checks") || "{}"); } catch (e) {}
+      checks[idx] = !checks[idx];
+      localStorage.setItem("nutrifit_super_checks", JSON.stringify(checks));
+    }
+
     function renderizarPlanSemanal(plan) {
+      planSemanalActual = normalizarPlanSemanal(plan);
       const cont = document.getElementById('contenidoDieta');
+      const barraDias = document.getElementById('barraDiasDieta');
       cont.innerHTML = '';
 
-      if (plan.diagnostico_adaptativo) {
+      if (plan.diagnostico_adaptativo?.estrategia) {
         const diag = document.createElement('div');
         diag.className = 'bg-slate-950 border border-emerald-500/30 p-4 rounded-2xl text-xs space-y-1';
         diag.innerHTML = `
           <div class="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <i class="fa-solid fa-lightbulb"></i> Estrategia Nutricional Adaptada:
+            <i class="fa-solid fa-lightbulb"></i> Estrategia Nutricional:
           </div>
           <p class="text-slate-300 leading-relaxed">${plan.diagnostico_adaptativo.estrategia}</p>
         `;
@@ -1451,33 +1784,86 @@ Solo el JSON sin markdown ni explicaciones.
       }
 
       if (plan.dias && plan.dias.length > 0) {
-        plan.dias.forEach(d => {
+        if (diaDietaSeleccionado !== 'Todos' && !plan.dias.some(d => d.dia === diaDietaSeleccionado)) {
+          diaDietaSeleccionado = plan.dias[0].dia;
+        }
+
+        if (barraDias) {
+          barraDias.classList.remove('hidden');
+          const pills = [...plan.dias.map(d => d.dia), 'Todos'];
+          barraDias.innerHTML = pills.map(dia => {
+            const activo = dia === diaDietaSeleccionado;
+            const cls = activo
+              ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
+              : 'bg-slate-950 text-slate-300 font-semibold border-slate-800';
+            return `<button type="button" onclick="seleccionarDiaDieta('${dia}')" class="shrink-0 px-3 py-1.5 rounded-xl text-[11px] border ${cls} transition">${dia === 'Todos' ? 'Ver Semana' : dia.slice(0, 3)}</button>`;
+          }).join('');
+        }
+
+        plan.dias.forEach((d, diaIdx) => {
+          if (diaDietaSeleccionado !== 'Todos' && d.dia !== diaDietaSeleccionado) return;
           const diaDiv = document.createElement('div');
-          diaDiv.className = 'bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2.5';
+          diaDiv.className = 'bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3';
           let comidasHtml = '';
-          d.comidas.forEach(c => {
+
+          (d.comidas || []).forEach((c, comidaIdx) => {
+            const opAct = c.opcion_activa || 0;
+            const op = (c.opciones && c.opciones[opAct]) || c;
+            const btnsOpciones = (c.opciones || []).map((_, oIdx) => {
+              const selCls = oIdx === opAct
+                ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
+                : 'bg-slate-950 text-slate-400 font-semibold border-slate-700';
+              return `<button type="button" onclick="seleccionarOpcionComidaDieta(${diaIdx}, ${comidaIdx}, ${oIdx})" class="px-2 py-1 rounded-lg text-[10px] border ${selCls} transition">Opción ${oIdx + 1}</button>`;
+            }).join('');
+
             comidasHtml += `
-              <div class="p-3 bg-slate-900 rounded-xl border border-slate-800/80">
-                <div class="flex justify-between text-xs font-semibold text-white mb-1">
-                  <span class="text-emerald-400">${c.nombre} (${c.hora_sugerida})</span>
-                  <span>${c.calorias} kcal • ${c.proteinas_g}g Prot</span>
+              <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800/90 space-y-2">
+                <div class="flex justify-between items-center text-xs font-semibold text-white">
+                  <span class="text-emerald-400">${c.nombre} ${c.hora_sugerida ? `(${c.hora_sugerida})` : ''}</span>
+                  <span class="text-slate-300">${c.calorias} kcal • ${c.proteinas_g}g Prot</span>
                 </div>
-                <h5 class="text-xs font-bold text-white">${c.plato}</h5>
-                <p class="text-[11px] text-slate-400 mt-1">${c.ingredientes}</p>
+                <div class="flex flex-wrap gap-1.5">${btnsOpciones}</div>
+                <div>
+                  <h5 class="text-xs font-extrabold text-white">${op.plato}</h5>
+                  <p class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">${op.ingredientes}</p>
+                </div>
+                <div class="flex gap-1.5 pt-1 border-t border-slate-800/70">
+                  <button type="button" onclick="cambiarPlatoDietaConIA(${diaIdx}, ${comidaIdx})" class="flex-1 py-1.5 px-2 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 text-[11px] font-bold active:scale-95">🔄 Cambiar plato</button>
+                  <button type="button" onclick="registrarComidaDeDietaEnDiario(${diaIdx}, ${comidaIdx})" class="flex-1 py-1.5 px-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold active:scale-95">✅ Comí esto</button>
+                </div>
               </div>
             `;
           });
+
           diaDiv.innerHTML = `
             <div class="flex justify-between items-center border-b border-slate-800 pb-2">
               <h4 class="text-sm font-extrabold text-white">${d.dia}</h4>
-              <span class="text-xs text-slate-400 font-medium">${d.calorias_dia} kcal</span>
+              <span class="text-xs text-emerald-400 font-bold">${d.calorias_dia || perfil.caloriasMeta} kcal</span>
             </div>
-            <div class="space-y-2 pt-1">
-              ${comidasHtml}
-            </div>
+            <div class="space-y-2.5 pt-1">${comidasHtml}</div>
           `;
           cont.appendChild(diaDiv);
         });
+      }
+
+      if (Array.isArray(plan.lista_supermercado) && plan.lista_supermercado.length > 0) {
+        let checks = {};
+        try { checks = JSON.parse(localStorage.getItem("nutrifit_super_checks") || "{}"); } catch (e) {}
+        const superDiv = document.createElement('div');
+        superDiv.className = 'bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2';
+        const itemsHtml = plan.lista_supermercado.map((item, idx) => `
+          <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <input type="checkbox" ${checks[idx] ? 'checked' : ''} onchange="toggleItemSupermercado(${idx})" class="rounded accent-emerald-500">
+            <span>${item}</span>
+          </label>
+        `).join('');
+        superDiv.innerHTML = `
+          <h4 class="text-xs font-extrabold text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-cart-shopping text-emerald-400"></i> Lista de Supermercado Semanal
+          </h4>
+          <div class="grid grid-cols-1 gap-1.5 pt-1">${itemsHtml}</div>
+        `;
+        cont.appendChild(superDiv);
       }
     }
   </script>
