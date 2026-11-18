@@ -36,7 +36,7 @@
           <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v8 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v9 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -78,6 +78,17 @@
   </div>
 
   <main class="max-w-4xl mx-auto px-4 pt-4 space-y-6">
+
+    <!-- ALERTA OBLIGATORIA DE MEDICIÓN SEMANAL -->
+    <div id="bannerControlObligatorio" class="hidden bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-lg">
+      <div class="text-xs text-amber-200">
+        <span class="font-extrabold text-amber-400 block">⚠️ Control Semanal Obligatorio Pendiente</span>
+        <span id="textoBannerControl">Hoy es tu día fijado de medición corporal.</span>
+      </div>
+      <button type="button" onclick="abrirModalControlObligatorio()" class="shrink-0 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs active:scale-95">
+        📏 Medir Ahora
+      </button>
+    </div>
 
     <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL) -->
     <div id="sec-scanner" class="space-y-5">
@@ -385,13 +396,29 @@
           </div>
 
           <div>
-            <label class="font-bold text-slate-300 block mb-1">3. Tus comidas favoritas</label>
-            <input type="text" id="prefFavoritos" oninput="guardarCostumbresSilencioso()" value="Bife de carne vacuna, pollo al horno, arroz blanco, fideos, huevos revueltos, banana, avena" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-bold text-slate-300">3. Lo que ME GUSTA (Tocá para marcar ✅)</label>
+              <span id="countFavoritos" class="text-[10px] text-emerald-400 font-bold">0 elegidos</span>
+            </div>
+            <input type="hidden" id="prefFavoritos" value="Bife / Carne vacuna, Pollo / Pechuga, Arroz blanco, Fideos / Pastas, Huevos, Banana, Avena">
+            <div id="chipsFavoritosContainer" class="space-y-2.5 bg-slate-950 border border-slate-800 rounded-2xl p-3"></div>
+            <div class="flex gap-1.5 mt-1.5">
+              <input type="text" id="inputCustomFavorito" placeholder="+ Agregar otro alimento que te guste..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white">
+              <button type="button" onclick="agregarAlimentoCustom('favorito')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs active:scale-95">+ Sumar</button>
+            </div>
           </div>
 
           <div>
-            <label class="font-bold text-slate-300 block mb-1">4. Lo que NO te gusta o alergias</label>
-            <input type="text" id="prefNoDeseados" oninput="guardarCostumbresSilencioso()" value="Pescado con espinas, hígado, mariscos, comida picante" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-bold text-slate-300">4. Lo que NO me gusta o alergias (Tocá 🚫)</label>
+              <span id="countNoDeseados" class="text-[10px] text-rose-400 font-bold">0 descartados</span>
+            </div>
+            <input type="hidden" id="prefNoDeseados" value="Hígado / Achuras, Mariscos, Picante">
+            <div id="chipsNoDeseadosContainer" class="space-y-2.5 bg-slate-950 border border-slate-800 rounded-2xl p-3"></div>
+            <div class="flex gap-1.5 mt-1.5">
+              <input type="text" id="inputCustomNoDeseado" placeholder="+ Agregar otro que NO te guste o alergia..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white">
+              <button type="button" onclick="agregarAlimentoCustom('nodeseado')" class="px-3 py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-xs active:scale-95">+ Descartar</button>
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -418,9 +445,14 @@
             <input type="text" id="prefSuplementos" oninput="guardarCostumbresSilencioso()" value="Proteína de suero (Whey), Creatina monohidrato" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
           </div>
 
-          <button type="button" onclick="guardarCostumbresLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
-            Guardar Costumbres en el Teléfono
-          </button>
+          <div class="space-y-2 pt-1">
+            <button type="button" onclick="guardarCostumbresYArmarPlan()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Guardar y Armar Plan Nutricional con IA
+            </button>
+            <button type="button" onclick="guardarCostumbresLocal()" class="w-full bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition">
+              Solo Guardar Costumbres
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -591,6 +623,21 @@
             📸 Registrar Semana
           </button>
         </div>
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs">
+          <div>
+            <span class="font-bold text-white block">📅 Día fijo de control semanal</span>
+            <span class="text-[10px] text-slate-400">Alerta obligatoria ese día para llevar tu registro</span>
+          </div>
+          <select id="diaControlSemanal" onchange="cambiarDiaControlSemanal(this.value)" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-emerald-400 font-bold">
+            <option value="Lunes">Lunes</option>
+            <option value="Martes">Martes</option>
+            <option value="Miércoles">Miércoles</option>
+            <option value="Jueves">Jueves</option>
+            <option value="Viernes">Viernes</option>
+            <option value="Sábado">Sábado</option>
+            <option value="Domingo">Domingo</option>
+          </select>
+        </div>
         <div id="resumenEvolucionSemanal" class="space-y-2"></div>
         <div id="listaEvaluacionesSemanales" class="space-y-2"></div>
       </div>
@@ -679,6 +726,43 @@
       <button type="button" onclick="document.getElementById('modalVerFoto').classList.add('hidden')" class="text-lg px-2 text-slate-300">✕</button>
     </div>
     <img id="fotoModalImg" src="" alt="Comida" class="max-h-[75vh] w-full max-w-md object-contain rounded-2xl border border-slate-700">
+  </div>
+
+  <!-- MODAL CONTROL SEMANAL OBLIGATORIO -->
+  <div id="modalControlObligatorio" class="hidden fixed inset-0 z-[75] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-md bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 space-y-3 shadow-2xl">
+      <div class="flex items-start justify-between gap-2">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded">Control Obligatorio</span>
+          <h3 class="text-base font-extrabold text-white mt-1">📏 Medición Semanal Pendiente</h3>
+          <p id="subtituloModalControl" class="text-[11px] text-slate-400 mt-0.5">Actualizá tus medidas para registrar la evolución y recalcular tus metas médicas.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-xs">
+        <label class="text-[11px] text-slate-300">Peso actual (kg)
+          <input id="ctrlPeso" type="number" step="0.1" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-bold">
+        </label>
+        <label class="text-[11px] text-slate-300">Cintura ombligo (cm)
+          <input id="ctrlCintura" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-bold">
+        </label>
+        <label class="text-[11px] text-slate-300">Cuello (cm)
+          <input id="ctrlCuello" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+        </label>
+        <label class="text-[11px] text-slate-300">Cadera (cm)
+          <input id="ctrlCadera" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+        </label>
+        <label class="text-[11px] text-slate-300">Brazo / Bíceps (cm)
+          <input id="ctrlBrazo" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+        </label>
+        <label class="text-[11px] text-slate-300">Muslo (cm)
+          <input id="ctrlMuslo" type="number" step="0.5" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white">
+        </label>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button type="button" onclick="posponerControlObligatorio()" class="px-3.5 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">Más tarde</button>
+        <button type="button" onclick="confirmarControlObligatorioModal()" class="flex-1 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs">✅ Guardar Control Semanal</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -874,8 +958,32 @@
       lbm: null,
       whtr: null,
       imc: null,
-      formulaBmr: "Mifflin-St Jeor"
+      formulaBmr: "Mifflin-St Jeor",
+      diaControlSemanal: "Lunes"
     };
+
+    const CATALOGO_ALIMENTOS = [
+      {
+        cat: "🥩 Carnes y Proteínas",
+        items: ["Bife / Carne vacuna", "Pollo / Pechuga", "Carne picada magra", "Cerdo / Bondiola", "Pescado / Merluza", "Atún al natural", "Salmón", "Huevos", "Claras de huevo", "Jamón cocido", "Queso magro", "Yogur griego / natural", "Leche", "Ricota", "Proteína Whey", "Hígado / Achuras", "Mariscos", "Soja / Tofu"]
+      },
+      {
+        cat: "🍚 Carbohidratos y Legumbres",
+        items: ["Arroz blanco", "Arroz integral", "Fideos / Pastas", "Papa", "Batata", "Avena", "Pan integral", "Pan lactal", "Tostadas de arroz", "Polenta", "Lentejas", "Garbanzos / Porotos", "Rapiditas / Tortillas", "Quinoa", "Harinas / Gluten"]
+      },
+      {
+        cat: "🥑 Verduras, Frutas y Grasas",
+        items: ["Banana", "Manzana", "Frutillas / Arándanos", "Naranja / Cítricos", "Tomate y Lechuga", "Brócoli / Coliflor", "Espinaca / Acelga", "Zanahoria / Calabaza", "Cebolla / Morrón", "Palta", "Aceite de oliva", "Frutos secos / Almendras", "Pasta de maní"]
+      },
+      {
+        cat: "☕ Bebidas y Extras",
+        items: ["Mate", "Café con leche", "Té / Infusiones", "Picante", "Lácteos / Lactosa"]
+      }
+    ];
+
+    let setFavoritos = new Set(["Bife / Carne vacuna", "Pollo / Pechuga", "Arroz blanco", "Fideos / Pastas", "Huevos", "Banana", "Avena"]);
+    let setNoDeseados = new Set(["Hígado / Achuras", "Mariscos", "Picante"]);
+    let controlPospuestoHoy = false;
 
     window.addEventListener('DOMContentLoaded', () => {
       // Cargar perfil local
@@ -885,20 +993,22 @@
       } catch (e) {}
       actualizarUiPerfil();
 
-      // Cargar costumbres locales
+      // Cargar costumbres locales + inicializar selector de chips variados
       try {
         const c = localStorage.getItem("nutrifit_costumbres");
         if (c) {
           const cost = JSON.parse(c);
           if (cost.pais) document.getElementById('prefPais').value = cost.pais;
           if (cost.dieta) document.getElementById('prefDieta').value = cost.dieta;
-          if (cost.favoritos) document.getElementById('prefFavoritos').value = cost.favoritos;
-          if (cost.noDeseados) document.getElementById('prefNoDeseados').value = cost.noDeseados;
+          if (cost.favoritos !== undefined) document.getElementById('prefFavoritos').value = cost.favoritos;
+          if (cost.noDeseados !== undefined) document.getElementById('prefNoDeseados').value = cost.noDeseados;
           if (cost.comidasDia) document.getElementById('prefComidasDia').value = cost.comidasDia;
           if (cost.tiempoCocina) document.getElementById('prefTiempoCocina').value = cost.tiempoCocina;
           if (cost.suplementos) document.getElementById('prefSuplementos').value = cost.suplementos;
         }
       } catch (e) {}
+      inicializarChipsDesdeInputs();
+      renderizarChipsCostumbres();
 
       // Cargar clave API en input
       document.getElementById('inputApiKey').value = getApiKey();
@@ -908,16 +1018,17 @@
       calcularEquivalenciaRapida();
       renderizarEvaluacionesSemanales();
 
-      // Cargar diario de hoy y activar vigilancia de cambio de día (00:00) y horario
+      // Cargar diario de hoy y activar vigilancia de cambio de día (00:00), horario y control semanal
       fechaActiva = fechaHoyLocal();
       fechaDiarioSeleccionada = fechaActiva;
       actualizarBadgeTurnoActual();
       actualizarDashboardDiario();
+      verificarControlSemanalObligatorio(true);
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) { verificarCambioDeDia(); actualizarBadgeTurnoActual(); }
+        if (!document.hidden) { verificarCambioDeDia(); actualizarBadgeTurnoActual(); verificarControlSemanalObligatorio(false); }
       });
-      window.addEventListener('focus', () => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); });
-      setInterval(() => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); }, 30000);
+      window.addEventListener('focus', () => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); verificarControlSemanalObligatorio(false); });
+      setInterval(() => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); verificarControlSemanalObligatorio(false); }, 30000);
     });
 
     function toggleModalSettings() {
@@ -1072,7 +1183,7 @@
       `;
     }
 
-    function guardarEvaluacionSemanal() {
+    function guardarEvaluacionSemanal(silencioso = false) {
       recalcularPerfilSilencioso();
       const hoy = fechaHoyLocal();
       let fechaInicio = localStorage.getItem("nutrifit_fecha_inicio");
@@ -1106,8 +1217,102 @@
       else lista.push(registro);
 
       localStorage.setItem("nutrifit_evaluaciones", JSON.stringify(lista));
+      controlPospuestoHoy = false;
       renderizarEvaluacionesSemanales();
-      alert(`✅ Semana ${semana} guardada (${hoy}).`);
+      ocultarAlertasControl();
+      if (!silencioso) alert(`✅ Semana ${semana} guardada (${hoy}). Próximo control obligatorio: ${perfil.diaControlSemanal || 'Lunes'}.`);
+    }
+
+    function cambiarDiaControlSemanal(nuevoDia) {
+      perfil.diaControlSemanal = nuevoDia || "Lunes";
+      localStorage.setItem("nutrifit_profile", JSON.stringify(perfil));
+      controlPospuestoHoy = false;
+      verificarControlSemanalObligatorio(false);
+    }
+
+    function ocultarAlertasControl() {
+      const b = document.getElementById('bannerControlObligatorio');
+      const m = document.getElementById('modalControlObligatorio');
+      if (b) b.classList.add('hidden');
+      if (m) m.classList.add('hidden');
+    }
+
+    function abrirModalControlObligatorio(motivo) {
+      document.getElementById('ctrlPeso').value = perfil.peso || '';
+      document.getElementById('ctrlCintura').value = perfil.cintura || '';
+      document.getElementById('ctrlCuello').value = perfil.cuello || '';
+      document.getElementById('ctrlCadera').value = perfil.cadera || '';
+      document.getElementById('ctrlBrazo').value = perfil.brazo || '';
+      document.getElementById('ctrlMuslo').value = perfil.muslo || '';
+      const sub = document.getElementById('subtituloModalControl');
+      if (sub && motivo) sub.innerText = motivo;
+      document.getElementById('modalControlObligatorio').classList.remove('hidden');
+    }
+
+    function posponerControlObligatorio() {
+      controlPospuestoHoy = true;
+      document.getElementById('modalControlObligatorio').classList.add('hidden');
+      setTimeout(() => { controlPospuestoHoy = false; verificarControlSemanalObligatorio(false); }, 3600000);
+    }
+
+    function confirmarControlObligatorioModal() {
+      const pVal = parseFloat(document.getElementById('ctrlPeso').value);
+      if (Number.isNaN(pVal) || pVal <= 0) {
+        alert("Ingresá al menos tu peso actual (kg) para registrar el control semanal.");
+        return;
+      }
+      document.getElementById('peso').value = pVal;
+      ['cintura', 'cuello', 'cadera', 'brazo', 'muslo'].forEach(campo => {
+        const v = document.getElementById('ctrl' + campo.charAt(0).toUpperCase() + campo.slice(1))?.value;
+        const target = document.getElementById(campo);
+        if (target && v !== undefined) target.value = v;
+      });
+      guardarEvaluacionSemanal(false);
+    }
+
+    function verificarControlSemanalObligatorio(abrirSiCorresponde = true) {
+      let lista = [];
+      try { lista = JSON.parse(localStorage.getItem("nutrifit_evaluaciones") || "[]"); } catch (e) {}
+      const tieneMedidasCargadas = Boolean(perfil.cintura || perfil.cuello || lista.length > 0);
+      if (!tieneMedidasCargadas) {
+        ocultarAlertasControl();
+        return;
+      }
+
+      const hoy = fechaHoyLocal();
+      const yaCargadoHoy = lista.some(x => x.fecha === hoy);
+      if (yaCargadoHoy) {
+        ocultarAlertasControl();
+        return;
+      }
+
+      const diaFijado = perfil.diaControlSemanal || "Lunes";
+      const esDiaFijado = obtenerNombreDiaHoy().toLowerCase() === diaFijado.toLowerCase();
+      let diasDesdeUltimo = 0;
+      if (lista.length > 0) {
+        const sorted = [...lista].sort((a, b) => b.fecha.localeCompare(a.fecha));
+        diasDesdeUltimo = Math.round((new Date(hoy) - new Date(sorted[0].fecha)) / 86400000);
+      }
+      const atrasado = lista.length > 0 && diasDesdeUltimo >= 7;
+
+      if (esDiaFijado || atrasado) {
+        const motivo = atrasado
+          ? `Pasaron ${diasDesdeUltimo} días desde tu última medición. Hoy debés registrar tu control semanal.`
+          : `Hoy (${diaFijado}) es tu día preestablecido de control semanal obligatorio.`;
+        const banner = document.getElementById('bannerControlObligatorio');
+        const txtBanner = document.getElementById('textoBannerControl');
+        if (txtBanner) txtBanner.innerText = motivo;
+        if (banner) banner.classList.remove('hidden');
+
+        if (abrirSiCorresponde && !controlPospuestoHoy) {
+          abrirModalControlObligatorio(motivo);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try { new Notification("NutriFit AI - Control Semanal", { body: motivo, icon: "icon-192.png" }); } catch (e) {}
+          }
+        }
+      } else {
+        ocultarAlertasControl();
+      }
     }
 
     function borrarEvaluacionSemanal(id) {
@@ -1188,7 +1393,16 @@
     function guardarPerfilLocal() {
       recalcularPerfilSilencioso();
       actualizarUiPerfil();
-      alert("Metas médicas y nutricionales guardadas.");
+      let evals = [];
+      try { evals = JSON.parse(localStorage.getItem("nutrifit_evaluaciones") || "[]"); } catch (e) {}
+      // Al cargar medidas por primera vez, fija Semana 1 y activa los controles en el día elegido
+      if (evals.length === 0 && (perfil.cintura || perfil.cuello || perfil.peso)) {
+        guardarEvaluacionSemanal(true);
+      }
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch (e) {}
+      }
+      alert(`Metas médicas guardadas. Tu control semanal obligatorio quedó fijado los días ${perfil.diaControlSemanal || 'Lunes'}.`);
       cambiarSeccion('scanner');
     }
 
@@ -1196,7 +1410,8 @@
       const campos = {
         edad: perfil.edad, genero: perfil.genero, peso: perfil.peso, altura: perfil.altura,
         cuello: perfil.cuello, cintura: perfil.cintura, cadera: perfil.cadera, brazo: perfil.brazo, muslo: perfil.muslo,
-        actividad: perfil.actividad, objetivo: perfil.objetivo
+        actividad: perfil.actividad, objetivo: perfil.objetivo,
+        diaControlSemanal: perfil.diaControlSemanal || 'Lunes'
       };
       Object.entries(campos).forEach(([id, val]) => {
         const el = document.getElementById(id);
@@ -1206,7 +1421,94 @@
       actualizarDashboardDiario();
     }
 
+    // SELECTOR VARIADO DE ALIMENTOS EN COSTUMBRES (LO QUE ME GUSTA / LO QUE NO)
+    function inicializarChipsDesdeInputs() {
+      const parseLista = (str) => (str || "").split(",").map(s => s.trim()).filter(Boolean);
+      const favs = parseLista(document.getElementById('prefFavoritos')?.value);
+      const nos = parseLista(document.getElementById('prefNoDeseados')?.value);
+      setFavoritos = new Set(favs);
+      setNoDeseados = new Set(nos.filter(x => !setFavoritos.has(x)));
+    }
+
+    function sincronizarInputsCostumbresDesdeChips() {
+      const favEl = document.getElementById('prefFavoritos');
+      const noEl = document.getElementById('prefNoDeseados');
+      if (favEl) favEl.value = Array.from(setFavoritos).join(", ");
+      if (noEl) noEl.value = Array.from(setNoDeseados).join(", ");
+    }
+
+    function renderizarChipsCostumbres() {
+      const favCont = document.getElementById('chipsFavoritosContainer');
+      const noCont = document.getElementById('chipsNoDeseadosContainer');
+      if (!favCont || !noCont) return;
+
+      const todosCatalogo = CATALOGO_ALIMENTOS.flatMap(g => g.items);
+      const extrasFav = Array.from(setFavoritos).filter(x => !todosCatalogo.includes(x));
+      const extrasNo = Array.from(setNoDeseados).filter(x => !todosCatalogo.includes(x));
+
+      const construirHtml = (tipo) => {
+        const activoSet = (tipo === 'favorito') ? setFavoritos : setNoDeseados;
+        const extras = (tipo === 'favorito') ? extrasFav : extrasNo;
+        const grupos = [...CATALOGO_ALIMENTOS];
+        if (extras.length > 0) grupos.push({ cat: "⭐ Agregados por vos", items: extras });
+
+        return grupos.map(g => {
+          const chips = g.items.map(item => {
+            const marcado = activoSet.has(item);
+            const cls = marcado
+              ? (tipo === 'favorito'
+                ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
+                : 'bg-rose-500 text-white font-extrabold border-rose-400')
+              : 'bg-slate-900 text-slate-300 font-medium border-slate-800';
+            const prefix = marcado ? (tipo === 'favorito' ? '✓ ' : '✕ ') : '';
+            const safeAttr = item.replace(/'/g, "\\'");
+            return `<button type="button" onclick="toggleChipCostumbre('${tipo}', '${safeAttr}')" class="px-2.5 py-1.5 rounded-xl text-[11px] border ${cls} active:scale-95 transition">${prefix}${item}</button>`;
+          }).join('');
+          return `<div><span class="text-[10px] font-bold text-slate-400 block mb-1">${g.cat}</span><div class="flex flex-wrap gap-1.5">${chips}</div></div>`;
+        }).join('');
+      };
+
+      favCont.innerHTML = construirHtml('favorito');
+      noCont.innerHTML = construirHtml('nodeseado');
+      const cFav = document.getElementById('countFavoritos');
+      const cNo = document.getElementById('countNoDeseados');
+      if (cFav) cFav.innerText = `${setFavoritos.size} elegidos`;
+      if (cNo) cNo.innerText = `${setNoDeseados.size} descartados`;
+    }
+
+    function toggleChipCostumbre(tipo, item) {
+      if (tipo === 'favorito') {
+        if (setFavoritos.has(item)) setFavoritos.delete(item);
+        else { setFavoritos.add(item); setNoDeseados.delete(item); }
+      } else {
+        if (setNoDeseados.has(item)) setNoDeseados.delete(item);
+        else { setNoDeseados.add(item); setFavoritos.delete(item); }
+      }
+      sincronizarInputsCostumbresDesdeChips();
+      renderizarChipsCostumbres();
+      guardarCostumbresSilencioso();
+    }
+
+    function agregarAlimentoCustom(tipo) {
+      const inpId = (tipo === 'favorito') ? 'inputCustomFavorito' : 'inputCustomNoDeseado';
+      const inp = document.getElementById(inpId);
+      const val = (inp ? inp.value : '').trim();
+      if (!val) return;
+      if (tipo === 'favorito') {
+        setFavoritos.add(val);
+        setNoDeseados.delete(val);
+      } else {
+        setNoDeseados.add(val);
+        setFavoritos.delete(val);
+      }
+      inp.value = '';
+      sincronizarInputsCostumbresDesdeChips();
+      renderizarChipsCostumbres();
+      guardarCostumbresSilencioso();
+    }
+
     function guardarCostumbresSilencioso() {
+      sincronizarInputsCostumbresDesdeChips();
       const costumbres = {
         pais: document.getElementById('prefPais').value,
         dieta: document.getElementById('prefDieta').value,
@@ -1221,8 +1523,13 @@
 
     function guardarCostumbresLocal() {
       guardarCostumbresSilencioso();
-      alert("Costumbres guardadas. Ahora tu plan nutricional se adaptará a esto.");
+      alert("Costumbres guardadas en tu teléfono.");
+    }
+
+    function guardarCostumbresYArmarPlan() {
+      guardarCostumbresSilencioso();
       cambiarSeccion('dieta');
+      generarDietaAutonoma();
     }
 
     // MANEJO Y REDIMENSIÓN DE IMÁGENES (CANVAS CLIENT-SIDE + MINIATURA PARA HISTORIAL)
@@ -1259,10 +1566,13 @@
           document.getElementById('imagePreview').src = dataUrl;
           document.getElementById('previewContainer').classList.remove('hidden');
           document.getElementById('btnAnalizar').disabled = false;
+          // Auto-calcula automáticamente ni bien sacás o elegís la foto
+          analizarFotoAutonoma();
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
+      e.target.value = "";
     }
 
     function activarModoPicoteo() {
