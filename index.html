@@ -36,7 +36,7 @@
           <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v7 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v8 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -137,25 +137,25 @@
 
       <!-- Tarjeta de Escaneo con Cámara / Galería -->
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2">
           <h2 class="text-base font-bold text-white flex items-center gap-2">
             <i class="fa-solid fa-camera text-emerald-400"></i>
             Escanear Plato
           </h2>
-          <span class="text-[11px] text-slate-400">Desglose de gramos reales</span>
+          <span id="badgeTurnoActual" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">🕐 Ahora</span>
         </div>
 
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
         <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="manejarArchivo(event)">
         <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="manejarArchivoAudio(event)">
 
-        <!-- Banner si viene de una comida vacía del Diario -->
+        <!-- Banner si viene de una comida vacía o Picoteo -->
         <div id="targetSlotBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-emerald-300">
           <span>📌 Cargando para: <strong id="targetSlotName" class="text-emerald-400">Almuerzo</strong></span>
           <button type="button" onclick="limpiarSlotPreseleccionado()" class="text-slate-400 hover:text-white px-1.5">✕</button>
         </div>
 
-        <!-- Botones de captura -->
+        <!-- Botones de captura + Picoteo rápido -->
         <div class="grid grid-cols-2 gap-3">
           <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition">
             <i class="fa-solid fa-camera text-lg"></i> Tomar Foto
@@ -164,6 +164,9 @@
             <i class="fa-regular fa-image text-lg text-emerald-400"></i> Galería
           </button>
         </div>
+        <button type="button" onclick="activarModoPicoteo()" class="w-full bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 active:scale-95 text-violet-300 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition">
+          🍪 Registrar Picoteo (a cualquier hora)
+        </button>
 
         <!-- Carga sin foto (Audio / Voz / Texto) -->
         <div id="seccionAudioScanner" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3 space-y-2.5">
@@ -281,36 +284,67 @@
             </div>
           </div>
 
-          <div class="pt-3 border-t border-slate-800 flex items-center gap-2">
-            <select id="guardarTiempoComida" class="bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-xs text-white">
-              <option value="Desayuno">Desayuno</option>
-              <option value="Almuerzo" selected>Almuerzo</option>
-              <option value="Merienda">Merienda</option>
-              <option value="Cena">Cena</option>
-              <option value="Colación">Colación</option>
+          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center gap-2">
+            <input type="time" id="guardarHoraComida" onchange="alCambiarHoraGuardar(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-3 text-xs text-emerald-400 font-bold" aria-label="Hora de la comida">
+            <select id="guardarTiempoComida" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-3 text-xs text-white">
+              <option value="Desayuno">🌅 Desayuno</option>
+              <option value="Almuerzo" selected>☀️ Almuerzo</option>
+              <option value="Merienda">☕ Merienda</option>
+              <option value="Cena">🌙 Cena</option>
+              <option value="Colación">🥤 Colación</option>
+              <option value="Picoteo">🍪 Picoteo</option>
             </select>
-            <button onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
-              <i class="fa-solid fa-bookmark"></i> Guardar en mi Diario
+            <button onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+              <i class="fa-solid fa-bookmark"></i> Guardar
             </button>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- SECCIÓN 2: DIARIO DE COMIDAS -->
-    <div id="sec-diario" class="hidden space-y-5">
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+      <!-- LO DEL DÍA EN LA PANTALLA PRINCIPAL -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
         <div class="flex items-center justify-between">
           <div>
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-clock text-emerald-400"></i> Lo de Hoy
+            </h2>
+            <p class="text-[11px] text-slate-400">Ordenado por horario con fotos</p>
+          </div>
+          <button type="button" onclick="cambiarSeccion('diario')" class="text-[11px] text-emerald-400 font-bold hover:underline">
+            Ver Historial ›
+          </button>
+        </div>
+        <div id="listaResumenHoyPrincipal" class="space-y-2.5"></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: DIARIO E HISTORIAL POR DÍAS -->
+    <div id="sec-diario" class="hidden space-y-5">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between gap-2">
+          <div>
             <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-calendar-check text-emerald-400"></i> Diario de Comidas
+              <i class="fa-solid fa-calendar-check text-emerald-400"></i> Diario e Historial
             </h2>
             <p id="fechaDiarioLabel" class="text-[11px] text-emerald-400 font-semibold mt-0.5">Hoy • Se reinicia automático a las 00:00</p>
           </div>
-          <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300">
-            Reiniciar Día
+          <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300 shrink-0">
+            Vaciar Día
           </button>
         </div>
+
+        <!-- Selector de fecha e historial de días anteriores -->
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-2">
+          <div class="flex items-center justify-between gap-1.5">
+            <button type="button" onclick="moverDiaDiario(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 font-bold active:scale-95">◀ Ant.</button>
+            <input type="date" id="diarioFechaPicker" onchange="seleccionarFechaDiario(this.value)" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold text-center">
+            <button type="button" onclick="moverDiaDiario(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 font-bold active:scale-95">Sig. ▶</button>
+            <button type="button" onclick="seleccionarFechaDiario(fechaHoyLocal())" class="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-[11px] text-emerald-400 font-bold active:scale-95">Hoy</button>
+          </div>
+          <div id="diarioDiasConDatos" class="flex gap-1.5 overflow-x-auto no-scrollbar"></div>
+        </div>
+
+        <div id="diarioResumenDia" class="grid grid-cols-4 gap-1.5 text-center bg-slate-950/70 border border-slate-800 rounded-2xl p-2.5 text-[11px]"></div>
 
         <div id="listaComidasDiario" class="space-y-3">
           <!-- Se llena dinámicamente -->
@@ -451,11 +485,11 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 5: PERFIL FISIOLÓGICO -->
+    <!-- SECCIÓN 5: PERFIL FISIOLÓGICO, MEDIDAS MÉDICAS Y EVOLUCIÓN SEMANAL -->
     <div id="sec-perfil" class="hidden space-y-5">
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
         <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-user text-emerald-400"></i> Perfil & Metas Fisiológicas
+          <i class="fa-solid fa-user text-emerald-400"></i> Perfil, Medidas & Metas Médicas
         </h2>
 
         <form id="profileForm" onsubmit="event.preventDefault(); guardarPerfilLocal();" class="space-y-3 text-xs">
@@ -484,6 +518,38 @@
             </div>
           </div>
 
+          <!-- Medidas antropométricas (cm) para U.S. Navy & Katch-McArdle -->
+          <div class="pt-2 border-t border-slate-800/80 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-emerald-400">📏 Medidas Corporales (cm)</span>
+              <span class="text-[10px] text-slate-400">Para % grasa y Katch-McArdle</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label class="text-slate-400 text-[10px] mb-1 block">Cuello (cm)</label>
+                <input type="number" id="cuello" step="0.5" placeholder="38" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+              </div>
+              <div>
+                <label class="text-slate-400 text-[10px] mb-1 block">Cintura ombligo</label>
+                <input type="number" id="cintura" step="0.5" placeholder="84" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+              </div>
+              <div>
+                <label class="text-slate-400 text-[10px] mb-1 block">Cadera (cm)</label>
+                <input type="number" id="cadera" step="0.5" placeholder="96" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-slate-400 text-[10px] mb-1 block">Brazo / Bíceps (cm)</label>
+                <input type="number" id="brazo" step="0.5" placeholder="35" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+              </div>
+              <div>
+                <label class="text-slate-400 text-[10px] mb-1 block">Muslo (cm)</label>
+                <input type="number" id="muslo" step="0.5" placeholder="56" oninput="recalcularPerfilSilencioso()" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-white">
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="text-slate-400 mb-1 block">Nivel de Actividad</label>
             <select id="actividad" onchange="recalcularPerfilSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
@@ -503,10 +569,30 @@
             </select>
           </div>
 
+          <!-- Panel de Evaluación Médica y Deportiva (ISSN + Navy + WHtR + Katch-McArdle) -->
+          <div id="panelEvaluacionMedica" class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-2 text-[11px]"></div>
+
           <button type="button" onclick="guardarPerfilLocal()" class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-bold py-3 rounded-xl text-xs transition">
             Guardar y Recalcular Metas
           </button>
         </form>
+      </div>
+
+      <!-- Seguimiento Semanal desde el inicio -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-emerald-400"></i> Seguimiento Semanal
+            </h3>
+            <p id="subtituloInicioSeguimiento" class="text-[11px] text-slate-400">Comparativa automática desde que arrancaste</p>
+          </div>
+          <button type="button" onclick="guardarEvaluacionSemanal()" class="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 font-bold px-3 py-2 rounded-xl text-[11px] active:scale-95 shrink-0">
+            📸 Registrar Semana
+          </button>
+        </div>
+        <div id="resumenEvolucionSemanal" class="space-y-2"></div>
+        <div id="listaEvaluacionesSemanales" class="space-y-2"></div>
       </div>
     </div>
 
@@ -555,10 +641,14 @@
             <option value="Merienda">Merienda</option>
             <option value="Cena">Cena</option>
             <option value="Colación">Colación</option>
+            <option value="Picoteo">Picoteo</option>
             <option value="Snack">Snack</option>
           </select>
         </label>
-        <label class="text-[11px] text-slate-400">Porción comida (%)
+        <label class="text-[11px] text-slate-400">Hora
+          <input id="editHora" type="time" onchange="if(document.getElementById('editTiempo').value !== 'Picoteo') document.getElementById('editTiempo').value = detectarTiempoPorHora(this.value)" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-emerald-400 font-bold">
+        </label>
+        <label class="text-[11px] text-slate-400 col-span-2">Porción comida (%)
           <input id="editPorcion" type="number" min="0" step="5" oninput="escalarPorcion()" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-amber-400 font-bold">
         </label>
         <label class="text-[11px] text-slate-400">Calorías (kcal)
@@ -582,6 +672,15 @@
     </div>
   </div>
 
+  <!-- MODAL VER FOTO DE COMIDA -->
+  <div id="modalVerFoto" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 z-[70] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4 space-y-3">
+    <div class="w-full max-w-md flex items-center justify-between text-white">
+      <span id="fotoModalTitulo" class="text-sm font-bold truncate">Foto del plato</span>
+      <button type="button" onclick="document.getElementById('modalVerFoto').classList.add('hidden')" class="text-lg px-2 text-slate-300">✕</button>
+    </div>
+    <img id="fotoModalImg" src="" alt="Comida" class="max-h-[75vh] w-full max-w-md object-contain rounded-2xl border border-slate-700">
+  </div>
+
   <script>
     // CLAVE DE API DE GOOGLE AI PRO
     const DEFAULT_API_KEY = atob("QVEuQWI4Uk42SkhTNFVDUUtlZVJJcHFuZG1HVXNOSVpzNVlKU1BkM21jd185SHMyN2dpemc=");
@@ -591,6 +690,7 @@
     }
 
     let imagenBase64 = null;
+    let imagenThumbUrl = null;
     let ultimoResultado = null;
     let slotPreseleccionado = null;
     let mediaRecorder = null;
@@ -599,12 +699,145 @@
     let segundosGrabados = 0;
     let audioCancelado = false;
     let fechaActiva = null;
+    let fechaDiarioSeleccionada = null;
     let planSemanalActual = null;
     let diaDietaSeleccionado = obtenerNombreDiaHoy();
+    const fotosMemoria = {};
+
+    const INFO_TURNOS_COMIDA = {
+      "Desayuno": { orden: 1, icono: "🌅", franja: "05:00 – 11:29", horaDefault: "08:30" },
+      "Almuerzo": { orden: 2, icono: "☀️", franja: "11:30 – 15:29", horaDefault: "13:00" },
+      "Merienda": { orden: 3, icono: "☕", franja: "15:30 – 19:29", horaDefault: "17:30" },
+      "Cena":     { orden: 4, icono: "🌙", franja: "19:30 – 04:59", horaDefault: "21:00" },
+      "Colación": { orden: 5, icono: "🥤", franja: "Cualquier hora", horaDefault: "11:00" },
+      "Picoteo":  { orden: 6, icono: "🍪", franja: "Cualquier hora", horaDefault: "16:00" },
+      "Snack":    { orden: 7, icono: "🍪", franja: "Cualquier hora", horaDefault: "16:00" }
+    };
 
     function obtenerNombreDiaHoy() {
       const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       return dias[new Date().getDay()] || "Lunes";
+    }
+
+    function horaActualLocal() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function detectarTiempoPorHora(horaStr) {
+      let h, m;
+      if (horaStr && /^\d{1,2}:\d{2}$/.test(horaStr.trim())) {
+        const p = horaStr.trim().split(':');
+        h = parseInt(p[0], 10);
+        m = parseInt(p[1], 10);
+      } else {
+        const d = new Date();
+        h = d.getHours();
+        m = d.getMinutes();
+      }
+      const mins = (h * 60) + m;
+      if (mins >= 300 && mins < 690) return "Desayuno";   // 05:00 - 11:29
+      if (mins >= 690 && mins < 930) return "Almuerzo";   // 11:30 - 15:29
+      if (mins >= 930 && mins < 1170) return "Merienda";  // 15:30 - 19:29
+      return "Cena";                                      // 19:30 - 04:59
+    }
+
+    function actualizarBadgeTurnoActual() {
+      const el = document.getElementById('badgeTurnoActual');
+      if (!el) return;
+      const hora = horaActualLocal();
+      const turno = detectarTiempoPorHora(hora);
+      const ico = INFO_TURNOS_COMIDA[turno]?.icono || "🕐";
+      el.innerText = `${ico} Ahora (${hora}): ${turno}`;
+    }
+
+    function alCambiarHoraGuardar(horaVal) {
+      const sel = document.getElementById('guardarTiempoComida');
+      if (!sel || sel.value === 'Picoteo') return;
+      const turno = detectarTiempoPorHora(horaVal);
+      sel.value = turno;
+      const catEl = document.getElementById('dishCategory');
+      if (catEl) catEl.innerText = turno;
+    }
+
+    // ALMACENAMIENTO DE FOTOS DE COMIDAS EN INDEXEDDB (EVITA LLENAR LOCALSTORAGE)
+    function abrirFotosDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        const timer = setTimeout(() => resolve(null), 600);
+        try {
+          const req = indexedDB.open("nutrifit_media_db", 1);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains("fotos")) db.createObjectStore("fotos", { keyPath: "id" });
+          };
+          req.onsuccess = (e) => { clearTimeout(timer); resolve(e.target.result); };
+          req.onerror = () => { clearTimeout(timer); resolve(null); };
+          req.onblocked = () => { clearTimeout(timer); resolve(null); };
+        } catch (e) { clearTimeout(timer); resolve(null); }
+      });
+    }
+
+    async function guardarFotoComidaDB(id, dataUrl) {
+      if (!id || !dataUrl) return;
+      fotosMemoria[id] = dataUrl;
+      const db = await abrirFotosDB();
+      if (!db) return;
+      try {
+        const tx = db.transaction("fotos", "readwrite");
+        tx.objectStore("fotos").put({ id, dataUrl });
+      } catch (e) {}
+    }
+
+    async function obtenerFotoComidaDB(id) {
+      if (fotosMemoria[id]) return fotosMemoria[id];
+      const db = await abrirFotosDB();
+      if (!db) return null;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction("fotos", "readonly");
+          const req = tx.objectStore("fotos").get(id);
+          req.onsuccess = () => {
+            const url = req.result?.dataUrl || null;
+            if (url) fotosMemoria[id] = url;
+            resolve(url);
+          };
+          req.onerror = () => resolve(null);
+        } catch (e) { resolve(null); }
+      });
+    }
+
+    async function borrarFotoComidaDB(id) {
+      delete fotosMemoria[id];
+      const db = await abrirFotosDB();
+      if (!db) return;
+      try {
+        const tx = db.transaction("fotos", "readwrite");
+        tx.objectStore("fotos").delete(id);
+      } catch (e) {}
+    }
+
+    async function verFotoComida(id, titulo) {
+      const url = await obtenerFotoComidaDB(id);
+      if (!url) {
+        alert("Esta comida se cargó por audio/texto o no tiene imagen guardada.");
+        return;
+      }
+      document.getElementById('fotoModalTitulo').innerText = titulo || "Foto del plato";
+      document.getElementById('fotoModalImg').src = url;
+      document.getElementById('modalVerFoto').classList.remove('hidden');
+    }
+
+    function hidratarMiniaturasFotos(contenedor) {
+      if (!contenedor) return;
+      contenedor.querySelectorAll('img[data-foto-id]').forEach(async (img) => {
+        const id = Number(img.getAttribute('data-foto-id'));
+        const url = await obtenerFotoComidaDB(id);
+        if (url) {
+          img.src = url;
+          img.classList.remove('hidden');
+        }
+      });
     }
 
     async function forzarActualizacionApp() {
@@ -620,53 +853,71 @@
       } catch (e) {}
       window.location.href = window.location.pathname + '?v=' + Date.now();
     }
+
     let perfil = {
       edad: 28,
       genero: "masculino",
       peso: 75,
       altura: 178,
+      cuello: null,
+      cintura: null,
+      cadera: null,
+      brazo: null,
+      muslo: null,
       actividad: "moderado",
       objetivo: "ganar_masa_muscular",
       caloriasMeta: 2982,
       proteinas: 150,
       carbos: 427,
-      grasas: 75
+      grasas: 75,
+      bf: null,
+      lbm: null,
+      whtr: null,
+      imc: null,
+      formulaBmr: "Mifflin-St Jeor"
     };
 
     window.addEventListener('DOMContentLoaded', () => {
       // Cargar perfil local
-      const p = localStorage.getItem("nutrifit_profile");
-      if (p) perfil = JSON.parse(p);
+      try {
+        const p = localStorage.getItem("nutrifit_profile");
+        if (p) perfil = { ...perfil, ...JSON.parse(p) };
+      } catch (e) {}
       actualizarUiPerfil();
 
       // Cargar costumbres locales
-      const c = localStorage.getItem("nutrifit_costumbres");
-      if (c) {
-        const cost = JSON.parse(c);
-        if (cost.pais) document.getElementById('prefPais').value = cost.pais;
-        if (cost.dieta) document.getElementById('prefDieta').value = cost.dieta;
-        if (cost.favoritos) document.getElementById('prefFavoritos').value = cost.favoritos;
-        if (cost.noDeseados) document.getElementById('prefNoDeseados').value = cost.noDeseados;
-        if (cost.comidasDia) document.getElementById('prefComidasDia').value = cost.comidasDia;
-        if (cost.tiempoCocina) document.getElementById('prefTiempoCocina').value = cost.tiempoCocina;
-        if (cost.suplementos) document.getElementById('prefSuplementos').value = cost.suplementos;
-      }
+      try {
+        const c = localStorage.getItem("nutrifit_costumbres");
+        if (c) {
+          const cost = JSON.parse(c);
+          if (cost.pais) document.getElementById('prefPais').value = cost.pais;
+          if (cost.dieta) document.getElementById('prefDieta').value = cost.dieta;
+          if (cost.favoritos) document.getElementById('prefFavoritos').value = cost.favoritos;
+          if (cost.noDeseados) document.getElementById('prefNoDeseados').value = cost.noDeseados;
+          if (cost.comidasDia) document.getElementById('prefComidasDia').value = cost.comidasDia;
+          if (cost.tiempoCocina) document.getElementById('prefTiempoCocina').value = cost.tiempoCocina;
+          if (cost.suplementos) document.getElementById('prefSuplementos').value = cost.suplementos;
+        }
+      } catch (e) {}
 
       // Cargar clave API en input
       document.getElementById('inputApiKey').value = getApiKey();
 
-      // Cargar plan semanal guardado
+      // Cargar plan semanal y evaluaciones semanales guardadas
       cargarYRenderizarPlanGuardado();
       calcularEquivalenciaRapida();
+      renderizarEvaluacionesSemanales();
 
-      // Cargar diario de hoy y activar vigilancia de cambio de día (00:00)
+      // Cargar diario de hoy y activar vigilancia de cambio de día (00:00) y horario
       fechaActiva = fechaHoyLocal();
+      fechaDiarioSeleccionada = fechaActiva;
+      actualizarBadgeTurnoActual();
       actualizarDashboardDiario();
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) verificarCambioDeDia();
+        if (!document.hidden) { verificarCambioDeDia(); actualizarBadgeTurnoActual(); }
       });
-      window.addEventListener('focus', verificarCambioDeDia);
-      setInterval(verificarCambioDeDia, 30000);
+      window.addEventListener('focus', () => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); });
+      setInterval(() => { verificarCambioDeDia(); actualizarBadgeTurnoActual(); }, 30000);
     });
 
     function toggleModalSettings() {
@@ -702,11 +953,48 @@
         mActivo.classList.add('text-emerald-400');
       }
 
+      if (seccion === 'scanner') actualizarDashboardDiario();
       if (seccion === 'diario') renderizarDiario();
       if (seccion === 'dieta') cargarYRenderizarPlanGuardado();
+      if (seccion === 'perfil') { renderizarPanelMedico(); renderizarEvaluacionesSemanales(); }
     }
 
-    // CÁLCULO FISIOLÓGICO MIFFLIN-ST JEOR (AUTO-GUARDADO SILENCIOSO + MANUAL)
+    // CÁLCULO CLÍNICO Y DEPORTIVO: U.S. NAVY (% GRASA) + KATCH-MCARDLE + WHtR + ISSN
+    function calcularMetricasMedicas(d) {
+      const peso = Number(d.peso) || 75;
+      const altura = Number(d.altura) || 178;
+      const cuello = Number(d.cuello) || 0;
+      const cintura = Number(d.cintura) || 0;
+      const cadera = Number(d.cadera) || 0;
+      const imc = Math.round((peso / Math.pow(altura / 100, 2)) * 10) / 10;
+      const whtr = (cintura > 0 && altura > 0) ? Math.round((cintura / altura) * 100) / 100 : null;
+
+      let bf = null;
+      if (d.genero === "masculino" && cintura > cuello && cuello > 0 && altura > 0) {
+        const raw = (495 / (1.0324 - 0.19077 * Math.log10(cintura - cuello) + 0.15456 * Math.log10(altura))) - 450;
+        if (raw >= 3 && raw <= 60) bf = Math.round(raw * 10) / 10;
+      } else if (d.genero === "femenino" && cintura > 0 && cadera > 0 && cuello > 0 && (cintura + cadera > cuello) && altura > 0) {
+        const raw = (495 / (1.29579 - 0.35004 * Math.log10(cintura + cadera - cuello) + 0.22100 * Math.log10(altura))) - 450;
+        if (raw >= 5 && raw <= 65) bf = Math.round(raw * 10) / 10;
+      }
+
+      const lbm = bf !== null ? Math.round(peso * (1 - bf / 100) * 10) / 10 : null;
+      let bmr, formulaBmr;
+      if (lbm !== null && lbm > 20) {
+        bmr = 370 + (21.6 * lbm);
+        formulaBmr = "Katch-McArdle (Masa Magra)";
+      } else {
+        bmr = (10 * peso) + (6.25 * altura) - (5 * (Number(d.edad) || 28)) + (d.genero === "masculino" ? 5 : -161);
+        formulaBmr = "Mifflin-St Jeor";
+      }
+      return { imc, whtr, bf, lbm, bmr: Math.round(bmr), formulaBmr };
+    }
+
+    function leerNumeroOpcional(id) {
+      const v = parseFloat(document.getElementById(id)?.value);
+      return (!Number.isNaN(v) && v > 0) ? v : null;
+    }
+
     function recalcularPerfilSilencioso() {
       const edadVal = parseInt(document.getElementById('edad').value);
       const pesoVal = parseFloat(document.getElementById('peso').value);
@@ -718,21 +1006,29 @@
       perfil.genero = document.getElementById('genero').value || perfil.genero;
       perfil.actividad = document.getElementById('actividad').value || perfil.actividad;
       perfil.objetivo = document.getElementById('objetivo').value || perfil.objetivo;
+      perfil.cuello = leerNumeroOpcional('cuello');
+      perfil.cintura = leerNumeroOpcional('cintura');
+      perfil.cadera = leerNumeroOpcional('cadera');
+      perfil.brazo = leerNumeroOpcional('brazo');
+      perfil.muslo = leerNumeroOpcional('muslo');
 
-      // BMR
-      let bmr = (10 * perfil.peso) + (6.25 * perfil.altura) - (5 * perfil.edad);
-      bmr += (perfil.genero === "masculino") ? 5 : -161;
+      const med = calcularMetricasMedicas(perfil);
+      perfil.imc = med.imc;
+      perfil.whtr = med.whtr;
+      perfil.bf = med.bf;
+      perfil.lbm = med.lbm;
+      perfil.formulaBmr = med.formulaBmr;
 
       const actFactors = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725 };
-      const tdee = bmr * (actFactors[perfil.actividad] || 1.55);
+      const tdee = med.bmr * (actFactors[perfil.actividad] || 1.55);
 
       if (perfil.objetivo === "ganar_masa_muscular") {
-        perfil.caloriasMeta = Math.round(tdee * 1.12); // +12% superávit
-        perfil.proteinas = Math.round(perfil.peso * 2.0); // 2.0g/kg
+        perfil.caloriasMeta = Math.round(tdee * 1.12); // +12% superávit limpio
+        perfil.proteinas = Math.round(perfil.peso * 2.0); // ISSN: 1.6-2.2 g/kg
         perfil.grasas = Math.round(perfil.peso * 1.0);
       } else if (perfil.objetivo === "definicion_perder_grasa") {
         perfil.caloriasMeta = Math.round(tdee * 0.80); // -20% déficit
-        perfil.proteinas = Math.round(perfil.peso * 2.2);
+        perfil.proteinas = Math.round(perfil.lbm ? perfil.lbm * 2.5 : perfil.peso * 2.3); // ISSN déficit: 2.3-3.1 g/kg magro/total
         perfil.grasas = Math.round(perfil.peso * 0.8);
       } else {
         perfil.caloriasMeta = Math.round(tdee);
@@ -745,23 +1041,168 @@
       perfil.carbos = Math.round(Math.max(0, perfil.caloriasMeta - (calProt + calGras)) / 4);
 
       localStorage.setItem("nutrifit_profile", JSON.stringify(perfil));
+      renderizarPanelMedico();
       actualizarDashboardDiario();
+    }
+
+    function renderizarPanelMedico() {
+      const box = document.getElementById('panelEvaluacionMedica');
+      if (!box) return;
+      const med = calcularMetricasMedicas(perfil);
+      let estadoWhtr = '<span class="text-slate-400">Cargá cintura para evaluar</span>';
+      if (med.whtr !== null) {
+        if (med.whtr < 0.50) estadoWhtr = `<span class="text-emerald-400 font-bold">${med.whtr} (Saludable &lt;0.50)</span>`;
+        else if (med.whtr < 0.60) estadoWhtr = `<span class="text-amber-400 font-bold">${med.whtr} (Riesgo aumentado)</span>`;
+        else estadoWhtr = `<span class="text-rose-400 font-bold">${med.whtr} (Riesgo alto)</span>`;
+      }
+      const protKg = (perfil.proteinas / (perfil.peso || 75)).toFixed(1);
+      box.innerHTML = `
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+          <span class="font-bold text-emerald-400">🩺 Evaluación Médica (ISSN + U.S. Navy)</span>
+          <span class="text-[10px] text-slate-400">${med.formulaBmr}</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <div><span class="text-slate-400">IMC:</span> <strong class="text-white">${med.imc}</strong></div>
+          <div><span class="text-slate-400">TMB basal:</span> <strong class="text-white">${med.bmr} kcal</strong></div>
+          <div><span class="text-slate-400">% Grasa (Navy):</span> <strong class="text-white">${med.bf !== null ? med.bf + '%' : 'Falta cuello/cintura'}</strong></div>
+          <div><span class="text-slate-400">Masa Magra:</span> <strong class="text-emerald-400">${med.lbm !== null ? med.lbm + ' kg' : '-'}</strong></div>
+          <div class="col-span-2"><span class="text-slate-400">Índice Cintura/Altura:</span> ${estadoWhtr}</div>
+          <div class="col-span-2 text-slate-400">Proteína objetivo: <strong class="text-blue-400">${perfil.proteinas}g/día (${protKg} g/kg)</strong> • Dosis ISSN: 20–40g cada 3–4h</div>
+        </div>
+      `;
+    }
+
+    function guardarEvaluacionSemanal() {
+      recalcularPerfilSilencioso();
+      const hoy = fechaHoyLocal();
+      let fechaInicio = localStorage.getItem("nutrifit_fecha_inicio");
+      if (!fechaInicio) {
+        fechaInicio = hoy;
+        localStorage.setItem("nutrifit_fecha_inicio", fechaInicio);
+      }
+      const diffDias = Math.max(0, Math.round((new Date(hoy) - new Date(fechaInicio)) / 86400000));
+      const semana = Math.floor(diffDias / 7) + 1;
+
+      let lista = [];
+      try { lista = JSON.parse(localStorage.getItem("nutrifit_evaluaciones") || "[]"); } catch (e) {}
+
+      const registro = {
+        id: Date.now(),
+        fecha: hoy,
+        semana,
+        peso: perfil.peso,
+        cintura: perfil.cintura,
+        cuello: perfil.cuello,
+        cadera: perfil.cadera,
+        brazo: perfil.brazo,
+        muslo: perfil.muslo,
+        bf: perfil.bf,
+        lbm: perfil.lbm,
+        whtr: perfil.whtr
+      };
+
+      const idxHoy = lista.findIndex(x => x.fecha === hoy);
+      if (idxHoy !== -1) lista[idxHoy] = registro;
+      else lista.push(registro);
+
+      localStorage.setItem("nutrifit_evaluaciones", JSON.stringify(lista));
+      renderizarEvaluacionesSemanales();
+      alert(`✅ Semana ${semana} guardada (${hoy}).`);
+    }
+
+    function borrarEvaluacionSemanal(id) {
+      if (!confirm("¿Borrar este registro semanal?")) return;
+      let lista = [];
+      try { lista = JSON.parse(localStorage.getItem("nutrifit_evaluaciones") || "[]"); } catch (e) {}
+      lista = lista.filter(x => x.id !== id);
+      localStorage.setItem("nutrifit_evaluaciones", JSON.stringify(lista));
+      renderizarEvaluacionesSemanales();
+    }
+
+    function renderizarEvaluacionesSemanales() {
+      const subEl = document.getElementById('subtituloInicioSeguimiento');
+      const resEl = document.getElementById('resumenEvolucionSemanal');
+      const listEl = document.getElementById('listaEvaluacionesSemanales');
+      if (!resEl || !listEl) return;
+
+      const fechaInicio = localStorage.getItem("nutrifit_fecha_inicio");
+      let lista = [];
+      try { lista = JSON.parse(localStorage.getItem("nutrifit_evaluaciones") || "[]"); } catch (e) {}
+      lista.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      if (subEl) {
+        subEl.innerText = fechaInicio ? `Inicio: ${fechaInicio.split('-').reverse().join('/')} • Control semanal` : "Tocá 'Registrar Semana' para fijar tu punto de partida";
+      }
+
+      if (lista.length === 0) {
+        resEl.innerHTML = '';
+        listEl.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Todavía no guardaste evaluaciones semanales. Cargá tu peso y medidas arriba y tocá "Registrar Semana".</p>';
+        return;
+      }
+
+      const primera = lista[0];
+      const ultima = lista[lista.length - 1];
+      const fmtDelta = (v, unit) => {
+        if (v === null || Number.isNaN(v)) return '-';
+        const r = Math.round(v * 10) / 10;
+        return `${r > 0 ? '+' : ''}${r}${unit}`;
+      };
+      const dPeso = ultima.peso - primera.peso;
+      const dCint = (ultima.cintura && primera.cintura) ? (ultima.cintura - primera.cintura) : null;
+      const dBf = (ultima.bf !== null && primera.bf !== null) ? (ultima.bf - primera.bf) : null;
+      const dLbm = (ultima.lbm !== null && primera.lbm !== null) ? (ultima.lbm - primera.lbm) : null;
+
+      resEl.innerHTML = `
+        <div class="bg-slate-950 border border-emerald-500/30 rounded-2xl p-3 text-[11px] space-y-1">
+          <div class="font-bold text-emerald-400">Evolución desde Semana ${primera.semana} hasta Semana ${ultima.semana}:</div>
+          <div class="grid grid-cols-2 gap-1.5 text-slate-300">
+            <div>Peso: <strong class="text-white">${fmtDelta(dPeso, ' kg')}</strong></div>
+            <div>Cintura: <strong class="text-white">${fmtDelta(dCint, ' cm')}</strong></div>
+            <div>% Grasa: <strong class="text-white">${fmtDelta(dBf, '%')}</strong></div>
+            <div>Masa Magra: <strong class="text-emerald-400">${fmtDelta(dLbm, ' kg')}</strong></div>
+          </div>
+        </div>
+      `;
+
+      listEl.innerHTML = [...lista].reverse().map(ev => {
+        const f = ev.fecha.split('-').reverse().join('/');
+        const medidas = [
+          ev.cintura ? `Cint ${ev.cintura}cm` : null,
+          ev.brazo ? `Brazo ${ev.brazo}cm` : null,
+          ev.muslo ? `Muslo ${ev.muslo}cm` : null,
+          ev.bf !== null ? `${ev.bf}% grasa` : null
+        ].filter(Boolean).join(' • ');
+        return `
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <div>
+              <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">Semana ${ev.semana} • ${f}</span>
+              <div class="text-white font-bold mt-1">${ev.peso} kg ${ev.lbm ? `<span class="text-emerald-400 font-semibold">(${ev.lbm} kg magros)</span>` : ''}</div>
+              ${medidas ? `<div class="text-[10px] text-slate-400 mt-0.5">${medidas}</div>` : ''}
+            </div>
+            <button type="button" onclick="borrarEvaluacionSemanal(${ev.id})" class="text-rose-400 px-2 py-1 rounded-lg bg-slate-900 text-[11px]">🗑️</button>
+          </div>
+        `;
+      }).join('');
     }
 
     function guardarPerfilLocal() {
       recalcularPerfilSilencioso();
       actualizarUiPerfil();
-      alert("Metas fisiológicas calculadas y guardadas.");
+      alert("Metas médicas y nutricionales guardadas.");
       cambiarSeccion('scanner');
     }
 
     function actualizarUiPerfil() {
-      // Rellenar el formulario con los datos guardados
-      const campos = { edad: perfil.edad, genero: perfil.genero, peso: perfil.peso, altura: perfil.altura, actividad: perfil.actividad, objetivo: perfil.objetivo };
+      const campos = {
+        edad: perfil.edad, genero: perfil.genero, peso: perfil.peso, altura: perfil.altura,
+        cuello: perfil.cuello, cintura: perfil.cintura, cadera: perfil.cadera, brazo: perfil.brazo, muslo: perfil.muslo,
+        actividad: perfil.actividad, objetivo: perfil.objetivo
+      };
       Object.entries(campos).forEach(([id, val]) => {
         const el = document.getElementById(id);
-        if (el && val !== undefined && val !== null && !Number.isNaN(val)) el.value = val;
+        if (el) el.value = (val !== undefined && val !== null && !Number.isNaN(val)) ? val : "";
       });
+      renderizarPanelMedico();
       actualizarDashboardDiario();
     }
 
@@ -784,7 +1225,26 @@
       cambiarSeccion('dieta');
     }
 
-    // MANEJO Y REDIMENSIÓN DE IMÁGENES (CANVAS CLIENT-SIDE)
+    // MANEJO Y REDIMENSIÓN DE IMÁGENES (CANVAS CLIENT-SIDE + MINIATURA PARA HISTORIAL)
+    function generarCanvasDataUrl(img, maxDim, calidad) {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      return canvas.toDataURL('image/jpeg', calidad);
+    }
+
     function manejarArchivo(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -793,27 +1253,9 @@
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // Redimensionar a max 1024px para carga ultra rápida
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxDim = 1024;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          const dataUrl = generarCanvasDataUrl(img, 1024, 0.85);
           imagenBase64 = dataUrl.split(',')[1];
+          imagenThumbUrl = generarCanvasDataUrl(img, 540, 0.76);
           document.getElementById('imagePreview').src = dataUrl;
           document.getElementById('previewContainer').classList.remove('hidden');
           document.getElementById('btnAnalizar').disabled = false;
@@ -823,16 +1265,37 @@
       reader.readAsDataURL(file);
     }
 
+    function activarModoPicoteo() {
+      slotPreseleccionado = "Picoteo";
+      const hora = horaActualLocal();
+      const sel = document.getElementById('guardarTiempoComida');
+      const hInp = document.getElementById('guardarHoraComida');
+      if (sel) sel.value = "Picoteo";
+      if (hInp) hInp.value = hora;
+      const banner = document.getElementById('targetSlotBanner');
+      const nameEl = document.getElementById('targetSlotName');
+      if (nameEl) nameEl.innerText = `🍪 Picoteo (${hora} hs)`;
+      if (banner) banner.classList.remove('hidden');
+      const txtInp = document.getElementById('inputTextoComida');
+      if (txtInp) {
+        txtInp.placeholder = "Ej: puñado de almendras, 2 galletitas, un alfajor...";
+        txtInp.focus();
+      }
+    }
+
     // ANÁLISIS DIRECTO AUTÓNOMO CON GEMINI (FOTO, AUDIO O TEXTO)
     function construirPromptAnalisis(fuenteDesc) {
+      const hora = horaActualLocal();
+      const turnoAuto = slotPreseleccionado || detectarTiempoPorHora(hora);
       return `
-Sos un nutricionista deportivo de élite especializado en composición corporal e hipertrofia (siguiendo el enfoque pedagógico de cuantificación de porciones, gramos exactos y hábitos de Ezequiel Vedrovnik).
+Sos un nutricionista deportivo de élite especializado en composición corporal e hipertrofia (Ezequiel Vedrovnik + guías médicas ISSN: 20-40g proteína por ingesta).
 ${fuenteDesc}
+La hora de registro actual es ${hora} hs (categoría correspondiente: "${turnoAuto}").
 Si no se especifican gramos exactos en un audio o texto, estimá porciones típicas estándar (ej: Argentina) en gramos reales y calculá sus calorías y macros.
 Devolvé ÚNICAMENTE un JSON válido con esta estructura:
 {
   "plato": "Nombre representativo del plato",
-  "tiempo_comida": "${slotPreseleccionado || 'Almuerzo | Desayuno | Merienda | Cena | Colación'}",
+  "tiempo_comida": "${turnoAuto}",
   "ingredientes": [
     {
       "nombre": "Alimento",
@@ -850,19 +1313,25 @@ Devolvé ÚNICAMENTE un JSON válido con esta estructura:
     "grasas_g": 15.0
   },
   "evaluacion_muscular": {
-    "observacion": "Comentario práctico estilo coaching sobre cómo encaja este plato en una meta de hipertrofia o recomposición"
+    "observacion": "Comentario práctico estilo coaching sobre cómo encaja este plato en hipertrofia/salud"
   },
-  "advertencias_ingredientes_ocultos": "Aclaración sobre aceites de cocción, aderezos o salsas invisibles que suman calorías sin saciedad"
+  "advertencias_ingredientes_ocultos": "Aclaración sobre aceites de cocción, aderezos o salsas invisibles que suman calorías"
 }
 Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 `;
     }
 
-    async function ejecutarAnalisisGemini(parts, loadingMsg) {
+    async function ejecutarAnalisisGemini(parts, loadingMsg, conFoto = false) {
       const btn = document.getElementById('btnAnalizar');
       const loading = document.getElementById('loadingIndicator');
       const loadingTitle = document.getElementById('loadingTitle');
       const resultBox = document.getElementById('analysisResult');
+
+      if (!conFoto) {
+        imagenBase64 = null;
+        imagenThumbUrl = null;
+        document.getElementById('previewContainer').classList.add('hidden');
+      }
 
       btn.disabled = true;
       if (loadingTitle) loadingTitle.innerText = loadingMsg || "Analizando plato con Gemini AI...";
@@ -901,8 +1370,10 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
             if (texto.startsWith("```")) texto = texto.substring(3);
             if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
 
+            const horaAhora = horaActualLocal();
             ultimoResultado = JSON.parse(texto.trim());
-            if (slotPreseleccionado) ultimoResultado.tiempo_comida = slotPreseleccionado;
+            ultimoResultado.hora = horaAhora;
+            ultimoResultado.tiempo_comida = slotPreseleccionado || detectarTiempoPorHora(horaAhora);
             mostrarResultados(ultimoResultado);
             exito = true;
             break;
@@ -931,7 +1402,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       await ejecutarAnalisisGemini([
         { text: prompt },
         { inline_data: { mime_type: "image/jpeg", data: imagenBase64 } }
-      ], "Analizando foto con Gemini Vision...");
+      ], "Analizando foto con Gemini Vision...", true);
     }
 
     async function analizarAudioBase64(audioB64, mimeType) {
@@ -941,7 +1412,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       await ejecutarAnalisisGemini([
         { text: prompt },
         { inline_data: { mime_type: cleanMime, data: audioB64 } }
-      ], "Escuchando audio y calculando gramos con Gemini...");
+      ], "Escuchando audio y calculando gramos con Gemini...", false);
     }
 
     async function analizarTextoComida() {
@@ -952,7 +1423,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         return;
       }
       const prompt = construirPromptAnalisis(`Analizá esta descripción de comida contada por el usuario: "${texto}"`);
-      await ejecutarAnalisisGemini([{ text: prompt }], "Interpretando comida con Gemini AI...");
+      await ejecutarAnalisisGemini([{ text: prompt }], "Interpretando comida con Gemini AI...", false);
     }
 
     function manejarArchivoAudio(e) {
@@ -1059,6 +1530,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         const match = Array.from(selTiempo.options).find(o => o.value.toLowerCase() === data.tiempo_comida.toLowerCase().trim());
         if (match) selTiempo.value = match.value;
       }
+      const horaInp = document.getElementById('guardarHoraComida');
+      if (horaInp) horaInp.value = data.hora || horaActualLocal();
 
       if (data.evaluacion_muscular) {
         document.getElementById('muscleEvaluation').innerText = data.evaluacion_muscular.observacion || 'Aporte nutricional completo';
@@ -1140,62 +1613,115 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       recalcularTotalesScan();
     }
 
-    // PERSISTENCIA LOCAL DEL DIARIO
+    // PERSISTENCIA LOCAL DEL DIARIO E HISTORIAL POR FECHA
     function fechaHoyLocal() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    function getDiarioHoy() {
-      const hoy = fechaHoyLocal();
-      let guardado = localStorage.getItem(`nutrifit_diario_${hoy}`);
-      // Migración: versiones anteriores guardaban con fecha UTC
-      const hoyUtc = new Date().toISOString().split('T')[0];
-      if (!guardado && hoyUtc !== hoy && localStorage.getItem(`nutrifit_diario_${hoyUtc}`)) {
-        guardado = localStorage.getItem(`nutrifit_diario_${hoyUtc}`);
+    function getDiarioPorFecha(fechaStr) {
+      const f = fechaStr || fechaHoyLocal();
+      let guardado = localStorage.getItem(`nutrifit_diario_${f}`);
+      if (!guardado && f === fechaHoyLocal()) {
+        const hoyUtc = new Date().toISOString().split('T')[0];
+        if (hoyUtc !== f && localStorage.getItem(`nutrifit_diario_${hoyUtc}`)) {
+          guardado = localStorage.getItem(`nutrifit_diario_${hoyUtc}`);
+        }
       }
-      return guardado ? JSON.parse(guardado) : [];
+      try { return guardado ? JSON.parse(guardado) : []; } catch (e) { return []; }
+    }
+
+    function setDiarioPorFecha(fechaStr, diario) {
+      const f = fechaStr || fechaHoyLocal();
+      localStorage.setItem(`nutrifit_diario_${f}`, JSON.stringify(diario));
+    }
+
+    function getDiarioHoy() {
+      return getDiarioPorFecha(fechaHoyLocal());
     }
 
     function setDiarioHoy(diario) {
-      localStorage.setItem(`nutrifit_diario_${fechaHoyLocal()}`, JSON.stringify(diario));
+      setDiarioPorFecha(fechaHoyLocal(), diario);
     }
 
-    function guardarComidaLocal() {
+    function listarFechasConDiario() {
+      const fechas = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('nutrifit_diario_')) {
+          const f = k.replace('nutrifit_diario_', '');
+          if (/^\d{4}-\d{2}-\d{2}$/.test(f) && getDiarioPorFecha(f).length > 0) fechas.push(f);
+        }
+      }
+      const hoy = fechaHoyLocal();
+      if (!fechas.includes(hoy)) fechas.push(hoy);
+      return [...new Set(fechas)].sort((a, b) => b.localeCompare(a));
+    }
+
+    function ordenarComidasCronologicamente(lista) {
+      return [...lista].sort((a, b) => {
+        const oa = INFO_TURNOS_COMIDA[a.tiempo]?.orden || 99;
+        const ob = INFO_TURNOS_COMIDA[b.tiempo]?.orden || 99;
+        if (oa !== ob) return oa - ob;
+        return (a.hora || "00:00").localeCompare(b.hora || "00:00");
+      });
+    }
+
+    async function guardarComidaLocal() {
       if (!ultimoResultado) return;
       const tiempo = document.getElementById('guardarTiempoComida').value;
+      const hora = document.getElementById('guardarHoraComida')?.value || ultimoResultado.hora || horaActualLocal();
       const nombrePlato = (document.getElementById('dishName').value || '').trim() || ultimoResultado.plato || 'Comida';
+      const id = Date.now();
+      const tieneFoto = Boolean(imagenThumbUrl);
+
       const comida = {
-        id: Date.now(),
-        tiempo: tiempo,
+        id,
+        tiempo,
+        hora,
         plato: nombrePlato,
         calorias: Math.round(ultimoResultado.totales?.calorias || 0),
         proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
         carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
         grasas: Math.round(ultimoResultado.totales?.grasas_g || 0),
-        ingredientes: ultimoResultado.ingredientes || []
+        ingredientes: ultimoResultado.ingredientes || [],
+        tieneFoto
       };
+
+      if (tieneFoto) {
+        await guardarFotoComidaDB(id, imagenThumbUrl);
+      }
 
       const diario = getDiarioHoy();
       diario.push(comida);
       setDiarioHoy(diario);
 
       limpiarSlotPreseleccionado();
+      imagenBase64 = null;
+      imagenThumbUrl = null;
+      document.getElementById('previewContainer').classList.add('hidden');
+      document.getElementById('analysisResult').classList.add('hidden');
+      document.getElementById('btnAnalizar').disabled = true;
       const inpTxt = document.getElementById('inputTextoComida');
       if (inpTxt) inpTxt.value = '';
+      fechaDiarioSeleccionada = fechaHoyLocal();
       actualizarDashboardDiario();
+      renderizarDiario();
       alert("¡Comida guardada en tu teléfono!");
-      cambiarSeccion('diario');
     }
 
-    // EDITAR / BORRAR COMIDAS
+    // EDITAR / BORRAR COMIDAS (FUNCIONA PARA HOY Y DÍAS ANTERIORES)
     let comidaEditandoId = null;
+    let comidaEditandoFecha = null;
 
-    function abrirEditorComida(id) {
-      const c = getDiarioHoy().find(x => x.id === id);
+    function abrirEditorComida(id, fechaStr) {
+      const f = fechaStr || fechaDiarioSeleccionada || fechaHoyLocal();
+      const c = getDiarioPorFecha(f).find(x => x.id === id);
       if (!c) return;
       comidaEditandoId = id;
+      comidaEditandoFecha = f;
       document.getElementById('editTiempo').value = c.tiempo;
+      document.getElementById('editHora').value = c.hora || INFO_TURNOS_COMIDA[c.tiempo]?.horaDefault || "12:00";
       document.getElementById('editPlato').value = c.plato;
       document.getElementById('editCal').value = c.calorias;
       document.getElementById('editProt').value = c.proteinas;
@@ -1208,6 +1734,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
     function cerrarEditorComida() {
       comidaEditandoId = null;
+      comidaEditandoFecha = null;
       document.getElementById('modalEditarComida').classList.add('hidden');
     }
 
@@ -1222,27 +1749,95 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     }
 
     function guardarEdicionComida() {
-      const diario = getDiarioHoy();
+      const f = comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
+      const diario = getDiarioPorFecha(f);
       const c = diario.find(x => x.id === comidaEditandoId);
       if (!c) return cerrarEditorComida();
       c.tiempo = document.getElementById('editTiempo').value;
+      c.hora = document.getElementById('editHora')?.value || c.hora || "12:00";
       c.plato = document.getElementById('editPlato').value.trim() || c.plato;
       c.calorias = parseFloat(document.getElementById('editCal').value) || 0;
       c.proteinas = parseFloat(document.getElementById('editProt').value) || 0;
       c.carbos = parseFloat(document.getElementById('editCarb').value) || 0;
       c.grasas = parseFloat(document.getElementById('editGras').value) || 0;
-      setDiarioHoy(diario);
+      setDiarioPorFecha(f, diario);
       cerrarEditorComida();
       actualizarDashboardDiario();
       renderizarDiario();
     }
 
-    function borrarComida(id) {
+    function borrarComida(id, fechaStr) {
       if (!confirm("¿Borrar esta comida del diario?")) return;
-      setDiarioHoy(getDiarioHoy().filter(x => x.id !== id));
+      const f = fechaStr || comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
+      setDiarioPorFecha(f, getDiarioPorFecha(f).filter(x => x.id !== id));
+      borrarFotoComidaDB(id);
       cerrarEditorComida();
       actualizarDashboardDiario();
       renderizarDiario();
+    }
+
+    function crearTarjetaComidaHtml(c, fechaStr, btnExtraHtml = '') {
+      const info = INFO_TURNOS_COMIDA[c.tiempo] || { icono: "🍽️" };
+      const horaTag = c.hora ? `<span class="text-[10px] text-slate-400 font-semibold ml-1">🕐 ${c.hora} hs</span>` : '';
+      const thumbHtml = c.tieneFoto
+        ? `<img data-foto-id="${c.id}" onclick="verFotoComida(${c.id}, this.dataset.titulo)" data-titulo="${(c.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0 cursor-pointer">`
+        : '';
+      return `
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2.5">
+          ${thumbHtml}
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center flex-wrap gap-1">
+              <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded">${info.icono} ${c.tiempo}</span>
+              ${horaTag}
+            </div>
+            <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
+              Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
+              Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
+            </p>
+          </div>
+          <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
+            <div>
+              <span class="text-base font-black text-white">${c.calorias}</span>
+              <span class="text-[10px] text-slate-400">kcal</span>
+            </div>
+            <div class="flex gap-1">
+              ${btnExtraHtml}
+              <button onclick="abrirEditorComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️</button>
+              <button onclick="borrarComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderizarResumenHoyPrincipal() {
+      const cont = document.getElementById('listaResumenHoyPrincipal');
+      if (!cont) return;
+      const hoy = fechaHoyLocal();
+      const comidas = ordenarComidasCronologicamente(getDiarioPorFecha(hoy));
+      const slots = obtenerComidasEstablecidas();
+      const turnoAhora = detectarTiempoPorHora(horaActualLocal());
+
+      if (comidas.length === 0) {
+        cont.innerHTML = `
+          <div class="text-xs text-slate-400 text-center py-3 border border-dashed border-slate-800 rounded-2xl">
+            Todavía no cargaste nada hoy (${turnoAhora} en curso).<br>Sacá una foto, grabá un audio o cargá un 🍪 picoteo arriba.
+          </div>
+        `;
+        return;
+      }
+
+      let html = comidas.map(c => crearTarjetaComidaHtml(c, hoy)).join('');
+      const faltantes = slots.filter(s => !comidas.some(c => (c.tiempo || '').toLowerCase() === s.toLowerCase()));
+      if (faltantes.length > 0) {
+        html += `<div class="flex flex-wrap gap-1.5 pt-1">` + faltantes.map(s =>
+          `<button type="button" onclick="irACargarSlot('${s}', 'foto')" class="text-[10px] font-bold px-2.5 py-1.5 rounded-xl bg-slate-950 border border-dashed border-slate-700 text-slate-300">+ ${INFO_TURNOS_COMIDA[s]?.icono || ''} ${s}</button>`
+        ).join('') + `</div>`;
+      }
+      cont.innerHTML = html;
+      hidratarMiniaturasFotos(cont);
     }
 
     function actualizarDashboardDiario() {
@@ -1266,11 +1861,14 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('dashProtBar').style.width = Math.min(100, Math.round((totProt / perfil.proteinas) * 100)) + '%';
       document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / perfil.carbos) * 100)) + '%';
       document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
+
+      renderizarResumenHoyPrincipal();
     }
 
     function verificarCambioDeDia() {
       const hoy = fechaHoyLocal();
       if (fechaActiva && fechaActiva !== hoy) {
+        if (fechaDiarioSeleccionada === fechaActiva) fechaDiarioSeleccionada = hoy;
         fechaActiva = hoy;
         limpiarSlotPreseleccionado();
         actualizarDashboardDiario();
@@ -1291,6 +1889,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       slotPreseleccionado = slot;
       const sel = document.getElementById('guardarTiempoComida');
       if (sel) sel.value = slot;
+      const hInp = document.getElementById('guardarHoraComida');
+      if (hInp) {
+        const ahora = horaActualLocal();
+        hInp.value = (detectarTiempoPorHora(ahora) === slot || slot === 'Picoteo')
+          ? ahora
+          : (INFO_TURNOS_COMIDA[slot]?.horaDefault || ahora);
+      }
       const banner = document.getElementById('targetSlotBanner');
       const nameEl = document.getElementById('targetSlotName');
       if (nameEl) nameEl.innerText = slot;
@@ -1307,37 +1912,100 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }, 80);
     }
 
+    function seleccionarFechaDiario(fechaStr) {
+      if (!fechaStr) return;
+      fechaDiarioSeleccionada = fechaStr;
+      renderizarDiario();
+    }
+
+    function moverDiaDiario(deltaDias) {
+      const base = fechaDiarioSeleccionada || fechaHoyLocal();
+      const parts = base.split('-').map(Number);
+      const d = new Date(parts[0], parts[1] - 1, parts[2] + deltaDias);
+      fechaDiarioSeleccionada = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      renderizarDiario();
+    }
+
     function renderizarDiario() {
-      const hoyStr = fechaHoyLocal();
-      const partes = hoyStr.split('-');
+      const hoy = fechaHoyLocal();
+      const fecha = fechaDiarioSeleccionada || hoy;
+      fechaDiarioSeleccionada = fecha;
+      const esHoy = (fecha === hoy);
+      const partes = fecha.split('-');
+
       const fechaLbl = document.getElementById('fechaDiarioLabel');
       if (fechaLbl && partes.length === 3) {
-        fechaLbl.innerText = `Hoy ${partes[2]}/${partes[1]}/${partes[0]} • Se reinicia automático a las 00:00`;
+        fechaLbl.innerText = esHoy
+          ? `Hoy ${partes[2]}/${partes[1]}/${partes[0]} • Reinicio automático a las 00:00`
+          : `Historial del ${partes[2]}/${partes[1]}/${partes[0]}`;
       }
 
-      const comidas = getDiarioHoy();
+      const picker = document.getElementById('diarioFechaPicker');
+      if (picker) picker.value = fecha;
+
+      const chipsEl = document.getElementById('diarioDiasConDatos');
+      if (chipsEl) {
+        const fechas = listarFechasConDiario();
+        chipsEl.innerHTML = fechas.slice(0, 10).map(f => {
+          const p = f.split('-');
+          const lbl = (f === hoy) ? 'Hoy' : `${p[2]}/${p[1]}`;
+          const activeCls = (f === fecha)
+            ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
+            : 'bg-slate-900 text-slate-300 font-semibold border-slate-800';
+          return `<button type="button" onclick="seleccionarFechaDiario('${f}')" class="shrink-0 px-2.5 py-1 rounded-lg text-[10px] border ${activeCls}">${lbl}</button>`;
+        }).join('');
+      }
+
+      const comidas = ordenarComidasCronologicamente(getDiarioPorFecha(fecha));
+
+      const resDiaEl = document.getElementById('diarioResumenDia');
+      if (resDiaEl) {
+        const sum = comidas.reduce((acc, c) => ({
+          cal: acc.cal + (c.calorias || 0),
+          prot: acc.prot + (c.proteinas || 0),
+          carb: acc.carb + (c.carbos || 0),
+          gras: acc.gras + (c.grasas || 0)
+        }), { cal: 0, prot: 0, carb: 0, gras: 0 });
+        resDiaEl.innerHTML = `
+          <div><span class="text-slate-400 block">Calorías</span><strong class="text-white">${Math.round(sum.cal)}</strong></div>
+          <div><span class="text-blue-400 block">Prot</span><strong class="text-white">${Math.round(sum.prot)}g</strong></div>
+          <div><span class="text-amber-400 block">Carbos</span><strong class="text-white">${Math.round(sum.carb)}g</strong></div>
+          <div><span class="text-rose-400 block">Grasas</span><strong class="text-white">${Math.round(sum.gras)}g</strong></div>
+        `;
+      }
+
       const slots = obtenerComidasEstablecidas();
-      // Incluir cualquier comida cargada bajo un momento extra (ej. Snack)
       comidas.forEach(c => {
         const t = (c.tiempo || '').trim();
-        if (t && !slots.some(s => s.toLowerCase() === t.toLowerCase())) {
-          slots.push(t);
-        }
+        if (t && !slots.some(s => s.toLowerCase() === t.toLowerCase())) slots.push(t);
       });
+      slots.sort((a, b) => (INFO_TURNOS_COMIDA[a]?.orden || 99) - (INFO_TURNOS_COMIDA[b]?.orden || 99));
 
+      const turnoActual = detectarTiempoPorHora(horaActualLocal());
       const cont = document.getElementById('listaComidasDiario');
       cont.innerHTML = '';
 
+      if (!esHoy && comidas.length === 0) {
+        cont.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay comidas registradas para el ${partes[2]}/${partes[1]}/${partes[0]}.</p>`;
+        return;
+      }
+
       slots.forEach(slot => {
         const comidasSlot = comidas.filter(c => (c.tiempo || '').toLowerCase() === slot.toLowerCase());
+        const info = INFO_TURNOS_COMIDA[slot] || { icono: "🍽️", franja: "" };
+        const esTurnoAhora = esHoy && (slot === turnoActual);
 
         if (comidasSlot.length === 0) {
+          if (!esHoy) return;
           const vacio = document.createElement('div');
-          vacio.className = 'bg-slate-950/50 p-3.5 rounded-2xl border-2 border-dashed border-slate-800 flex items-center justify-between gap-2';
+          vacio.className = `bg-slate-950/50 p-3.5 rounded-2xl border-2 border-dashed ${esTurnoAhora ? 'border-emerald-500/40' : 'border-slate-800'} flex items-center justify-between gap-2`;
           vacio.innerHTML = `
             <div>
-              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800 px-2 py-0.5 rounded">${slot}</span>
-              <p class="text-xs text-slate-500 mt-1.5 font-medium">Sin cargar (Vacío)</p>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-bold text-slate-300 uppercase tracking-wider bg-slate-800 px-2 py-0.5 rounded">${info.icono} ${slot}</span>
+                ${esTurnoAhora ? '<span class="text-[9px] font-extrabold text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded">AHORA</span>' : ''}
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1.5 font-medium">Sin cargar (${info.franja})</p>
             </div>
             <div class="flex gap-1.5 shrink-0">
               <button type="button" onclick="irACargarSlot('${slot}', 'foto')" class="text-[11px] font-bold px-2.5 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 active:scale-95">📷 Foto</button>
@@ -1347,41 +2015,40 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
           cont.appendChild(vacio);
         } else {
           comidasSlot.forEach((c, idx) => {
-            const item = document.createElement('div');
-            item.className = 'bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between gap-2';
-            const btnSumar = idx === 0 ? `<button type="button" onclick="irACargarSlot('${slot}', 'audio')" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-amber-300 active:scale-95" title="Sumar otra comida a ${slot}">+ Sumar</button>` : '';
-            item.innerHTML = `
-              <div class="min-w-0">
-                <span class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded">${c.tiempo}</span>
-                <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">
-                  Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
-                  Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
-                  Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
-                </p>
-              </div>
-              <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
-                <div>
-                  <span class="text-base font-black text-white">${c.calorias}</span>
-                  <span class="text-[10px] text-slate-400">kcal</span>
-                </div>
-                <div class="flex gap-1.5">
-                  ${btnSumar}
-                  <button onclick="abrirEditorComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️ Editar</button>
-                  <button onclick="borrarComida(${c.id})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
-                </div>
-              </div>
-            `;
-            cont.appendChild(item);
+            const btnSumar = (esHoy && idx === 0)
+              ? `<button type="button" onclick="irACargarSlot('${slot}', 'audio')" class="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-amber-300 active:scale-95" title="Sumar otra comida">+</button>`
+              : '';
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = crearTarjetaComidaHtml(c, fecha, btnSumar);
+            cont.appendChild(wrapper.firstElementChild);
           });
         }
       });
+
+      if (esHoy) {
+        const picBtn = document.createElement('button');
+        picBtn.type = 'button';
+        picBtn.onclick = activarModoPicoteoYIr;
+        picBtn.className = 'w-full py-2.5 rounded-2xl border border-dashed border-violet-500/40 bg-violet-500/10 text-violet-300 text-xs font-bold active:scale-95';
+        picBtn.innerText = '🍪 + Agregar Picoteo (a cualquier hora)';
+        cont.appendChild(picBtn);
+      }
+
+      hidratarMiniaturasFotos(cont);
+    }
+
+    function activarModoPicoteoYIr() {
+      activarModoPicoteo();
+      cambiarSeccion('scanner');
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
     }
 
     function limpiarDiarioHoy() {
-      if (confirm("¿Querés reiniciar las comidas de hoy?")) {
-        localStorage.removeItem(`nutrifit_diario_${fechaHoyLocal()}`);
-        localStorage.removeItem(`nutrifit_diario_${new Date().toISOString().split('T')[0]}`);
+      const f = fechaDiarioSeleccionada || fechaHoyLocal();
+      if (confirm(`¿Querés vaciar todas las comidas del ${f.split('-').reverse().join('/')}?`)) {
+        getDiarioPorFecha(f).forEach(c => borrarFotoComidaDB(c.id));
+        localStorage.removeItem(`nutrifit_diario_${f}`);
+        if (f === fechaHoyLocal()) localStorage.removeItem(`nutrifit_diario_${new Date().toISOString().split('T')[0]}`);
         actualizarDashboardDiario();
         renderizarDiario();
       }
@@ -1491,10 +2158,11 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         ? comidasPrevias.map(c => `${c.tiempo}: ${c.plato} (${c.calorias} kcal, ${c.proteinas}g prot)`).join(', ')
         : "Sin comidas registradas hoy todavía.";
 
+      const medInfo = perfil.bf ? ` | Composición médica: ${perfil.bf}% grasa (U.S. Navy), ${perfil.lbm}kg masa magra (${perfil.formulaBmr}), WHtR ${perfil.whtr || '-'}` : '';
       const prompt = `
-Sos un nutricionista deportivo especialista en hipertrofia y adherencia (método Ezequiel Vedrovnik: precisión en gramos, equivalencias intercambiables para no aburrirse).
+Sos un nutricionista deportivo especialista en hipertrofia y adherencia clínica (Ezequiel Vedrovnik + guías ISSN: 20-40g proteína por ingesta cada 3-4h, Katch-McArdle).
 Armá un plan semanal de 7 días ("Lunes" a "Domingo") con exactamente estas comidas por día: ${slots.join(', ')}.
-Meta diaria: ${perfil.caloriasMeta} kcal (${perfil.proteinas}g prot, ${perfil.carbos}g carbos, ${perfil.grasas}g grasas).
+Meta diaria: ${perfil.caloriasMeta} kcal (${perfil.proteinas}g prot, ${perfil.carbos}g carbos, ${perfil.grasas}g grasas)${medInfo}.
 Región: ${costumbres.pais || 'Argentina / Cono Sur'} | Tipo: ${costumbres.dieta || 'Omnívoro'}
 Favoritos: ${costumbres.favoritos || 'Carne vacuna, pollo, arroz, pastas, huevos, avena, banana'}
 Evitar: ${costumbres.noDeseados || 'Ninguno'} | Tiempo cocina: ${costumbres.tiempoCocina || 'rapido_20min'} | Suplementos: ${costumbres.suplementos || 'Whey, Creatina'}
@@ -1615,20 +2283,24 @@ Devolvé ÚNICAMENTE JSON:
       const gras = c.grasas_g !== undefined ? Math.round(Number(c.grasas_g)) : Math.round((restKcal * 0.35) / 9);
 
       const diario = getDiarioHoy();
+      const horaReg = horaActualLocal();
       diario.push({
         id: Date.now(),
-        tiempo: c.nombre || "Almuerzo",
+        tiempo: c.nombre || detectarTiempoPorHora(horaReg),
+        hora: horaReg,
         plato: op.plato || c.plato || c.nombre,
         calorias: cal,
         proteinas: prot,
         carbos: carb,
         grasas: gras,
-        ingredientes: [{ nombre: op.ingredientes || op.plato, porcion_estimada_g: 0, calorias: cal, proteinas_g: prot, carbohidratos_g: carb, grasas_g: gras }]
+        ingredientes: [{ nombre: op.ingredientes || op.plato, porcion_estimada_g: 0, calorias: cal, proteinas_g: prot, carbohidratos_g: carb, grasas_g: gras }],
+        tieneFoto: false
       });
       setDiarioHoy(diario);
+      fechaDiarioSeleccionada = fechaHoyLocal();
       actualizarDashboardDiario();
       renderizarDiario();
-      alert(`✅ "${op.plato}" sumado a tu Diario de hoy.`);
+      alert(`✅ "${op.plato}" sumado a tu Diario de hoy (${horaReg} hs).`);
     }
 
     async function adaptarRestoDelDiaConIA() {
@@ -1806,9 +2478,16 @@ Devolvé ÚNICAMENTE JSON:
           diaDiv.className = 'bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3';
           let comidasHtml = '';
 
+          const esHoyPlan = d.dia.toLowerCase() === obtenerNombreDiaHoy().toLowerCase();
+          const comidasRealesHoy = esHoyPlan ? getDiarioHoy() : [];
+
           (d.comidas || []).forEach((c, comidaIdx) => {
             const opAct = c.opcion_activa || 0;
             const op = (c.opciones && c.opciones[opAct]) || c;
+            const fotoReal = comidasRealesHoy.find(m => m.tieneFoto && (m.tiempo || '').toLowerCase() === (c.nombre || '').toLowerCase());
+            const fotoChipHtml = fotoReal
+              ? `<div class="flex items-center gap-2 bg-slate-950/90 border border-slate-800 rounded-xl p-2 mt-1"><img data-foto-id="${fotoReal.id}" onclick="verFotoComida(${fotoReal.id}, this.dataset.titulo)" data-titulo="${(fotoReal.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-10 h-10 rounded-lg object-cover cursor-pointer"><span class="text-[10px] text-emerald-400 font-semibold">📷 Foto real de hoy: ${fotoReal.plato} (${fotoReal.hora || ''} hs)</span></div>`
+              : '';
             const btnsOpciones = (c.opciones || []).map((_, oIdx) => {
               const selCls = oIdx === opAct
                 ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
@@ -1826,6 +2505,7 @@ Devolvé ÚNICAMENTE JSON:
                 <div>
                   <h5 class="text-xs font-extrabold text-white">${op.plato}</h5>
                   <p class="text-[11px] text-slate-400 mt-0.5 leading-relaxed">${op.ingredientes}</p>
+                  ${fotoChipHtml}
                 </div>
                 <div class="flex gap-1.5 pt-1 border-t border-slate-800/70">
                   <button type="button" onclick="cambiarPlatoDietaConIA(${diaIdx}, ${comidaIdx})" class="flex-1 py-1.5 px-2 rounded-xl bg-slate-950 border border-slate-700 text-amber-300 text-[11px] font-bold active:scale-95">🔄 Cambiar plato</button>
@@ -1843,6 +2523,7 @@ Devolvé ÚNICAMENTE JSON:
             <div class="space-y-2.5 pt-1">${comidasHtml}</div>
           `;
           cont.appendChild(diaDiv);
+          hidratarMiniaturasFotos(diaDiv);
         });
       }
 
