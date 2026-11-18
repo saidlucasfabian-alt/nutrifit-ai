@@ -36,7 +36,7 @@
           <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v9 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v10 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -424,9 +424,10 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="font-bold text-slate-300 block mb-1">5. Comidas al día</label>
-              <select id="prefComidasDia" onchange="guardarCostumbresSilencioso()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
-                <option value="3">3 comidas</option>
-                <option value="4" selected>4 comidas fijas</option>
+              <select id="prefComidasDia" onchange="alCambiarCantidadComidas(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="2">2 comidas</option>
+                <option value="3" selected>3 comidas</option>
+                <option value="4">4 comidas</option>
                 <option value="5">5 comidas</option>
               </select>
             </div>
@@ -438,6 +439,15 @@
                 <option value="elaborado">👨‍🍳 Con tiempo</option>
               </select>
             </div>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold text-slate-300">¿Cuáles comidas hacés habitualmente?</span>
+              <span id="labelTurnosActivos" class="text-[10px] text-emerald-400 font-bold">3 elegidas</span>
+            </div>
+            <div id="chipsTurnosComida" class="flex flex-wrap gap-1.5"></div>
+            <p class="text-[10px] text-slate-500">Si no hacés Desayuno, podés dejarlo desmarcado. Igual, cualquier comida que cargues antes de las 11:00 hs se cataloga automáticamente como 🌅 Desayuno.</p>
           </div>
 
           <div>
@@ -789,14 +799,16 @@
     const fotosMemoria = {};
 
     const INFO_TURNOS_COMIDA = {
-      "Desayuno": { orden: 1, icono: "🌅", franja: "05:00 – 11:29", horaDefault: "08:30" },
-      "Almuerzo": { orden: 2, icono: "☀️", franja: "11:30 – 15:29", horaDefault: "13:00" },
+      "Desayuno": { orden: 1, icono: "🌅", franja: "04:00 – 10:59", horaDefault: "08:30" },
+      "Almuerzo": { orden: 2, icono: "☀️", franja: "11:00 – 15:29", horaDefault: "13:00" },
       "Merienda": { orden: 3, icono: "☕", franja: "15:30 – 19:29", horaDefault: "17:30" },
-      "Cena":     { orden: 4, icono: "🌙", franja: "19:30 – 04:59", horaDefault: "21:00" },
+      "Cena":     { orden: 4, icono: "🌙", franja: "19:30 – 03:59", horaDefault: "21:00" },
       "Colación": { orden: 5, icono: "🥤", franja: "Cualquier hora", horaDefault: "11:00" },
       "Picoteo":  { orden: 6, icono: "🍪", franja: "Cualquier hora", horaDefault: "16:00" },
       "Snack":    { orden: 7, icono: "🍪", franja: "Cualquier hora", horaDefault: "16:00" }
     };
+
+    const TODOS_LOS_TURNOS = ["Desayuno", "Almuerzo", "Merienda", "Cena", "Colación"];
 
     function obtenerNombreDiaHoy() {
       const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -820,10 +832,10 @@
         m = d.getMinutes();
       }
       const mins = (h * 60) + m;
-      if (mins >= 300 && mins < 690) return "Desayuno";   // 05:00 - 11:29
-      if (mins >= 690 && mins < 930) return "Almuerzo";   // 11:30 - 15:29
+      if (mins >= 240 && mins < 660) return "Desayuno";   // 04:00 - 10:59 (antes de las 11:00)
+      if (mins >= 660 && mins < 930) return "Almuerzo";   // 11:00 - 15:29
       if (mins >= 930 && mins < 1170) return "Merienda";  // 15:30 - 19:29
-      return "Cena";                                      // 19:30 - 04:59
+      return "Cena";                                      // 19:30 - 03:59
     }
 
     function actualizarBadgeTurnoActual() {
@@ -983,6 +995,7 @@
 
     let setFavoritos = new Set(["Bife / Carne vacuna", "Pollo / Pechuga", "Arroz blanco", "Fideos / Pastas", "Huevos", "Banana", "Avena"]);
     let setNoDeseados = new Set(["Hígado / Achuras", "Mariscos", "Picante"]);
+    let comidasActivas = ["Almuerzo", "Merienda", "Cena"];
     let controlPospuestoHoy = false;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -993,7 +1006,7 @@
       } catch (e) {}
       actualizarUiPerfil();
 
-      // Cargar costumbres locales + inicializar selector de chips variados
+      // Cargar costumbres locales + inicializar selector de chips variados y comidas activas
       try {
         const c = localStorage.getItem("nutrifit_costumbres");
         if (c) {
@@ -1002,13 +1015,25 @@
           if (cost.dieta) document.getElementById('prefDieta').value = cost.dieta;
           if (cost.favoritos !== undefined) document.getElementById('prefFavoritos').value = cost.favoritos;
           if (cost.noDeseados !== undefined) document.getElementById('prefNoDeseados').value = cost.noDeseados;
-          if (cost.comidasDia) document.getElementById('prefComidasDia').value = cost.comidasDia;
+          if (Array.isArray(cost.comidasActivas) && cost.comidasActivas.length > 0) {
+            comidasActivas = cost.comidasActivas;
+          } else if (cost.comidasDia === "2") {
+            comidasActivas = ["Almuerzo", "Cena"];
+          } else if (cost.comidasDia === "4") {
+            comidasActivas = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
+          } else if (cost.comidasDia === "5") {
+            comidasActivas = ["Desayuno", "Almuerzo", "Merienda", "Cena", "Colación"];
+          } else {
+            comidasActivas = ["Almuerzo", "Merienda", "Cena"];
+          }
+          document.getElementById('prefComidasDia').value = cost.comidasDia || String(comidasActivas.length);
           if (cost.tiempoCocina) document.getElementById('prefTiempoCocina').value = cost.tiempoCocina;
           if (cost.suplementos) document.getElementById('prefSuplementos').value = cost.suplementos;
         }
       } catch (e) {}
       inicializarChipsDesdeInputs();
       renderizarChipsCostumbres();
+      renderizarChipsTurnosComida();
 
       // Cargar clave API en input
       document.getElementById('inputApiKey').value = getApiKey();
@@ -1507,6 +1532,47 @@
       guardarCostumbresSilencioso();
     }
 
+    function renderizarChipsTurnosComida() {
+      const cont = document.getElementById('chipsTurnosComida');
+      const lbl = document.getElementById('labelTurnosActivos');
+      if (!cont) return;
+      cont.innerHTML = TODOS_LOS_TURNOS.map(t => {
+        const activo = comidasActivas.includes(t);
+        const ico = INFO_TURNOS_COMIDA[t]?.icono || '';
+        const cls = activo
+          ? 'bg-emerald-500 text-slate-950 font-extrabold border-emerald-400'
+          : 'bg-slate-900 text-slate-400 font-medium border-slate-800';
+        return `<button type="button" onclick="toggleTurnoComida('${t}')" class="px-2.5 py-1.5 rounded-xl text-[11px] border ${cls} active:scale-95 transition">${activo ? '✓ ' : ''}${ico} ${t}</button>`;
+      }).join('');
+      if (lbl) lbl.innerText = `${comidasActivas.length} elegidas`;
+    }
+
+    function alCambiarCantidadComidas(cant) {
+      if (cant === "2") comidasActivas = ["Almuerzo", "Cena"];
+      else if (cant === "3") comidasActivas = ["Almuerzo", "Merienda", "Cena"];
+      else if (cant === "4") comidasActivas = ["Desayuno", "Almuerzo", "Merienda", "Cena"];
+      else comidasActivas = ["Desayuno", "Almuerzo", "Merienda", "Cena", "Colación"];
+      renderizarChipsTurnosComida();
+      guardarCostumbresSilencioso();
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function toggleTurnoComida(turno) {
+      if (comidasActivas.includes(turno)) {
+        if (comidasActivas.length <= 1) return;
+        comidasActivas = comidasActivas.filter(t => t !== turno);
+      } else {
+        comidasActivas = [...comidasActivas, turno].sort((a, b) => (INFO_TURNOS_COMIDA[a]?.orden || 99) - (INFO_TURNOS_COMIDA[b]?.orden || 99));
+      }
+      const sel = document.getElementById('prefComidasDia');
+      if (sel && comidasActivas.length >= 2 && comidasActivas.length <= 5) sel.value = String(comidasActivas.length);
+      renderizarChipsTurnosComida();
+      guardarCostumbresSilencioso();
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
     function guardarCostumbresSilencioso() {
       sincronizarInputsCostumbresDesdeChips();
       const costumbres = {
@@ -1515,6 +1581,7 @@
         favoritos: document.getElementById('prefFavoritos').value,
         noDeseados: document.getElementById('prefNoDeseados').value,
         comidasDia: document.getElementById('prefComidasDia').value,
+        comidasActivas: [...comidasActivas],
         tiempoCocina: document.getElementById('prefTiempoCocina').value,
         suplementos: document.getElementById('prefSuplementos').value
       };
@@ -2189,8 +2256,12 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     function obtenerComidasEstablecidas() {
       let cost = {};
       try { cost = JSON.parse(localStorage.getItem("nutrifit_costumbres") || "{}"); } catch (e) {}
-      const n = String(cost.comidasDia || "4");
-      if (n === "3") return ["Desayuno", "Almuerzo", "Cena"];
+      if (Array.isArray(cost.comidasActivas) && cost.comidasActivas.length > 0) {
+        return [...cost.comidasActivas].sort((a, b) => (INFO_TURNOS_COMIDA[a]?.orden || 99) - (INFO_TURNOS_COMIDA[b]?.orden || 99));
+      }
+      const n = String(cost.comidasDia || comidasActivas.length || "3");
+      if (n === "2") return ["Almuerzo", "Cena"];
+      if (n === "3") return ["Almuerzo", "Merienda", "Cena"];
       if (n === "5") return ["Desayuno", "Almuerzo", "Merienda", "Cena", "Colación"];
       return ["Desayuno", "Almuerzo", "Merienda", "Cena"];
     }
