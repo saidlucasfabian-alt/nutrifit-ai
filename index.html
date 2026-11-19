@@ -36,7 +36,7 @@
           <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v11 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v12 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -2114,9 +2114,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       return [...new Set(fechas)].sort((a, b) => b.localeCompare(a));
     }
 
-    // CATALOGO CONFIGURABLE DE BEBIDAS, REGISTRO DE AGUA Y ASOCIACIÓN A COMIDAS
+    // CATALOGO CONFIGURABLE DE BEBIDAS E INFUSIONES, REGISTRO DE AGUA Y ASOCIACIÓN A COMIDAS
     const CATALOGO_BEBIDAS_DEFAULT = [
       { id: 'agua', nombre: 'Agua', icono: '💧', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0, esAgua: true },
+      { id: 'mate', nombre: 'Mate', icono: '🧉', ml: 500, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
+      { id: 'cafe', nombre: 'Café', icono: '☕', ml: 200, calorias: 5, carbos: 1, proteinas: 0, grasas: 0 },
+      { id: 'cafe_leche', nombre: 'Café con leche', icono: '🥛', ml: 250, calorias: 90, carbos: 9, proteinas: 5, grasas: 4 },
+      { id: 'te', nombre: 'Té / Infusión', icono: '🍵', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
       { id: 'jugo_light', nombre: 'Jugos light', icono: '🧃', ml: 250, calorias: 10, carbos: 2, proteinas: 0, grasas: 0 },
       { id: 'gaseosa_light', nombre: 'Gaseosas light', icono: '🥤', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
       { id: 'gaseosa_comun', nombre: 'Gaseosas comunes', icono: '🥤', ml: 250, calorias: 105, carbos: 26, proteinas: 0, grasas: 0 },
@@ -2129,15 +2133,27 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       try {
         const raw = localStorage.getItem('nutrifit_catalogo_bebidas');
         if (raw) {
-          const parsed = JSON.parse(raw);
+          let parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
             if (!parsed.some(b => b.id === 'agua' || b.esAgua)) {
-              return [ { ...CATALOGO_BEBIDAS_DEFAULT[0] }, ...parsed ];
+              parsed = [{ ...CATALOGO_BEBIDAS_DEFAULT[0] }, ...parsed];
+            }
+            if (!localStorage.getItem('nutrifit_infusiones_v12_migradas')) {
+              const idsFaltantes = ['mate', 'cafe', 'cafe_leche', 'te'];
+              const nuevas = CATALOGO_BEBIDAS_DEFAULT.filter(d => idsFaltantes.includes(d.id) && !parsed.some(p => p.id === d.id)).map(d => ({ ...d }));
+              if (nuevas.length > 0) {
+                const idxAgua = parsed.findIndex(b => b.id === 'agua' || b.esAgua);
+                if (idxAgua !== -1) parsed.splice(idxAgua + 1, 0, ...nuevas);
+                else parsed = [...nuevas, ...parsed];
+                localStorage.setItem('nutrifit_catalogo_bebidas', JSON.stringify(parsed));
+              }
+              localStorage.setItem('nutrifit_infusiones_v12_migradas', '1');
             }
             return parsed;
           }
         }
       } catch (e) {}
+      localStorage.setItem('nutrifit_infusiones_v12_migradas', '1');
       return CATALOGO_BEBIDAS_DEFAULT.map(b => ({ ...b }));
     }
 
@@ -2555,7 +2571,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     }
 
     function restaurarBebidasPorDefecto() {
-      if (!confirm("¿Restaurar las 7 bebidas predeterminadas?")) return;
+      if (!confirm("¿Restaurar las bebidas e infusiones predeterminadas?")) return;
       guardarCatalogoBebidas(CATALOGO_BEBIDAS_DEFAULT.map(b => ({ ...b })));
       renderizarModalConfigBebidas();
     }
