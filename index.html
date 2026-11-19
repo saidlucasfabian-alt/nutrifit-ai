@@ -36,7 +36,7 @@
           <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v10 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v11 ↻</button>
           </h1>
           <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
         </div>
@@ -96,7 +96,7 @@
       <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 shadow-xl relative overflow-hidden">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+            <span id="badgeMetaObjetivo" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
               Meta Hipertrofia (+12%)
             </span>
             <p class="text-xs text-slate-400 mt-1">Calorías Restantes Hoy</p>
@@ -312,6 +312,44 @@
         </div>
       </div>
 
+      <!-- BEBIDAS RÁPIDAS Y REGISTRO DE AGUA -->
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3.5">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-glass-water text-sky-400"></i> Bebidas y Agua Rápida
+            </h2>
+            <p class="text-[11px] text-slate-400">Tocá para contar vasos; las bebidas se suman a tu comida actual o reciente</p>
+          </div>
+          <button type="button" onclick="abrirModalConfigBebidas()" class="shrink-0 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl active:scale-95">
+            ⚙️ Configurar
+          </button>
+        </div>
+
+        <!-- Registro dedicado de Agua diaria -->
+        <div class="bg-sky-500/10 border border-sky-500/30 rounded-2xl p-3 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold text-sky-300">💧 Hidratación (Agua Hoy)</span>
+              <div id="aguaHoyTexto" class="text-[11px] text-slate-300 font-semibold mt-0.5">0 vasos • 0 ml (0.00 L)</div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="restarVasoBebida('agua')" class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-black text-sm active:scale-95" aria-label="Restar un vaso de agua">−</button>
+              <button type="button" onclick="sumarVasoBebida('agua')" class="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs active:scale-95 shadow-sm">
+                💧 +1 Vaso
+              </button>
+            </div>
+          </div>
+          <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+            <div id="aguaHoyBarra" class="bg-sky-400 h-full rounded-full transition-all" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Botonera configurable de bebidas (1, 2, 3 vasos...) -->
+        <div id="gridBotonesBebidas" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+        <div id="feedbackBebidaReciente" class="hidden text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3 py-2 font-semibold"></div>
+      </div>
+
       <!-- LO DEL DÍA EN LA PANTALLA PRINCIPAL -->
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
         <div class="flex items-center justify-between">
@@ -355,7 +393,7 @@
           <div id="diarioDiasConDatos" class="flex gap-1.5 overflow-x-auto no-scrollbar"></div>
         </div>
 
-        <div id="diarioResumenDia" class="grid grid-cols-4 gap-1.5 text-center bg-slate-950/70 border border-slate-800 rounded-2xl p-2.5 text-[11px]"></div>
+        <div id="diarioResumenDia" class="grid grid-cols-5 gap-1.5 text-center bg-slate-950/70 border border-slate-800 rounded-2xl p-2.5 text-[11px]"></div>
 
         <div id="listaComidasDiario" class="space-y-3">
           <!-- Se llena dinámicamente -->
@@ -736,6 +774,42 @@
       <button type="button" onclick="document.getElementById('modalVerFoto').classList.add('hidden')" class="text-lg px-2 text-slate-300">✕</button>
     </div>
     <img id="fotoModalImg" src="" alt="Comida" class="max-h-[75vh] w-full max-w-md object-contain rounded-2xl border border-slate-700">
+  </div>
+
+  <!-- MODAL CONFIGURAR BEBIDAS -->
+  <div id="modalConfigBebidas" class="hidden fixed inset-0 z-[72] bg-black/85 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-5 space-y-3.5 shadow-2xl max-h-[88vh] flex flex-col">
+      <div class="flex items-center justify-between gap-2">
+        <div>
+          <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+            🥤 Configurar Bebidas y Vasos
+          </h3>
+          <p class="text-[11px] text-slate-400">Ajustá ml, calorías y carbohidratos por vaso o agregá nuevas.</p>
+        </div>
+        <button type="button" onclick="cerrarModalConfigBebidas()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+      </div>
+
+      <div id="listaConfigBebidas" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
+
+      <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
+        <span class="text-[11px] font-bold text-emerald-400 block">+ Agregar Nueva Bebida</span>
+        <div class="grid grid-cols-4 gap-1.5 text-xs">
+          <input id="newBebIcono" type="text" value="🍹" maxlength="4" placeholder="Emoji" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-center text-white">
+          <input id="newBebNombre" type="text" placeholder="Nombre (ej: Vermut)" class="col-span-3 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white">
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-xs">
+          <input id="newBebMl" type="number" min="50" value="250" placeholder="ml/vaso" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white">
+          <input id="newBebCal" type="number" min="0" value="80" placeholder="kcal" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white">
+          <input id="newBebCarb" type="number" min="0" value="12" placeholder="carbs g" class="bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-white">
+        </div>
+        <button type="button" onclick="agregarBebidaPersonalizada()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold text-xs border border-slate-700">+ Sumar a la Botonera</button>
+      </div>
+
+      <div class="flex gap-2 pt-1">
+        <button type="button" onclick="restaurarBebidasPorDefecto()" class="px-3 py-2.5 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold">Restaurar</button>
+        <button type="button" onclick="guardarConfigBebidasModal()" class="flex-1 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold">Guardar Cambios</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL CONTROL SEMANAL OBLIGATORIO -->
@@ -1664,8 +1738,10 @@
     function construirPromptAnalisis(fuenteDesc) {
       const hora = horaActualLocal();
       const turnoAuto = slotPreseleccionado || detectarTiempoPorHora(hora);
+      const metaDesc = obtenerEtiquetaMetaObjetivo().texto;
       return `
-Sos un nutricionista deportivo de élite especializado en composición corporal e hipertrofia (Ezequiel Vedrovnik + guías médicas ISSN: 20-40g proteína por ingesta).
+Sos un nutricionista deportivo de élite especializado en composición corporal (método Ezequiel Vedrovnik + guías médicas ISSN: 20-40g proteína por ingesta).
+Objetivo actual del usuario: ${metaDesc} (meta diaria ${perfil.caloriasMeta} kcal).
 ${fuenteDesc}
 La hora de registro actual es ${hora} hs (categoría correspondiente: "${turnoAuto}").
 Si no se especifican gramos exactos en un audio o texto, estimá porciones típicas estándar (ej: Argentina) en gramos reales y calculá sus calorías y macros.
@@ -1690,7 +1766,7 @@ Devolvé ÚNICAMENTE un JSON válido con esta estructura:
     "grasas_g": 15.0
   },
   "evaluacion_muscular": {
-    "observacion": "Comentario práctico estilo coaching sobre cómo encaja este plato en hipertrofia/salud"
+    "observacion": "Comentario práctico estilo coaching sobre cómo encaja este plato en su objetivo (${metaDesc}) y salud"
   },
   "advertencias_ingredientes_ocultos": "Aclaración sobre aceites de cocción, aderezos o salsas invisibles que suman calorías"
 }
@@ -2028,11 +2104,466 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         if (k && k.startsWith('nutrifit_diario_')) {
           const f = k.replace('nutrifit_diario_', '');
           if (/^\d{4}-\d{2}-\d{2}$/.test(f) && getDiarioPorFecha(f).length > 0) fechas.push(f);
+        } else if (k && k.startsWith('nutrifit_agua_')) {
+          const f = k.replace('nutrifit_agua_', '');
+          if (/^\d{4}-\d{2}-\d{2}$/.test(f) && getAguaPorFecha(f).vasos > 0) fechas.push(f);
         }
       }
       const hoy = fechaHoyLocal();
       if (!fechas.includes(hoy)) fechas.push(hoy);
       return [...new Set(fechas)].sort((a, b) => b.localeCompare(a));
+    }
+
+    // CATALOGO CONFIGURABLE DE BEBIDAS, REGISTRO DE AGUA Y ASOCIACIÓN A COMIDAS
+    const CATALOGO_BEBIDAS_DEFAULT = [
+      { id: 'agua', nombre: 'Agua', icono: '💧', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0, esAgua: true },
+      { id: 'jugo_light', nombre: 'Jugos light', icono: '🧃', ml: 250, calorias: 10, carbos: 2, proteinas: 0, grasas: 0 },
+      { id: 'gaseosa_light', nombre: 'Gaseosas light', icono: '🥤', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
+      { id: 'gaseosa_comun', nombre: 'Gaseosas comunes', icono: '🥤', ml: 250, calorias: 105, carbos: 26, proteinas: 0, grasas: 0 },
+      { id: 'cerveza', nombre: 'Cerveza', icono: '🍺', ml: 330, calorias: 140, carbos: 12, proteinas: 1, grasas: 0 },
+      { id: 'vino', nombre: 'Vino', icono: '🍷', ml: 180, calorias: 135, carbos: 4, proteinas: 0, grasas: 0 },
+      { id: 'general', nombre: 'General', icono: '🍹', ml: 250, calorias: 80, carbos: 15, proteinas: 0, grasas: 0 }
+    ];
+
+    function obtenerCatalogoBebidas() {
+      try {
+        const raw = localStorage.getItem('nutrifit_catalogo_bebidas');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (!parsed.some(b => b.id === 'agua' || b.esAgua)) {
+              return [ { ...CATALOGO_BEBIDAS_DEFAULT[0] }, ...parsed ];
+            }
+            return parsed;
+          }
+        }
+      } catch (e) {}
+      return CATALOGO_BEBIDAS_DEFAULT.map(b => ({ ...b }));
+    }
+
+    function guardarCatalogoBebidas(lista) {
+      localStorage.setItem('nutrifit_catalogo_bebidas', JSON.stringify(lista));
+      renderizarBebidasYAguaPanel();
+    }
+
+    function getAguaPorFecha(fechaStr) {
+      const f = fechaStr || fechaHoyLocal();
+      const catAgua = obtenerCatalogoBebidas().find(b => b.id === 'agua' || b.esAgua) || { ml: 250 };
+      const mlUnitDef = Number(catAgua.ml) || 250;
+      try {
+        const raw = localStorage.getItem(`nutrifit_agua_${f}`);
+        if (raw) {
+          const d = JSON.parse(raw);
+          const vasos = Math.max(0, Number(d.vasos) || 0);
+          const totalMl = Math.max(0, Number(d.totalMl) !== undefined ? Number(d.totalMl) : vasos * mlUnitDef);
+          return { vasos, totalMl: Number.isNaN(totalMl) ? vasos * mlUnitDef : totalMl };
+        }
+      } catch (e) {}
+      return { vasos: 0, totalMl: 0 };
+    }
+
+    function setAguaPorFecha(fechaStr, data) {
+      const f = fechaStr || fechaHoyLocal();
+      localStorage.setItem(`nutrifit_agua_${f}`, JSON.stringify({
+        vasos: Math.max(0, Number(data.vasos) || 0),
+        totalMl: Math.max(0, Number(data.totalMl) || 0)
+      }));
+    }
+
+    function minutosDesdeHoraStr(horaStr) {
+      if (!horaStr || !/^\d{1,2}:\d{2}$/.test(horaStr.trim())) return null;
+      const [h, m] = horaStr.trim().split(':').map(Number);
+      if (Number.isNaN(h) || Number.isNaN(m)) return null;
+      return h * 60 + m;
+    }
+
+    function minutosPasadosDesde(horaComida, horaReferencia) {
+      const mC = minutosDesdeHoraStr(horaComida);
+      const mR = minutosDesdeHoraStr(horaReferencia);
+      if (mC === null || mR === null) return 9999;
+      return (mR - mC + 1440) % 1440;
+    }
+
+    function buscarComidaParaAsociarBebida(diario, horaRef) {
+      if (!Array.isArray(diario) || diario.length === 0) return null;
+      const hora = horaRef || horaActualLocal();
+      const turnoAhora = detectarTiempoPorHora(hora);
+
+      const candidatos = diario.map((c, idx) => {
+        const diff = minutosPasadosDesde(c.hora, hora);
+        const esReciente = (diff <= 150) || (diff >= 1410); // hasta 2.5h después (ej. cena 21:00, vino 22:00) o +30min
+        const mismoSlot = (c.tiempo || '').toLowerCase() === turnoAhora.toLowerCase();
+        const mismoPreSlot = slotPreseleccionado && (c.tiempo || '').toLowerCase() === slotPreseleccionado.toLowerCase();
+        const distReal = Math.min(diff, 1440 - diff);
+        return { c, idx, esReciente, mismoSlot, mismoPreSlot, distReal };
+      }).filter(item => {
+        if (item.mismoPreSlot) return true;
+        if ((item.c.tiempo || '').toLowerCase() === 'picoteo') {
+          return item.esReciente && item.distReal <= 60;
+        }
+        return item.esReciente || item.mismoSlot;
+      });
+
+      if (candidatos.length === 0) return null;
+      candidatos.sort((a, b) => {
+        if (Boolean(a.mismoPreSlot) !== Boolean(b.mismoPreSlot)) return a.mismoPreSlot ? -1 : 1;
+        if (Boolean(a.c.esSoloBebida) !== Boolean(b.c.esSoloBebida)) return a.c.esSoloBebida ? 1 : -1;
+        if (a.distReal !== b.distReal) return a.distReal - b.distReal;
+        return (b.c.id || 0) - (a.c.id || 0);
+      });
+      return candidatos[0].c;
+    }
+
+    function actualizarNombreSiSoloBebida(comida) {
+      if (!comida || !comida.esSoloBebida) return;
+      const list = Array.isArray(comida.bebidas) ? comida.bebidas : [];
+      comida.plato = list.map(b => `${b.icono || '🥤'} ${b.nombre} x${b.vasos}`).join(' + ') || 'Bebidas';
+    }
+
+    function aplicarDeltaBebidaEnComida(comida, bebida, deltaVasos) {
+      if (!comida || !bebida || !deltaVasos) return false;
+      comida.bebidas = Array.isArray(comida.bebidas) ? comida.bebidas : [];
+      let entry = comida.bebidas.find(x => x.id === bebida.id);
+      if (deltaVasos > 0) {
+        if (!entry) {
+          entry = {
+            id: bebida.id,
+            nombre: bebida.nombre,
+            icono: bebida.icono || '🥤',
+            vasos: 0,
+            mlUnit: Number(bebida.ml) || 250,
+            caloriasUnit: Number(bebida.calorias) || 0,
+            carbosUnit: Number(bebida.carbos) || 0,
+            proteinasUnit: Number(bebida.proteinas) || 0,
+            grasasUnit: Number(bebida.grasas) || 0
+          };
+          comida.bebidas.push(entry);
+        }
+        entry.vasos += deltaVasos;
+        comida.calorias = Math.round((Number(comida.calorias) || 0) + entry.caloriasUnit * deltaVasos);
+        comida.carbos = Math.round((Number(comida.carbos) || 0) + entry.carbosUnit * deltaVasos);
+        comida.proteinas = Math.round((Number(comida.proteinas) || 0) + entry.proteinasUnit * deltaVasos);
+        comida.grasas = Math.round((Number(comida.grasas) || 0) + entry.grasasUnit * deltaVasos);
+      } else {
+        if (!entry || entry.vasos <= 0) return false;
+        const quitar = Math.min(entry.vasos, Math.abs(deltaVasos));
+        entry.vasos -= quitar;
+        comida.calorias = Math.max(0, Math.round((Number(comida.calorias) || 0) - entry.caloriasUnit * quitar));
+        comida.carbos = Math.max(0, Math.round((Number(comida.carbos) || 0) - entry.carbosUnit * quitar));
+        comida.proteinas = Math.max(0, Math.round((Number(comida.proteinas) || 0) - entry.proteinasUnit * quitar));
+        comida.grasas = Math.max(0, Math.round((Number(comida.grasas) || 0) - entry.grasasUnit * quitar));
+        if (entry.vasos <= 0) {
+          comida.bebidas = comida.bebidas.filter(x => x.id !== bebida.id);
+        }
+      }
+      actualizarNombreSiSoloBebida(comida);
+      return true;
+    }
+
+    function absorberBebidasSueltasEnComida(comidaNueva, diario) {
+      if (!Array.isArray(diario) || diario.length === 0) return diario;
+      const restantes = [];
+      diario.forEach(item => {
+        const minDiff = Math.min(minutosPasadosDesde(item.hora, comidaNueva.hora), 1440 - minutosPasadosDesde(item.hora, comidaNueva.hora));
+        const coincideTiempo = (item.tiempo || '').toLowerCase() === (comidaNueva.tiempo || '').toLowerCase();
+        if (item.esSoloBebida && (coincideTiempo || minDiff <= 120) && Array.isArray(item.bebidas)) {
+          comidaNueva.bebidas = Array.isArray(comidaNueva.bebidas) ? comidaNueva.bebidas : [];
+          item.bebidas.forEach(b => {
+            const catMock = {
+              id: b.id, nombre: b.nombre, icono: b.icono, ml: b.mlUnit,
+              calorias: b.caloriasUnit, carbos: b.carbosUnit, proteinas: b.proteinasUnit, grasas: b.grasasUnit
+            };
+            aplicarDeltaBebidaEnComida(comidaNueva, catMock, b.vasos || 1);
+          });
+        } else {
+          restantes.push(item);
+        }
+      });
+      return restantes;
+    }
+
+    function mostrarFeedbackBebida(msg) {
+      const box = document.getElementById('feedbackBebidaReciente');
+      if (!box) return;
+      if (!msg) { box.classList.add('hidden'); box.innerText = ''; return; }
+      box.innerText = msg;
+      box.classList.remove('hidden');
+    }
+
+    function sumarVasoBebida(bebidaId, comidaIdExplicita = null, horaOverride = null) {
+      const catalogo = obtenerCatalogoBebidas();
+      const bebida = catalogo.find(b => b.id === bebidaId);
+      if (!bebida) return;
+      const hoy = fechaHoyLocal();
+
+      if (bebida.id === 'agua' || bebida.esAgua) {
+        const agua = getAguaPorFecha(hoy);
+        agua.vasos += 1;
+        agua.totalMl += (Number(bebida.ml) || 250);
+        setAguaPorFecha(hoy, agua);
+        mostrarFeedbackBebida(`💧 Agua registrada: ${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} (${(agua.totalMl / 1000).toFixed(2)} L) hoy.`);
+        actualizarDashboardDiario();
+        renderizarDiario();
+        return;
+      }
+
+      const hora = horaOverride || horaActualLocal();
+      const diario = getDiarioPorFecha(hoy);
+      let comida = comidaIdExplicita ? diario.find(x => x.id === comidaIdExplicita) : buscarComidaParaAsociarBebida(diario, hora);
+      let fueAsociada = true;
+
+      if (!comida) {
+        fueAsociada = false;
+        const turno = slotPreseleccionado || detectarTiempoPorHora(hora);
+        comida = {
+          id: Date.now() + Math.floor(Math.random() * 100),
+          tiempo: turno,
+          hora,
+          plato: `${bebida.icono || '🥤'} ${bebida.nombre} x1`,
+          calorias: 0,
+          proteinas: 0,
+          carbos: 0,
+          grasas: 0,
+          ingredientes: [],
+          tieneFoto: false,
+          esSoloBebida: true,
+          bebidas: []
+        };
+        diario.push(comida);
+      }
+
+      aplicarDeltaBebidaEnComida(comida, bebida, 1);
+      setDiarioPorFecha(hoy, diario);
+
+      const entryAct = (comida.bebidas || []).find(b => b.id === bebida.id);
+      const vasosTot = entryAct ? entryAct.vasos : 1;
+      const calBebTot = vasosTot * (Number(bebida.calorias) || 0);
+      const destinoTxt = fueAsociada
+        ? `sumado a tu ${comida.tiempo} (${comida.plato.length > 26 ? comida.plato.slice(0, 26) + '…' : comida.plato})`
+        : `registrado en ${comida.tiempo} (${hora} hs)`;
+      mostrarFeedbackBebida(`✓ ${bebida.icono} ${bebida.nombre}: ${vasosTot} vaso${vasosTot === 1 ? '' : 's'} (${calBebTot} kcal) • ${destinoTxt}`);
+
+      fechaDiarioSeleccionada = hoy;
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function restarVasoBebida(bebidaId, comidaIdExplicita = null, fechaOverride = null) {
+      const f = fechaOverride || fechaHoyLocal();
+      const catalogo = obtenerCatalogoBebidas();
+      const bebida = catalogo.find(b => b.id === bebidaId);
+      if (!bebida) return;
+
+      if (bebida.id === 'agua' || bebida.esAgua) {
+        const agua = getAguaPorFecha(f);
+        if (agua.vasos <= 0) return;
+        agua.vasos = Math.max(0, agua.vasos - 1);
+        agua.totalMl = Math.max(0, agua.totalMl - (Number(bebida.ml) || 250));
+        setAguaPorFecha(f, agua);
+        mostrarFeedbackBebida(`💧 Agua ajustada: ${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} (${(agua.totalMl / 1000).toFixed(2)} L).`);
+        actualizarDashboardDiario();
+        renderizarDiario();
+        return;
+      }
+
+      let diario = getDiarioPorFecha(f);
+      let comida = comidaIdExplicita ? diario.find(x => x.id === comidaIdExplicita) : null;
+      if (!comida) {
+        const conEsaBebida = diario.filter(c => Array.isArray(c.bebidas) && c.bebidas.some(b => b.id === bebidaId && b.vasos > 0));
+        if (conEsaBebida.length > 0) comida = conEsaBebida[conEsaBebida.length - 1];
+      }
+      if (!comida) return;
+
+      const bebidaSnapshot = (comida.bebidas || []).find(b => b.id === bebidaId);
+      const mockBebida = bebidaSnapshot
+        ? { id: bebidaSnapshot.id, nombre: bebidaSnapshot.nombre, icono: bebidaSnapshot.icono, ml: bebidaSnapshot.mlUnit, calorias: bebidaSnapshot.caloriasUnit, carbos: bebidaSnapshot.carbosUnit, proteinas: bebidaSnapshot.proteinasUnit, grasas: bebidaSnapshot.grasasUnit }
+        : bebida;
+
+      aplicarDeltaBebidaEnComida(comida, mockBebida, -1);
+      if (comida.esSoloBebida && (!comida.bebidas || comida.bebidas.length === 0)) {
+        diario = diario.filter(x => x.id !== comida.id);
+      }
+      setDiarioPorFecha(f, diario);
+      mostrarFeedbackBebida(`↺ Se quitó 1 vaso de ${bebida.icono} ${bebida.nombre}.`);
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function sumarVasoBebidaPorComida(comidaId, bebidaId, fechaStr) {
+      const f = fechaStr || fechaHoyLocal();
+      const diario = getDiarioPorFecha(f);
+      const comida = diario.find(x => x.id === comidaId);
+      if (!comida) return;
+      const bEntry = (comida.bebidas || []).find(b => b.id === bebidaId);
+      const cat = obtenerCatalogoBebidas().find(b => b.id === bebidaId);
+      const drinkObj = cat || (bEntry ? { id: bEntry.id, nombre: bEntry.nombre, icono: bEntry.icono, ml: bEntry.mlUnit, calorias: bEntry.caloriasUnit, carbos: bEntry.carbosUnit, proteinas: bEntry.proteinasUnit, grasas: bEntry.grasasUnit } : null);
+      if (!drinkObj) return;
+      aplicarDeltaBebidaEnComida(comida, drinkObj, 1);
+      setDiarioPorFecha(f, diario);
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function restarVasoBebidaPorComida(comidaId, bebidaId, fechaStr) {
+      restarVasoBebida(bebidaId, comidaId, fechaStr);
+    }
+
+    function contarVasosBebidaHoy(bebidaId) {
+      if (bebidaId === 'agua') return getAguaPorFecha(fechaHoyLocal()).vasos;
+      return getDiarioHoy().reduce((acc, c) => {
+        const b = (c.bebidas || []).find(x => x.id === bebidaId);
+        return acc + (b ? (Number(b.vasos) || 0) : 0);
+      }, 0);
+    }
+
+    function renderizarBebidasYAguaPanel() {
+      const agua = getAguaPorFecha(fechaHoyLocal());
+      const catAgua = obtenerCatalogoBebidas().find(b => b.id === 'agua' || b.esAgua) || { ml: 250 };
+      const txtEl = document.getElementById('aguaHoyTexto');
+      const barEl = document.getElementById('aguaHoyBarra');
+      if (txtEl) {
+        const litros = (agua.totalMl / 1000).toFixed(2);
+        txtEl.innerText = `${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} • ${agua.totalMl} ml (${litros} L / Meta 2.0 L)`;
+      }
+      if (barEl) {
+        const metaMl = Math.max(2000, Math.round((Number(perfil.peso) || 75) * 33));
+        barEl.style.width = Math.min(100, Math.round((agua.totalMl / metaMl) * 100)) + '%';
+      }
+
+      const grid = document.getElementById('gridBotonesBebidas');
+      if (!grid) return;
+      const catalogo = obtenerCatalogoBebidas();
+      grid.innerHTML = catalogo.map(b => {
+        const vasos = b.esAgua ? agua.vasos : contarVasosBebidaHoy(b.id);
+        const activoCls = vasos > 0
+          ? (b.esAgua ? 'border-sky-400/60 bg-sky-500/15' : 'border-emerald-500/50 bg-emerald-500/10')
+          : 'border-slate-800 bg-slate-950';
+        const badgeHtml = vasos > 0
+          ? `<span class="text-[10px] font-black px-1.5 py-0.5 rounded-md ${b.esAgua ? 'bg-sky-400 text-slate-950' : 'bg-emerald-500 text-slate-950'}">x${vasos}</span>`
+          : '';
+        const btnRestar = vasos > 0
+          ? `<button type="button" onclick="restarVasoBebida('${b.id}')" class="shrink-0 w-6 h-6 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-black text-xs flex items-center justify-center active:scale-95" title="Restar 1 vaso">−</button>`
+          : '';
+        return `
+          <div class="rounded-2xl border ${activoCls} p-2 flex items-center gap-1.5 transition">
+            <button type="button" onclick="sumarVasoBebida('${b.id}')" class="flex-1 text-left min-w-0 active:scale-95">
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-xs font-bold text-white truncate">${b.icono || '🥤'} ${b.nombre}</span>
+                ${badgeHtml}
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">
+                ${b.ml}ml • <strong class="${b.calorias === 0 ? 'text-sky-300' : 'text-amber-300'}">${b.calorias} kcal</strong>
+              </div>
+            </button>
+            ${btnRestar}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function abrirModalConfigBebidas() {
+      renderizarModalConfigBebidas();
+      document.getElementById('modalConfigBebidas')?.classList.remove('hidden');
+    }
+
+    function cerrarModalConfigBebidas() {
+      document.getElementById('modalConfigBebidas')?.classList.add('hidden');
+    }
+
+    function renderizarModalConfigBebidas() {
+      const cont = document.getElementById('listaConfigBebidas');
+      if (!cont) return;
+      const lista = obtenerCatalogoBebidas();
+      cont.innerHTML = lista.map((b, idx) => `
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-2 text-xs" data-beb-idx="${idx}" data-beb-id="${b.id}" data-beb-agua="${b.esAgua ? '1' : '0'}">
+          <div class="flex items-center gap-1.5">
+            <input type="text" data-field="icono" value="${(b.icono || '🥤').replace(/"/g, '&quot;')}" maxlength="4" class="w-10 bg-slate-900 border border-slate-700 rounded-lg px-1.5 py-1 text-center text-white">
+            <input type="text" data-field="nombre" value="${(b.nombre || '').replace(/"/g, '&quot;')}" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 font-bold text-white">
+            ${b.esAgua ? '<span class="text-[10px] text-sky-400 font-bold px-1.5">Agua</span>' : `<button type="button" onclick="eliminarBebidaConfig('${b.id}')" class="px-2 py-1 rounded-lg bg-slate-900 text-rose-400 text-[11px] font-bold" title="Eliminar bebida">🗑️</button>`}
+          </div>
+          <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+            <label class="text-slate-400">ml/vaso
+              <input type="number" data-field="ml" min="30" value="${Number(b.ml) || 250}" class="w-full mt-0.5 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white font-semibold">
+            </label>
+            <label class="text-slate-400">kcal
+              <input type="number" data-field="calorias" min="0" value="${Number(b.calorias) || 0}" class="w-full mt-0.5 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-amber-300 font-semibold">
+            </label>
+            <label class="text-slate-400">carbs (g)
+              <input type="number" data-field="carbos" min="0" value="${Number(b.carbos) || 0}" class="w-full mt-0.5 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-white font-semibold">
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function leerCatalogoDesdeModal() {
+      const filas = document.querySelectorAll('#listaConfigBebidas [data-beb-id]');
+      const orig = obtenerCatalogoBebidas();
+      const resultado = [];
+      filas.forEach(row => {
+        const id = row.dataset.bebId;
+        const prev = orig.find(x => x.id === id) || {};
+        const icono = (row.querySelector('[data-field="icono"]')?.value || '🥤').trim() || '🥤';
+        const nombre = (row.querySelector('[data-field="nombre"]')?.value || '').trim() || prev.nombre || 'Bebida';
+        const ml = Math.max(30, parseInt(row.querySelector('[data-field="ml"]')?.value, 10) || 250);
+        const calorias = Math.max(0, parseInt(row.querySelector('[data-field="calorias"]')?.value, 10) || 0);
+        const carbos = Math.max(0, parseInt(row.querySelector('[data-field="carbos"]')?.value, 10) || 0);
+        resultado.push({
+          ...prev,
+          id,
+          icono,
+          nombre,
+          ml,
+          calorias,
+          carbos,
+          proteinas: Number(prev.proteinas) || 0,
+          grasas: Number(prev.grasas) || 0,
+          esAgua: row.dataset.bebAgua === '1'
+        });
+      });
+      return resultado;
+    }
+
+    function agregarBebidaPersonalizada() {
+      const lista = leerCatalogoDesdeModal();
+      const icono = (document.getElementById('newBebIcono')?.value || '🍹').trim() || '🍹';
+      const nombreInp = document.getElementById('newBebNombre');
+      const nombre = (nombreInp?.value || '').trim();
+      if (!nombre) { alert("Escribí el nombre de la bebida."); return; }
+      const ml = Math.max(30, parseInt(document.getElementById('newBebMl')?.value, 10) || 250);
+      const calorias = Math.max(0, parseInt(document.getElementById('newBebCal')?.value, 10) || 0);
+      const carbos = Math.max(0, parseInt(document.getElementById('newBebCarb')?.value, 10) || 0);
+      lista.push({
+        id: 'beb_' + Date.now(),
+        icono,
+        nombre,
+        ml,
+        calorias,
+        carbos,
+        proteinas: 0,
+        grasas: 0
+      });
+      if (nombreInp) nombreInp.value = '';
+      guardarCatalogoBebidas(lista);
+      renderizarModalConfigBebidas();
+    }
+
+    function eliminarBebidaConfig(id) {
+      const lista = leerCatalogoDesdeModal().filter(b => b.id !== id);
+      guardarCatalogoBebidas(lista);
+      renderizarModalConfigBebidas();
+    }
+
+    function restaurarBebidasPorDefecto() {
+      if (!confirm("¿Restaurar las 7 bebidas predeterminadas?")) return;
+      guardarCatalogoBebidas(CATALOGO_BEBIDAS_DEFAULT.map(b => ({ ...b })));
+      renderizarModalConfigBebidas();
+    }
+
+    function guardarConfigBebidasModal() {
+      const lista = leerCatalogoDesdeModal();
+      guardarCatalogoBebidas(lista);
+      cerrarModalConfigBebidas();
     }
 
     function ordenarComidasCronologicamente(lista) {
@@ -2069,7 +2600,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         await guardarFotoComidaDB(id, imagenThumbUrl);
       }
 
-      const diario = getDiarioHoy();
+      let diario = getDiarioHoy();
+      diario = absorberBebidasSueltasEnComida(comida, diario);
       diario.push(comida);
       setDiarioHoy(diario);
 
@@ -2159,6 +2691,21 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const thumbHtml = c.tieneFoto
         ? `<img data-foto-id="${c.id}" onclick="verFotoComida(${c.id}, this.dataset.titulo)" data-titulo="${(c.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0 cursor-pointer">`
         : '';
+      const bebidasArr = Array.isArray(c.bebidas) ? c.bebidas.filter(b => (Number(b.vasos) || 0) > 0) : [];
+      const bebidasHtml = bebidasArr.length > 0
+        ? `<div class="flex flex-wrap gap-1 mt-1.5">` + bebidasArr.map(b => {
+            const calBeb = Math.round((Number(b.caloriasUnit) || 0) * (Number(b.vasos) || 1));
+            const mlBeb = Math.round((Number(b.mlUnit) || 250) * (Number(b.vasos) || 1));
+            const bIdSafe = String(b.id).replace(/'/g, "\\'");
+            return `
+              <span class="inline-flex items-center gap-1 text-[10px] bg-sky-500/10 border border-sky-500/25 text-sky-200 px-1.5 py-0.5 rounded-lg">
+                <span>${b.icono || '🥤'} ${b.nombre} x${b.vasos} (${mlBeb}ml${calBeb > 0 ? ` • +${calBeb} kcal` : ''})</span>
+                <button type="button" onclick="restarVasoBebidaPorComida(${c.id}, '${bIdSafe}', '${fechaStr}')" class="px-1 rounded bg-slate-900 text-slate-300 font-bold" title="Quitar 1 vaso">−</button>
+                <button type="button" onclick="sumarVasoBebidaPorComida(${c.id}, '${bIdSafe}', '${fechaStr}')" class="px-1 rounded bg-slate-900 text-emerald-400 font-bold" title="Sumar 1 vaso">+</button>
+              </span>
+            `;
+          }).join('') + `</div>`
+        : '';
       return `
         <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2.5">
           ${thumbHtml}
@@ -2173,6 +2720,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
               Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
               Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
             </p>
+            ${bebidasHtml}
           </div>
           <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
             <div>
@@ -2194,19 +2742,29 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       if (!cont) return;
       const hoy = fechaHoyLocal();
       const comidas = ordenarComidasCronologicamente(getDiarioPorFecha(hoy));
+      const agua = getAguaPorFecha(hoy);
       const slots = obtenerComidasEstablecidas();
       const turnoAhora = detectarTiempoPorHora(horaActualLocal());
 
-      if (comidas.length === 0) {
+      if (comidas.length === 0 && agua.vasos === 0) {
         cont.innerHTML = `
           <div class="text-xs text-slate-400 text-center py-3 border border-dashed border-slate-800 rounded-2xl">
-            Todavía no cargaste nada hoy (${turnoAhora} en curso).<br>Sacá una foto, grabá un audio o cargá un 🍪 picoteo arriba.
+            Todavía no cargaste nada hoy (${turnoAhora} en curso).<br>Sacá una foto, grabá un audio o sumá bebidas arriba.
           </div>
         `;
         return;
       }
 
-      let html = comidas.map(c => crearTarjetaComidaHtml(c, hoy)).join('');
+      let html = '';
+      if (agua.vasos > 0) {
+        html += `
+          <div class="bg-sky-500/10 border border-sky-500/25 rounded-2xl px-3 py-2 flex items-center justify-between text-xs">
+            <span class="font-bold text-sky-300">💧 Agua tomada hoy</span>
+            <span class="text-white font-extrabold">${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} (${(agua.totalMl / 1000).toFixed(2)} L)</span>
+          </div>
+        `;
+      }
+      html += comidas.map(c => crearTarjetaComidaHtml(c, hoy)).join('');
       const faltantes = slots.filter(s => !comidas.some(c => (c.tiempo || '').toLowerCase() === s.toLowerCase()));
       if (faltantes.length > 0) {
         html += `<div class="flex flex-wrap gap-1.5 pt-1">` + faltantes.map(s =>
@@ -2217,7 +2775,36 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       hidratarMiniaturasFotos(cont);
     }
 
+    function obtenerEtiquetaMetaObjetivo() {
+      const obj = perfil.objetivo || "ganar_masa_muscular";
+      if (obj === "definicion_perder_grasa") {
+        return {
+          texto: "🔥 Meta Pérdida de Grasa (-20%)",
+          cls: "text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/25"
+        };
+      }
+      if (obj === "mantenimiento") {
+        return {
+          texto: "⚖️ Meta Mantenimiento (Equilibrio)",
+          cls: "text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/25"
+        };
+      }
+      return {
+        texto: "💪 Meta Hipertrofia (+12%)",
+        cls: "text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20"
+      };
+    }
+
+    function renderizarObjetivoPanelPrincipal() {
+      const badge = document.getElementById('badgeMetaObjetivo');
+      if (!badge) return;
+      const info = obtenerEtiquetaMetaObjetivo();
+      badge.innerText = info.texto;
+      badge.className = info.cls;
+    }
+
     function actualizarDashboardDiario() {
+      renderizarObjetivoPanelPrincipal();
       const comidas = getDiarioHoy();
       let totCal = 0, totProt = 0, totCarb = 0, totGras = 0;
       comidas.forEach(c => {
@@ -2239,6 +2826,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / perfil.carbos) * 100)) + '%';
       document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
 
+      renderizarBebidasYAguaPanel();
       renderizarResumenHoyPrincipal();
     }
 
@@ -2341,6 +2929,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
       const resDiaEl = document.getElementById('diarioResumenDia');
       if (resDiaEl) {
+        const aguaDia = getAguaPorFecha(fecha);
         const sum = comidas.reduce((acc, c) => ({
           cal: acc.cal + (c.calorias || 0),
           prot: acc.prot + (c.proteinas || 0),
@@ -2352,6 +2941,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
           <div><span class="text-blue-400 block">Prot</span><strong class="text-white">${Math.round(sum.prot)}g</strong></div>
           <div><span class="text-amber-400 block">Carbos</span><strong class="text-white">${Math.round(sum.carb)}g</strong></div>
           <div><span class="text-rose-400 block">Grasas</span><strong class="text-white">${Math.round(sum.gras)}g</strong></div>
+          <div><span class="text-sky-400 block">💧 Agua</span><strong class="text-sky-300">${aguaDia.vasos}v (${(aguaDia.totalMl / 1000).toFixed(1)}L)</strong></div>
         `;
       }
 
@@ -2367,7 +2957,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       cont.innerHTML = '';
 
       if (!esHoy && comidas.length === 0) {
-        cont.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay comidas registradas para el ${partes[2]}/${partes[1]}/${partes[0]}.</p>`;
+        const aguaHist = getAguaPorFecha(fecha);
+        cont.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay comidas registradas para el ${partes[2]}/${partes[1]}/${partes[0]}${aguaHist.vasos > 0 ? ` (💧 ${aguaHist.vasos} vasos de agua)` : ''}.</p>`;
         return;
       }
 
@@ -2426,10 +3017,12 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
     function limpiarDiarioHoy() {
       const f = fechaDiarioSeleccionada || fechaHoyLocal();
-      if (confirm(`¿Querés vaciar todas las comidas del ${f.split('-').reverse().join('/')}?`)) {
+      if (confirm(`¿Querés vaciar todas las comidas y agua del ${f.split('-').reverse().join('/')}?`)) {
         getDiarioPorFecha(f).forEach(c => borrarFotoComidaDB(c.id));
         localStorage.removeItem(`nutrifit_diario_${f}`);
+        localStorage.removeItem(`nutrifit_agua_${f}`);
         if (f === fechaHoyLocal()) localStorage.removeItem(`nutrifit_diario_${new Date().toISOString().split('T')[0]}`);
+        mostrarFeedbackBebida('');
         actualizarDashboardDiario();
         renderizarDiario();
       }
@@ -2540,8 +3133,10 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         : "Sin comidas registradas hoy todavía.";
 
       const medInfo = perfil.bf ? ` | Composición médica: ${perfil.bf}% grasa (U.S. Navy), ${perfil.lbm}kg masa magra (${perfil.formulaBmr}), WHtR ${perfil.whtr || '-'}` : '';
+      const metaDesc = obtenerEtiquetaMetaObjetivo().texto;
       const prompt = `
-Sos un nutricionista deportivo especialista en hipertrofia y adherencia clínica (Ezequiel Vedrovnik + guías ISSN: 20-40g proteína por ingesta cada 3-4h, Katch-McArdle).
+Sos un nutricionista deportivo especialista en composición corporal y adherencia clínica (Ezequiel Vedrovnik + guías ISSN: 20-40g proteína por ingesta cada 3-4h, Katch-McArdle).
+Objetivo del usuario: ${metaDesc}.
 Armá un plan semanal de 7 días ("Lunes" a "Domingo") con exactamente estas comidas por día: ${slots.join(', ')}.
 Meta diaria: ${perfil.caloriasMeta} kcal (${perfil.proteinas}g prot, ${perfil.carbos}g carbos, ${perfil.grasas}g grasas)${medInfo}.
 Región: ${costumbres.pais || 'Argentina / Cono Sur'} | Tipo: ${costumbres.dieta || 'Omnívoro'}
@@ -2663,9 +3258,9 @@ Devolvé ÚNICAMENTE JSON:
       const carb = c.carbos_g !== undefined ? Math.round(Number(c.carbos_g)) : Math.round((restKcal * 0.65) / 4);
       const gras = c.grasas_g !== undefined ? Math.round(Number(c.grasas_g)) : Math.round((restKcal * 0.35) / 9);
 
-      const diario = getDiarioHoy();
+      let diario = getDiarioHoy();
       const horaReg = horaActualLocal();
-      diario.push({
+      const comidaNueva = {
         id: Date.now(),
         tiempo: c.nombre || detectarTiempoPorHora(horaReg),
         hora: horaReg,
@@ -2676,7 +3271,9 @@ Devolvé ÚNICAMENTE JSON:
         grasas: gras,
         ingredientes: [{ nombre: op.ingredientes || op.plato, porcion_estimada_g: 0, calorias: cal, proteinas_g: prot, carbohidratos_g: carb, grasas_g: gras }],
         tieneFoto: false
-      });
+      };
+      diario = absorberBebidasSueltasEnComida(comidaNueva, diario);
+      diario.push(comidaNueva);
       setDiarioHoy(diario);
       fechaDiarioSeleccionada = fechaHoyLocal();
       actualizarDashboardDiario();
