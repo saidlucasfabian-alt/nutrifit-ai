@@ -27,23 +27,23 @@
 
   <!-- Header Superior -->
   <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl font-black border border-emerald-500/30 shadow-lg shadow-emerald-500/10">
+    <div class="max-w-4xl mx-auto px-3 py-2 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-base font-black border border-emerald-500/30">
           <i class="fa-solid fa-fire-flame-curved"></i>
         </div>
         <div>
-          <h1 class="text-base font-extrabold tracking-tight text-white flex items-center gap-1.5">
+          <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v12 ↻</button>
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v13 ↻</button>
           </h1>
-          <p class="text-[11px] text-slate-400">Método Ezequiel Vedrovnik + Google AI Pro</p>
+          <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
       </div>
 
       <div class="flex items-center gap-2">
-        <button onclick="toggleModalSettings()" class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-sm transition">
+        <button onclick="toggleModalSettings()" class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs transition">
           <i class="fa-solid fa-gear"></i>
         </button>
       </div>
@@ -77,83 +77,80 @@
     </div>
   </div>
 
-  <main class="max-w-4xl mx-auto px-4 pt-4 space-y-6">
+  <main class="max-w-4xl mx-auto px-3 pt-2.5 space-y-3">
 
     <!-- ALERTA OBLIGATORIA DE MEDICIÓN SEMANAL -->
-    <div id="bannerControlObligatorio" class="hidden bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-lg">
+    <div id="bannerControlObligatorio" class="hidden bg-amber-500/15 border-2 border-amber-500/50 rounded-2xl p-3 flex items-center justify-between gap-2.5 shadow-lg">
       <div class="text-xs text-amber-200">
         <span class="font-extrabold text-amber-400 block">⚠️ Control Semanal Obligatorio Pendiente</span>
         <span id="textoBannerControl">Hoy es tu día fijado de medición corporal.</span>
       </div>
-      <button type="button" onclick="abrirModalControlObligatorio()" class="shrink-0 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs active:scale-95">
-        📏 Medir Ahora
+      <button type="button" onclick="abrirModalControlObligatorio()" class="shrink-0 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold px-3 py-1.5 rounded-xl text-xs active:scale-95">
+        📏 Medir
       </button>
     </div>
 
-    <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL) -->
-    <div id="sec-scanner" class="space-y-5">
-      <!-- Tarjeta Resumen Rápido de Hoy -->
-      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 shadow-xl relative overflow-hidden">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <span id="badgeMetaObjetivo" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-              Meta Hipertrofia (+12%)
-            </span>
-            <p class="text-xs text-slate-400 mt-1">Calorías Restantes Hoy</p>
-          </div>
-          <button onclick="cambiarSeccion('perfil')" class="text-[11px] text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1">
+    <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL COMPACTA) -->
+    <div id="sec-scanner" class="space-y-3">
+      <!-- Tarjeta Resumen Rápido de Hoy (Compacta) -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-lg relative overflow-hidden">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span id="badgeMetaObjetivo" class="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            Meta Hipertrofia (+12%)
+          </span>
+          <button onclick="cambiarSeccion('perfil')" class="text-[10px] text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1">
             <i class="fa-solid fa-pen-to-square"></i> Ajustar
           </button>
         </div>
 
-        <div class="flex items-baseline justify-between">
-          <div>
-            <span id="dashCalRestantes" class="text-3xl font-black text-white tracking-tight">2,982</span>
-            <span class="text-xs text-slate-400 ml-1">kcal</span>
+        <div class="flex items-baseline justify-between gap-2">
+          <div class="flex items-baseline gap-1.5">
+            <span id="dashCalRestantes" class="text-2xl font-black text-white tracking-tight leading-none">2,982</span>
+            <span class="text-[11px] text-slate-400">kcal restantes</span>
           </div>
-          <span id="dashCalConsumidas" class="text-xs font-semibold text-slate-400">0 consumidas</span>
+          <span id="dashCalConsumidas" class="text-[11px] font-semibold text-slate-400">0 consumidas</span>
         </div>
 
-        <!-- 3 Barras de Macros Principales (Foco Vedrovnik: Gramos de proteína y carbos) -->
-        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800">
+        <!-- 3 Barras de Macros Principales -->
+        <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/80">
           <div>
-            <div class="flex justify-between text-[11px] font-semibold mb-1">
-              <span class="text-blue-400">Proteína</span>
+            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+              <span class="text-blue-400">Prot</span>
               <span id="dashProtText" class="text-slate-300">0/150g</span>
             </div>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
               <div id="dashProtBar" class="bg-blue-400 h-full rounded-full transition-all" style="width: 0%"></div>
             </div>
           </div>
           <div>
-            <div class="flex justify-between text-[11px] font-semibold mb-1">
-              <span class="text-amber-400">Carbos</span>
+            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+              <span class="text-amber-400">Carbs</span>
               <span id="dashCarbText" class="text-slate-300">0/427g</span>
             </div>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
               <div id="dashCarbBar" class="bg-amber-400 h-full rounded-full transition-all" style="width: 0%"></div>
             </div>
           </div>
           <div>
-            <div class="flex justify-between text-[11px] font-semibold mb-1">
-              <span class="text-rose-400">Grasas</span>
+            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+              <span class="text-rose-400">Gras</span>
               <span id="dashGrasText" class="text-slate-300">0/75g</span>
             </div>
-            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
               <div id="dashGrasBar" class="bg-rose-400 h-full rounded-full transition-all" style="width: 0%"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Tarjeta de Escaneo con Cámara / Galería -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
+      <!-- Tarjeta de Escaneo Compacta (Foto / Galería / Picoteo / Audio / Texto) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <h2 class="text-xs font-bold text-white flex items-center gap-1.5">
             <i class="fa-solid fa-camera text-emerald-400"></i>
-            Escanear Plato
+            Cargar Comida
           </h2>
-          <span id="badgeTurnoActual" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">🕐 Ahora</span>
+          <span id="badgeTurnoActual" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🕐 Ahora</span>
         </div>
 
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
@@ -161,64 +158,60 @@
         <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="manejarArchivoAudio(event)">
 
         <!-- Banner si viene de una comida vacía o Picoteo -->
-        <div id="targetSlotBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center justify-between text-xs text-emerald-300">
+        <div id="targetSlotBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-[11px] text-emerald-300">
           <span>📌 Cargando para: <strong id="targetSlotName" class="text-emerald-400">Almuerzo</strong></span>
-          <button type="button" onclick="limpiarSlotPreseleccionado()" class="text-slate-400 hover:text-white px-1.5">✕</button>
+          <button type="button" onclick="limpiarSlotPreseleccionado()" class="text-slate-400 hover:text-white px-1">✕</button>
         </div>
 
-        <!-- Botones de captura + Picoteo rápido -->
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition">
-            <i class="fa-solid fa-camera text-lg"></i> Tomar Foto
+        <!-- Botones compactos en 1 fila: Foto, Galería y Picoteo -->
+        <div class="grid grid-cols-3 gap-1.5">
+          <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
+            <i class="fa-solid fa-camera"></i> Foto
           </button>
-          <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-4 px-4 rounded-2xl text-sm flex items-center justify-center gap-2 border border-slate-700 transition">
-            <i class="fa-regular fa-image text-lg text-emerald-400"></i> Galería
+          <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
+            <i class="fa-regular fa-image text-emerald-400"></i> Galería
+          </button>
+          <button type="button" onclick="activarModoPicoteo()" class="bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 active:scale-95 text-violet-300 font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition">
+            🍪 Picoteo
           </button>
         </div>
-        <button type="button" onclick="activarModoPicoteo()" class="w-full bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 active:scale-95 text-violet-300 font-bold py-2.5 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 transition">
-          🍪 Registrar Picoteo (a cualquier hora)
-        </button>
 
-        <!-- Carga sin foto (Audio / Voz / Texto) -->
-        <div id="seccionAudioScanner" class="bg-slate-950/70 border border-slate-800 rounded-2xl p-3 space-y-2.5">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-bold text-slate-300">¿Sin foto? Cargá por Audio o Texto</span>
-            <span class="text-[10px] text-emerald-400 font-semibold">La IA calcula gramos</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" id="btnGrabarAudio" onclick="toggleGrabacionAudio()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+        <!-- Carga compacta por Audio o Texto -->
+        <div id="seccionAudioScanner" class="bg-slate-950/70 border border-slate-800 rounded-xl p-2 space-y-1.5">
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" id="btnGrabarAudio" onclick="toggleGrabacionAudio()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-microphone"></i> Grabar Audio
             </button>
-            <button type="button" onclick="document.getElementById('audioInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-semibold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+            <button type="button" onclick="document.getElementById('audioInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-semibold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1.5 transition">
               <i class="fa-solid fa-file-audio text-amber-400"></i> Subir Audio
             </button>
           </div>
-          <div id="boxGrabandoAudio" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-xl p-2.5 flex items-center justify-between gap-2">
+          <div id="boxGrabandoAudio" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-lg p-2 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 text-xs text-rose-300 font-bold">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
               <span>Grabando... <span id="timerAudio">0s</span></span>
             </div>
             <div class="flex gap-1.5">
-              <button type="button" onclick="cancelarGrabacionAudio()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-semibold">Cancelar</button>
-              <button type="button" onclick="detenerYAnalizarAudio()" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-extrabold">⏹️ Analizar</button>
+              <button type="button" onclick="cancelarGrabacionAudio()" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-semibold">Cancelar</button>
+              <button type="button" onclick="detenerYAnalizarAudio()" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-extrabold">⏹️ Analizar</button>
             </div>
           </div>
           <div class="flex gap-1.5">
-            <input id="inputTextoComida" type="text" placeholder="O escribí qué comiste (ej: 2 huevos, 1 tostada)" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
-            <button type="button" onclick="analizarTextoComida()" class="px-3 py-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs active:scale-95">Analizar</button>
+            <input id="inputTextoComida" type="text" placeholder="O escribí qué comiste (ej: 2 huevos, 1 tostada)" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
+            <button type="button" onclick="analizarTextoComida()" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs active:scale-95">Analizar</button>
           </div>
         </div>
 
         <!-- Preview de la foto -->
-        <div id="previewContainer" class="hidden relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 max-h-64 flex items-center justify-center">
-          <img id="imagePreview" src="" alt="Comida" class="max-h-60 w-full object-cover">
-          <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] text-emerald-400 font-bold border border-slate-700">
+        <div id="previewContainer" class="hidden relative rounded-xl overflow-hidden border border-slate-700 bg-slate-950 max-h-52 flex items-center justify-center">
+          <img id="imagePreview" src="" alt="Comida" class="max-h-52 w-full object-cover">
+          <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur px-2 py-0.5 rounded-lg text-[10px] text-emerald-400 font-bold border border-slate-700">
             ✓ Foto lista
           </div>
         </div>
 
-        <button id="btnAnalizar" onclick="analizarFotoAutonoma()" disabled class="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-slate-950 font-black py-3.5 rounded-2xl text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Analizar Gramos y Macros con IA
+        <button id="btnAnalizar" onclick="analizarFotoAutonoma()" disabled class="hidden w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:hover:bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-sm">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Re-analizar Foto con IA
         </button>
 
         <div id="loadingIndicator" class="hidden py-8 text-center space-y-2">
@@ -312,58 +305,36 @@
         </div>
       </div>
 
-      <!-- BEBIDAS RÁPIDAS Y REGISTRO DE AGUA -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3.5">
+      <!-- BEBIDAS E INFUSIONES RÁPIDAS (COMPACTA, AGUA COMO UN BOTÓN MÁS) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
         <div class="flex items-center justify-between gap-2">
-          <div>
-            <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-glass-water text-sky-400"></i> Bebidas y Agua Rápida
+          <div class="flex items-center gap-2 min-w-0">
+            <h2 class="text-xs font-bold text-white flex items-center gap-1.5 shrink-0">
+              <i class="fa-solid fa-glass-water text-sky-400"></i> Bebidas
             </h2>
-            <p class="text-[11px] text-slate-400">Tocá para contar vasos; las bebidas se suman a tu comida actual o reciente</p>
+            <span id="aguaHoyTexto" class="text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-full truncate">💧 0v • 0.00L</span>
           </div>
-          <button type="button" onclick="abrirModalConfigBebidas()" class="shrink-0 text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-xl active:scale-95">
-            ⚙️ Configurar
+          <button type="button" onclick="abrirModalConfigBebidas()" class="shrink-0 text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg active:scale-95">
+            ⚙️ Config
           </button>
         </div>
 
-        <!-- Registro dedicado de Agua diaria -->
-        <div class="bg-sky-500/10 border border-sky-500/30 rounded-2xl p-3 space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <div>
-              <span class="text-xs font-extrabold text-sky-300">💧 Hidratación (Agua Hoy)</span>
-              <div id="aguaHoyTexto" class="text-[11px] text-slate-300 font-semibold mt-0.5">0 vasos • 0 ml (0.00 L)</div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="restarVasoBebida('agua')" class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-black text-sm active:scale-95" aria-label="Restar un vaso de agua">−</button>
-              <button type="button" onclick="sumarVasoBebida('agua')" class="px-3 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs active:scale-95 shadow-sm">
-                💧 +1 Vaso
-              </button>
-            </div>
-          </div>
-          <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-            <div id="aguaHoyBarra" class="bg-sky-400 h-full rounded-full transition-all" style="width: 0%"></div>
-          </div>
-        </div>
-
-        <!-- Botonera configurable de bebidas (1, 2, 3 vasos...) -->
-        <div id="gridBotonesBebidas" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
-        <div id="feedbackBebidaReciente" class="hidden text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-xl px-3 py-2 font-semibold"></div>
+        <!-- Botonera compacta de bebidas, agua e infusiones -->
+        <div id="gridBotonesBebidas" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5"></div>
+        <div id="feedbackBebidaReciente" class="hidden text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2.5 py-1.5 font-semibold"></div>
       </div>
 
       <!-- LO DEL DÍA EN LA PANTALLA PRINCIPAL -->
-      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
         <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <i class="fa-solid fa-clock text-emerald-400"></i> Lo de Hoy
-            </h2>
-            <p class="text-[11px] text-slate-400">Ordenado por horario con fotos</p>
-          </div>
+          <h2 class="text-xs font-bold text-white flex items-center gap-1.5">
+            <i class="fa-solid fa-clock text-emerald-400"></i> Lo de Hoy
+          </h2>
           <button type="button" onclick="cambiarSeccion('diario')" class="text-[11px] text-emerald-400 font-bold hover:underline">
             Ver Historial ›
           </button>
         </div>
-        <div id="listaResumenHoyPrincipal" class="space-y-2.5"></div>
+        <div id="listaResumenHoyPrincipal" class="space-y-2"></div>
       </div>
     </div>
 
@@ -1706,7 +1677,8 @@
           imagenThumbUrl = generarCanvasDataUrl(img, 540, 0.76);
           document.getElementById('imagePreview').src = dataUrl;
           document.getElementById('previewContainer').classList.remove('hidden');
-          document.getElementById('btnAnalizar').disabled = false;
+          const btnA = document.getElementById('btnAnalizar');
+          if (btnA) { btnA.disabled = false; btnA.classList.remove('hidden'); }
           // Auto-calcula automáticamente ni bien sacás o elegís la foto
           analizarFotoAutonoma();
         };
@@ -2434,16 +2406,10 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
     function renderizarBebidasYAguaPanel() {
       const agua = getAguaPorFecha(fechaHoyLocal());
-      const catAgua = obtenerCatalogoBebidas().find(b => b.id === 'agua' || b.esAgua) || { ml: 250 };
       const txtEl = document.getElementById('aguaHoyTexto');
-      const barEl = document.getElementById('aguaHoyBarra');
       if (txtEl) {
         const litros = (agua.totalMl / 1000).toFixed(2);
-        txtEl.innerText = `${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} • ${agua.totalMl} ml (${litros} L / Meta 2.0 L)`;
-      }
-      if (barEl) {
-        const metaMl = Math.max(2000, Math.round((Number(perfil.peso) || 75) * 33));
-        barEl.style.width = Math.min(100, Math.round((agua.totalMl / metaMl) * 100)) + '%';
+        txtEl.innerText = `💧 ${agua.vasos}v • ${litros}L`;
       }
 
       const grid = document.getElementById('gridBotonesBebidas');
@@ -2455,20 +2421,23 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
           ? (b.esAgua ? 'border-sky-400/60 bg-sky-500/15' : 'border-emerald-500/50 bg-emerald-500/10')
           : 'border-slate-800 bg-slate-950';
         const badgeHtml = vasos > 0
-          ? `<span class="text-[10px] font-black px-1.5 py-0.5 rounded-md ${b.esAgua ? 'bg-sky-400 text-slate-950' : 'bg-emerald-500 text-slate-950'}">x${vasos}</span>`
+          ? `<span class="text-[9px] font-black px-1 py-0.5 rounded ${b.esAgua ? 'bg-sky-400 text-slate-950' : 'bg-emerald-500 text-slate-950'} leading-none">x${vasos}</span>`
           : '';
         const btnRestar = vasos > 0
-          ? `<button type="button" onclick="restarVasoBebida('${b.id}')" class="shrink-0 w-6 h-6 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 font-black text-xs flex items-center justify-center active:scale-95" title="Restar 1 vaso">−</button>`
+          ? `<button type="button" onclick="restarVasoBebida('${b.id}')" class="shrink-0 w-5 h-5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 font-black text-[11px] flex items-center justify-center active:scale-95" title="Restar 1">−</button>`
           : '';
+        const subInfo = b.esAgua
+          ? (vasos > 0 ? `<strong class="text-sky-300">${(agua.totalMl / 1000).toFixed(2)}L</strong>` : `${b.ml}ml`)
+          : `<strong class="${b.calorias === 0 ? 'text-sky-300' : 'text-amber-300'}">${b.calorias} kcal</strong>`;
         return `
-          <div class="rounded-2xl border ${activoCls} p-2 flex items-center gap-1.5 transition">
+          <div class="rounded-xl border ${activoCls} px-2 py-1.5 flex items-center gap-1 transition">
             <button type="button" onclick="sumarVasoBebida('${b.id}')" class="flex-1 text-left min-w-0 active:scale-95">
               <div class="flex items-center justify-between gap-1">
-                <span class="text-xs font-bold text-white truncate">${b.icono || '🥤'} ${b.nombre}</span>
+                <span class="text-[11px] font-bold text-white truncate">${b.icono || '🥤'} ${b.nombre}</span>
                 ${badgeHtml}
               </div>
-              <div class="text-[10px] text-slate-400 mt-0.5">
-                ${b.ml}ml • <strong class="${b.calorias === 0 ? 'text-sky-300' : 'text-amber-300'}">${b.calorias} kcal</strong>
+              <div class="text-[9px] text-slate-400 leading-tight mt-0.5 truncate">
+                ${subInfo}
               </div>
             </button>
             ${btnRestar}
@@ -2626,7 +2595,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       imagenThumbUrl = null;
       document.getElementById('previewContainer').classList.add('hidden');
       document.getElementById('analysisResult').classList.add('hidden');
-      document.getElementById('btnAnalizar').disabled = true;
+      const btnA = document.getElementById('btnAnalizar');
+      if (btnA) { btnA.disabled = true; btnA.classList.add('hidden'); }
       const inpTxt = document.getElementById('inputTextoComida');
       if (inpTxt) inpTxt.value = '';
       fechaDiarioSeleccionada = fechaHoyLocal();
