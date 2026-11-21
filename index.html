@@ -36,7 +36,7 @@
           <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v14 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v15 ↻</button>
           </h1>
           <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
@@ -220,12 +220,15 @@
           <p class="text-xs text-slate-400">Identificando ingredientes, gramos y aceites ocultos.</p>
         </div>
 
-        <!-- Resultado del análisis -->
-        <div id="analysisResult" class="hidden pt-4 border-t border-slate-800 space-y-4">
+        <!-- Resultado del análisis (se guarda automáticamente al procesar) -->
+        <div id="analysisResult" class="hidden pt-3 border-t border-slate-800 space-y-3">
+          <div id="bannerAutoGuardado" class="bg-emerald-500/15 border border-emerald-500/35 rounded-xl px-3 py-2 text-[11px] text-emerald-200 font-semibold flex items-center justify-between gap-2">
+            <span id="textoAutoGuardado">✅ Guardado automáticamente. Podés ajustar fecha, hora o gramos abajo.</span>
+          </div>
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
               <span id="dishCategory" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Almuerzo</span>
-              <input id="dishName" type="text" value="Plato detectado" oninput="if(ultimoResultado) ultimoResultado.plato = this.value;" class="w-full bg-transparent border-b border-slate-800 focus:border-emerald-500 focus:outline-none text-lg font-extrabold text-white mt-1 pb-0.5" aria-label="Nombre del plato">
+              <input id="dishName" type="text" value="Plato detectado" oninput="if(ultimoResultado){ ultimoResultado.plato = this.value; sincronizarAutoGuardadoEnVivo(); }" class="w-full bg-transparent border-b border-slate-800 focus:border-emerald-500 focus:outline-none text-lg font-extrabold text-white mt-1 pb-0.5" aria-label="Nombre del plato">
             </div>
             <div class="text-right shrink-0">
               <span id="totalCalories" class="text-2xl font-black text-emerald-400">0</span>
@@ -288,18 +291,26 @@
             </div>
           </div>
 
-          <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center gap-2">
-            <input type="time" id="guardarHoraComida" onchange="alCambiarHoraGuardar(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-3 text-xs text-emerald-400 font-bold" aria-label="Hora de la comida">
-            <select id="guardarTiempoComida" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-3 text-xs text-white">
-              <option value="Desayuno">🌅 Desayuno</option>
-              <option value="Almuerzo" selected>☀️ Almuerzo</option>
-              <option value="Merienda">☕ Merienda</option>
-              <option value="Cena">🌙 Cena</option>
-              <option value="Colaciones">🍎 Colaciones</option>
-            </select>
-            <button onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition">
-              <i class="fa-solid fa-bookmark"></i> Guardar
-            </button>
+          <div class="pt-3 border-t border-slate-800 space-y-2">
+            <div class="grid grid-cols-3 gap-1.5">
+              <input type="date" id="guardarFechaComida" onchange="alCambiarFechaGuardar(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2 py-2.5 text-[11px] text-white font-bold" aria-label="Fecha de la comida">
+              <input type="time" id="guardarHoraComida" onchange="alCambiarHoraGuardar(this.value)" class="bg-slate-950 border border-slate-700 rounded-xl px-2 py-2.5 text-[11px] text-emerald-400 font-bold" aria-label="Hora de la comida">
+              <select id="guardarTiempoComida" onchange="sincronizarAutoGuardadoEnVivo()" class="bg-slate-950 border border-slate-700 rounded-xl px-2 py-2.5 text-[11px] text-white">
+                <option value="Desayuno">🌅 Desayuno</option>
+                <option value="Almuerzo" selected>☀️ Almuerzo</option>
+                <option value="Merienda">☕ Merienda</option>
+                <option value="Cena">🌙 Cena</option>
+                <option value="Colaciones">🍎 Colaciones</option>
+              </select>
+            </div>
+            <div class="flex gap-2">
+              <button type="button" onclick="descartarAnalisisAutoGuardado()" class="px-3.5 py-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 font-bold text-xs active:scale-95">
+                🗑️ Descartar
+              </button>
+              <button type="button" onclick="guardarComidaLocal()" class="flex-1 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
+                <i class="fa-solid fa-check"></i> Listo / Guardar ajustes
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -700,6 +711,12 @@
         <label class="text-[11px] text-slate-400 col-span-2">Nombre del plato
           <input id="editPlato" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
         </label>
+        <div class="col-span-2 flex items-end gap-2">
+          <label class="text-[11px] text-slate-400 flex-1">Fecha
+            <input id="editFecha" type="date" onchange="alCambiarFechaEdicion(this.value)" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white font-bold">
+          </label>
+          <button type="button" onclick="moverEditorAAyer()" class="px-3 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold text-xs active:scale-95 shrink-0" title="Mover este registro al día de ayer">← Ayer</button>
+        </div>
         <label class="text-[11px] text-slate-400">Momento
           <select id="editTiempo" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
             <option value="Desayuno">Desayuno</option>
@@ -830,6 +847,9 @@
     let imagenBase64 = null;
     let imagenThumbUrl = null;
     let ultimoResultado = null;
+    let ultimaComidaAutoGuardadaId = null;
+    let ultimaComidaAutoGuardadaFecha = null;
+    let fechaPreseleccionada = null;
     let slotPreseleccionado = null;
     let mediaRecorder = null;
     let audioChunks = [];
@@ -934,19 +954,53 @@
 
     function alCambiarHoraGuardar(horaVal) {
       const sel = document.getElementById('guardarTiempoComida');
-      if (!sel || sel.value === 'Colaciones') return;
-      const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(horaVal), horaVal, getDiarioHoy());
-      sel.value = res.tiempo;
-      const catEl = document.getElementById('dishCategory');
-      if (catEl) catEl.innerText = res.tiempo;
+      const fechaSel = document.getElementById('guardarFechaComida')?.value || ultimaComidaAutoGuardadaFecha || fechaHoyLocal();
+      if (sel && sel.value !== 'Colaciones') {
+        const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(horaVal), horaVal, getDiarioPorFecha(fechaSel), ultimaComidaAutoGuardadaId);
+        sel.value = res.tiempo;
+        const catEl = document.getElementById('dishCategory');
+        if (catEl) catEl.innerText = res.tiempo;
+      }
+      sincronizarAutoGuardadoEnVivo();
+    }
+
+    function alCambiarFechaGuardar(nuevaFecha) {
+      if (!nuevaFecha) return;
+      const horaVal = document.getElementById('guardarHoraComida')?.value || horaActualLocal();
+      const sel = document.getElementById('guardarTiempoComida');
+      if (sel && sel.value !== 'Colaciones') {
+        const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(horaVal), horaVal, getDiarioPorFecha(nuevaFecha), ultimaComidaAutoGuardadaId);
+        sel.value = res.tiempo;
+        const catEl = document.getElementById('dishCategory');
+        if (catEl) catEl.innerText = res.tiempo;
+      }
+      sincronizarAutoGuardadoEnVivo();
     }
 
     function alCambiarHoraEdicion(horaVal) {
       const sel = document.getElementById('editTiempo');
       if (!sel || sel.value === 'Colaciones' || sel.value === 'Hidratación') return;
-      const f = comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
+      const f = document.getElementById('editFecha')?.value || comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
       const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(horaVal), horaVal, getDiarioPorFecha(f), comidaEditandoId);
       sel.value = res.tiempo;
+    }
+
+    function alCambiarFechaEdicion(nuevaFecha) {
+      if (!nuevaFecha) return;
+      const sel = document.getElementById('editTiempo');
+      const horaVal = document.getElementById('editHora')?.value || "12:00";
+      if (sel && sel.value !== 'Colaciones' && sel.value !== 'Hidratación') {
+        const res = resolverTiempoSinDuplicados(sel.value, horaVal, getDiarioPorFecha(nuevaFecha), comidaEditandoId);
+        sel.value = res.tiempo;
+      }
+    }
+
+    function moverEditorAAyer() {
+      const inp = document.getElementById('editFecha');
+      if (!inp) return;
+      const ayer = fechaRelativaLocal(-1);
+      inp.value = ayer;
+      alCambiarFechaEdicion(ayer);
     }
 
     // ALMACENAMIENTO DE FOTOS DE COMIDAS EN INDEXEDDB (EVITA LLENAR LOCALSTORAGE)
@@ -2180,10 +2234,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
             if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
 
             const horaAhora = horaActualLocal();
+            const fechaObjetivo = fechaPreseleccionada || fechaHoyLocal();
             ultimoResultado = JSON.parse(texto.trim());
             ultimoResultado.hora = horaAhora;
+            ultimoResultado.fecha = fechaObjetivo;
             const propuesto = slotPreseleccionado || detectarTiempoPorHora(horaAhora);
-            ultimoResultado.tiempo_comida = resolverTiempoSinDuplicados(propuesto, horaAhora, getDiarioHoy()).tiempo;
+            ultimoResultado.tiempo_comida = resolverTiempoSinDuplicados(propuesto, horaAhora, getDiarioPorFecha(fechaObjetivo)).tiempo;
+            await autoGuardarComidaAnalizada(ultimoResultado, fechaObjetivo);
             mostrarResultados(ultimoResultado);
             exito = true;
             break;
@@ -2323,11 +2380,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
     function limpiarSlotPreseleccionado() {
       slotPreseleccionado = null;
+      fechaPreseleccionada = null;
       const b = document.getElementById('targetSlotBanner');
       if (b) b.classList.add('hidden');
     }
 
     function mostrarResultados(data) {
+      const fechaMostrar = data.fecha || ultimaComidaAutoGuardadaFecha || fechaPreseleccionada || fechaHoyLocal();
       document.getElementById('dishCategory').innerText = data.tiempo_comida || 'Almuerzo';
       document.getElementById('dishName').value = data.plato || 'Plato analizado';
       document.getElementById('totalCalories').innerText = Math.round(data.totales?.calorias || 0);
@@ -2335,6 +2394,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('totalCarbs').innerText = Math.round(data.totales?.carbohidratos_g || 0) + 'g';
       document.getElementById('totalFats').innerText = Math.round(data.totales?.grasas_g || 0) + 'g';
 
+      const fechaInp = document.getElementById('guardarFechaComida');
+      if (fechaInp) fechaInp.value = fechaMostrar;
       const selTiempo = document.getElementById('guardarTiempoComida');
       if (selTiempo && data.tiempo_comida) {
         const match = Array.from(selTiempo.options).find(o => o.value.toLowerCase() === data.tiempo_comida.toLowerCase().trim());
@@ -2342,6 +2403,16 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }
       const horaInp = document.getElementById('guardarHoraComida');
       if (horaInp) horaInp.value = data.hora || horaActualLocal();
+
+      const txtAuto = document.getElementById('textoAutoGuardado');
+      if (txtAuto) {
+        const fp = fechaMostrar.split('-');
+        const fBonita = fp.length === 3 ? `${fp[2]}/${fp[1]}` : fechaMostrar;
+        const hBonita = data.hora || horaActualLocal();
+        txtAuto.innerText = ultimaComidaAutoGuardadaId
+          ? `✅ Guardado automático (${fBonita} • ${hBonita} hs). Podés ajustar fecha, hora o gramos.`
+          : `Revisá fecha, hora o gramos y tocá Listo para guardar.`;
+      }
 
       if (data.evaluacion_muscular) {
         document.getElementById('muscleEvaluation').innerText = data.evaluacion_muscular.observacion || 'Aporte nutricional completo';
@@ -2399,6 +2470,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         grasas_g: Math.round(tot.grasas_g)
       };
       mostrarResultados(ultimoResultado);
+      sincronizarAutoGuardadoEnVivo();
     }
 
     function actualizarGramosIngrediente(idx, nuevosGramos) {
@@ -2423,21 +2495,21 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       recalcularTotalesScan();
     }
 
-    // PERSISTENCIA LOCAL DEL DIARIO E HISTORIAL POR FECHA
+    // PERSISTENCIA LOCAL DEL DIARIO E HISTORIAL POR FECHA (SIEMPRE HORA LOCAL, SIN CRUCE UTC)
     function fechaHoyLocal() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
+    function fechaRelativaLocal(deltaDias = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + deltaDias);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
     function getDiarioPorFecha(fechaStr) {
       const f = fechaStr || fechaHoyLocal();
-      let guardado = localStorage.getItem(`nutrifit_diario_${f}`);
-      if (!guardado && f === fechaHoyLocal()) {
-        const hoyUtc = new Date().toISOString().split('T')[0];
-        if (hoyUtc !== f && localStorage.getItem(`nutrifit_diario_${hoyUtc}`)) {
-          guardado = localStorage.getItem(`nutrifit_diario_${hoyUtc}`);
-        }
-      }
+      const guardado = localStorage.getItem(`nutrifit_diario_${f}`);
       try {
         const arr = guardado ? JSON.parse(guardado) : [];
         if (!Array.isArray(arr)) return [];
@@ -2483,11 +2555,11 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       { id: 'agua', nombre: 'Agua', icono: '💧', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0, esAgua: true },
       { id: 'mate', nombre: 'Mate', icono: '🧉', ml: 500, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
       { id: 'cafe', nombre: 'Café', icono: '☕', ml: 200, calorias: 5, carbos: 1, proteinas: 0, grasas: 0 },
-      { id: 'cafe_leche', nombre: 'Café con leche', icono: '🥛', ml: 250, calorias: 90, carbos: 9, proteinas: 5, grasas: 4 },
-      { id: 'te', nombre: 'Té / Infusión', icono: '🍵', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
-      { id: 'jugo_light', nombre: 'Jugos light', icono: '🧃', ml: 250, calorias: 10, carbos: 2, proteinas: 0, grasas: 0 },
-      { id: 'gaseosa_light', nombre: 'Gaseosas light', icono: '🥤', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
-      { id: 'gaseosa_comun', nombre: 'Gaseosas comunes', icono: '🥤', ml: 250, calorias: 105, carbos: 26, proteinas: 0, grasas: 0 },
+      { id: 'cafe_leche', nombre: 'Café c/leche', icono: '🥛', ml: 250, calorias: 90, carbos: 9, proteinas: 5, grasas: 4 },
+      { id: 'te', nombre: 'Té', icono: '🍵', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
+      { id: 'jugo_light', nombre: 'Jugo light', icono: '🧃', ml: 250, calorias: 10, carbos: 2, proteinas: 0, grasas: 0 },
+      { id: 'gaseosa_light', nombre: 'Gaseosa Zero', icono: '🥤', ml: 250, calorias: 0, carbos: 0, proteinas: 0, grasas: 0 },
+      { id: 'gaseosa_comun', nombre: 'Gaseosa Común', icono: '🥤', ml: 250, calorias: 105, carbos: 26, proteinas: 0, grasas: 0 },
       { id: 'cerveza', nombre: 'Cerveza', icono: '🍺', ml: 330, calorias: 140, carbos: 12, proteinas: 1, grasas: 0 },
       { id: 'vino', nombre: 'Vino', icono: '🍷', ml: 180, calorias: 135, carbos: 4, proteinas: 0, grasas: 0 },
       { id: 'general', nombre: 'General', icono: '🍹', ml: 250, calorias: 80, carbos: 15, proteinas: 0, grasas: 0 }
@@ -2513,11 +2585,28 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
               }
               localStorage.setItem('nutrifit_infusiones_v12_migradas', '1');
             }
+            if (!localStorage.getItem('nutrifit_bebidas_nombres_v15')) {
+              const mapaCorto = {
+                'Café con leche': 'Café c/leche',
+                'Té / Infusión': 'Té',
+                'Jugos light': 'Jugo light',
+                'Gaseosas light': 'Gaseosa Zero',
+                'Gaseosas comunes': 'Gaseosa Común'
+              };
+              let cambio = false;
+              parsed = parsed.map(b => {
+                if (mapaCorto[b.nombre]) { cambio = true; return { ...b, nombre: mapaCorto[b.nombre] }; }
+                return b;
+              });
+              if (cambio) localStorage.setItem('nutrifit_catalogo_bebidas', JSON.stringify(parsed));
+              localStorage.setItem('nutrifit_bebidas_nombres_v15', '1');
+            }
             return parsed;
           }
         }
       } catch (e) {}
       localStorage.setItem('nutrifit_infusiones_v12_migradas', '1');
+      localStorage.setItem('nutrifit_bebidas_nombres_v15', '1');
       return CATALOGO_BEBIDAS_DEFAULT.map(b => ({ ...b }));
     }
 
@@ -3012,28 +3101,28 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       });
     }
 
-    async function guardarComidaLocal() {
-      if (!ultimoResultado) return;
-      const tiempoSeleccionado = document.getElementById('guardarTiempoComida').value;
-      const hora = document.getElementById('guardarHoraComida')?.value || ultimoResultado.hora || horaActualLocal();
-      const nombrePlato = (document.getElementById('dishName').value || '').trim() || ultimoResultado.plato || 'Comida';
+    async function autoGuardarComidaAnalizada(data, fechaDestino) {
+      if (!data) return null;
+      const fecha = fechaDestino || fechaPreseleccionada || fechaHoyLocal();
+      const hora = data.hora || horaActualLocal();
+      let diario = getDiarioPorFecha(fecha);
+      const resol = resolverTiempoSinDuplicados(data.tiempo_comida || detectarTiempoPorHora(hora), hora, diario);
+      data.tiempo_comida = resol.tiempo;
+      data.fecha = fecha;
+      data.hora = hora;
+
       const id = Date.now();
       const tieneFoto = Boolean(imagenThumbUrl);
-
-      let diario = getDiarioHoy();
-      const resolucion = resolverTiempoSinDuplicados(tiempoSeleccionado, hora, diario);
-      const tiempoFinal = resolucion.tiempo;
-
       const comida = {
         id,
-        tiempo: tiempoFinal,
+        tiempo: resol.tiempo,
         hora,
-        plato: nombrePlato,
-        calorias: Math.round(ultimoResultado.totales?.calorias || 0),
-        proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
-        carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
-        grasas: Math.round(ultimoResultado.totales?.grasas_g || 0),
-        ingredientes: ultimoResultado.ingredientes || [],
+        plato: (data.plato || '').trim() || 'Comida',
+        calorias: Math.round(data.totales?.calorias || 0),
+        proteinas: Math.round(data.totales?.proteinas_g || 0),
+        carbos: Math.round(data.totales?.carbohidratos_g || 0),
+        grasas: Math.round(data.totales?.grasas_g || 0),
+        ingredientes: data.ingredientes || [],
         tieneFoto
       };
 
@@ -3043,28 +3132,161 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
       diario = absorberBebidasSueltasEnComida(comida, diario);
       diario.push(comida);
-      setDiarioHoy(diario);
+      setDiarioPorFecha(fecha, diario);
 
+      ultimaComidaAutoGuardadaId = id;
+      ultimaComidaAutoGuardadaFecha = fecha;
+      fechaDiarioSeleccionada = fecha;
+      actualizarDashboardDiario();
+      renderizarDiario();
+      return comida;
+    }
+
+    function sincronizarAutoGuardadoEnVivo(notificarReasignacion = false) {
+      if (!ultimaComidaAutoGuardadaId || !ultimaComidaAutoGuardadaFecha || !ultimoResultado) return null;
+      const fechaVieja = ultimaComidaAutoGuardadaFecha;
+      const fechaNueva = document.getElementById('guardarFechaComida')?.value || fechaVieja;
+      const horaNueva = document.getElementById('guardarHoraComida')?.value || ultimoResultado.hora || horaActualLocal();
+      const tiempoSel = document.getElementById('guardarTiempoComida')?.value || ultimoResultado.tiempo_comida;
+      const platoNuevo = (document.getElementById('dishName')?.value || '').trim() || ultimoResultado.plato || 'Comida';
+
+      let diarioViejo = getDiarioPorFecha(fechaVieja);
+      const idx = diarioViejo.findIndex(x => x.id === ultimaComidaAutoGuardadaId);
+      if (idx === -1) return null;
+      const c = diarioViejo[idx];
+
+      const diarioDestino = (fechaNueva === fechaVieja) ? diarioViejo : getDiarioPorFecha(fechaNueva);
+      const resol = resolverTiempoSinDuplicados(tiempoSel, horaNueva, diarioDestino, c.id);
+
+      c.tiempo = resol.tiempo;
+      c.hora = horaNueva;
+      c.plato = platoNuevo;
+      c.calorias = Math.round(ultimoResultado.totales?.calorias || 0);
+      c.proteinas = Math.round(ultimoResultado.totales?.proteinas_g || 0);
+      c.carbos = Math.round(ultimoResultado.totales?.carbohidratos_g || 0);
+      c.grasas = Math.round(ultimoResultado.totales?.grasas_g || 0);
+      c.ingredientes = ultimoResultado.ingredientes || [];
+
+      if (fechaNueva !== fechaVieja) {
+        diarioViejo = diarioViejo.filter(x => x.id !== c.id);
+        setDiarioPorFecha(fechaVieja, diarioViejo);
+        diarioDestino.push(c);
+        setDiarioPorFecha(fechaNueva, diarioDestino);
+        ultimaComidaAutoGuardadaFecha = fechaNueva;
+      } else {
+        setDiarioPorFecha(fechaVieja, diarioViejo);
+      }
+
+      ultimoResultado.fecha = fechaNueva;
+      ultimoResultado.hora = horaNueva;
+      ultimoResultado.tiempo_comida = resol.tiempo;
+
+      const selT = document.getElementById('guardarTiempoComida');
+      if (selT) selT.value = resol.tiempo;
+      const catEl = document.getElementById('dishCategory');
+      if (catEl) catEl.innerText = resol.tiempo;
+      const txtAuto = document.getElementById('textoAutoGuardado');
+      if (txtAuto) {
+        const fp = fechaNueva.split('-');
+        const fBonita = fp.length === 3 ? `${fp[2]}/${fp[1]}` : fechaNueva;
+        txtAuto.innerText = `✅ Guardado automático (${fBonita} • ${horaNueva} hs • ${resol.tiempo}).`;
+      }
+
+      fechaDiarioSeleccionada = fechaNueva;
+      actualizarDashboardDiario();
+      renderizarDiario();
+      if (notificarReasignacion && resol.reasignado) alert(resol.motivo);
+      return resol;
+    }
+
+    function descartarAnalisisAutoGuardado() {
+      if (ultimaComidaAutoGuardadaId && ultimaComidaAutoGuardadaFecha) {
+        const f = ultimaComidaAutoGuardadaFecha;
+        const diario = getDiarioPorFecha(f).filter(x => x.id !== ultimaComidaAutoGuardadaId);
+        setDiarioPorFecha(f, diario);
+        borrarFotoComidaDB(ultimaComidaAutoGuardadaId);
+      }
+      ultimaComidaAutoGuardadaId = null;
+      ultimaComidaAutoGuardadaFecha = null;
+      ultimoResultado = null;
       limpiarSlotPreseleccionado();
       imagenBase64 = null;
       imagenThumbUrl = null;
       document.getElementById('previewContainer').classList.add('hidden');
       document.getElementById('analysisResult').classList.add('hidden');
+      const dn = document.getElementById('dishName');
+      if (dn) dn.value = '';
       const btnA = document.getElementById('btnAnalizar');
       if (btnA) { btnA.disabled = true; btnA.classList.add('hidden'); }
       const inpTxt = document.getElementById('inputTextoComida');
       if (inpTxt) inpTxt.value = '';
-      fechaDiarioSeleccionada = fechaHoyLocal();
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    async function guardarComidaLocal() {
+      if (!ultimoResultado) return;
+
+      let resolucion = { tiempo: document.getElementById('guardarTiempoComida')?.value || 'Colaciones', reasignado: false, motivo: '' };
+      if (ultimaComidaAutoGuardadaId && ultimaComidaAutoGuardadaFecha) {
+        const resSync = sincronizarAutoGuardadoEnVivo(false);
+        if (resSync) resolucion = resSync;
+      } else {
+        const fechaElegida = document.getElementById('guardarFechaComida')?.value || fechaPreseleccionada || fechaHoyLocal();
+        const tiempoSeleccionado = document.getElementById('guardarTiempoComida').value;
+        const hora = document.getElementById('guardarHoraComida')?.value || ultimoResultado.hora || horaActualLocal();
+        const nombrePlato = (document.getElementById('dishName').value || '').trim() || ultimoResultado.plato || 'Comida';
+        const id = Date.now();
+        const tieneFoto = Boolean(imagenThumbUrl);
+
+        let diario = getDiarioPorFecha(fechaElegida);
+        resolucion = resolverTiempoSinDuplicados(tiempoSeleccionado, hora, diario);
+
+        const comida = {
+          id,
+          tiempo: resolucion.tiempo,
+          hora,
+          plato: nombrePlato,
+          calorias: Math.round(ultimoResultado.totales?.calorias || 0),
+          proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
+          carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
+          grasas: Math.round(ultimoResultado.totales?.grasas_g || 0),
+          ingredientes: ultimoResultado.ingredientes || [],
+          tieneFoto
+        };
+
+        if (tieneFoto) {
+          await guardarFotoComidaDB(id, imagenThumbUrl);
+        }
+
+        diario = absorberBebidasSueltasEnComida(comida, diario);
+        diario.push(comida);
+        setDiarioPorFecha(fechaElegida, diario);
+        fechaDiarioSeleccionada = fechaElegida;
+      }
+
+      ultimaComidaAutoGuardadaId = null;
+      ultimaComidaAutoGuardadaFecha = null;
+      ultimoResultado = null;
+      limpiarSlotPreseleccionado();
+      imagenBase64 = null;
+      imagenThumbUrl = null;
+      document.getElementById('previewContainer').classList.add('hidden');
+      document.getElementById('analysisResult').classList.add('hidden');
+      const dn = document.getElementById('dishName');
+      if (dn) dn.value = '';
+      const btnA = document.getElementById('btnAnalizar');
+      if (btnA) { btnA.disabled = true; btnA.classList.add('hidden'); }
+      const inpTxt = document.getElementById('inputTextoComida');
+      if (inpTxt) inpTxt.value = '';
       actualizarDashboardDiario();
       renderizarDiario();
       if (resolucion.reasignado) {
-        alert(`¡Comida guardada en ${tiempoFinal}!\n(${resolucion.motivo})`);
-      } else {
-        alert(`¡Comida guardada en ${tiempoFinal}!`);
+        alert(`¡Registro actualizado en ${resolucion.tiempo}!\n(${resolucion.motivo})`);
       }
     }
 
-    // EDITAR / BORRAR COMIDAS (FUNCIONA PARA HOY Y DÍAS ANTERIORES)
+    // EDITAR / BORRAR COMIDAS (FUNCIONA PARA HOY Y DÍAS ANTERIORES, CON CAMBIO DE FECHA)
     let comidaEditandoId = null;
     let comidaEditandoFecha = null;
 
@@ -3074,6 +3296,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       if (!c) return;
       comidaEditandoId = id;
       comidaEditandoFecha = f;
+      const editFechaEl = document.getElementById('editFecha');
+      if (editFechaEl) editFechaEl.value = f;
       document.getElementById('editTiempo').value = normalizarTiempoComida(c.tiempo);
       document.getElementById('editHora').value = c.hora || INFO_TURNOS_COMIDA[c.tiempo]?.horaDefault || "12:00";
       document.getElementById('editPlato').value = c.plato;
@@ -3103,15 +3327,20 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     }
 
     function guardarEdicionComida() {
-      const f = comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
-      const diario = getDiarioPorFecha(f);
-      const c = diario.find(x => x.id === comidaEditandoId);
+      const fechaOrigen = comidaEditandoFecha || fechaDiarioSeleccionada || fechaHoyLocal();
+      const fechaDestino = document.getElementById('editFecha')?.value || fechaOrigen;
+      let diarioOrigen = getDiarioPorFecha(fechaOrigen);
+      const c = diarioOrigen.find(x => x.id === comidaEditandoId);
       if (!c) return cerrarEditorComida();
+
       const tiempoElegido = document.getElementById('editTiempo').value;
       const horaElegida = document.getElementById('editHora')?.value || c.hora || "12:00";
+      const diarioDestino = (fechaDestino === fechaOrigen) ? diarioOrigen : getDiarioPorFecha(fechaDestino);
+
       const resol = c.esBloqueHidratacion
-        ? { tiempo: normalizarTiempoComida(tiempoElegido), reasignado: false }
-        : resolverTiempoSinDuplicados(tiempoElegido, horaElegida, diario, c.id);
+        ? { tiempo: normalizarTiempoComida(tiempoElegido), reasignado: false, motivo: '' }
+        : resolverTiempoSinDuplicados(tiempoElegido, horaElegida, diarioDestino, c.id);
+
       c.tiempo = resol.tiempo;
       c.hora = horaElegida;
       c.plato = document.getElementById('editPlato').value.trim() || c.plato;
@@ -3119,7 +3348,16 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       c.proteinas = parseFloat(document.getElementById('editProt').value) || 0;
       c.carbos = parseFloat(document.getElementById('editCarb').value) || 0;
       c.grasas = parseFloat(document.getElementById('editGras').value) || 0;
-      setDiarioPorFecha(f, diario);
+
+      if (fechaDestino !== fechaOrigen) {
+        diarioOrigen = diarioOrigen.filter(x => x.id !== c.id);
+        setDiarioPorFecha(fechaOrigen, diarioOrigen);
+        diarioDestino.push(c);
+        setDiarioPorFecha(fechaDestino, diarioDestino);
+      } else {
+        setDiarioPorFecha(fechaOrigen, diarioOrigen);
+      }
+
       cerrarEditorComida();
       actualizarDashboardDiario();
       renderizarDiario();
@@ -3211,10 +3449,10 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
               ${horaTag}
             </div>
             <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5">
-              Prot: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
-              Carbos: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
-              Grasas: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
+            <p class="text-[11px] text-slate-400 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+              P: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
+              C: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
+              G: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
             </p>
             ${bebidasHtml}
           </div>
@@ -3442,7 +3680,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
       if (!esHoy && comidas.length === 0) {
         const aguaHist = getAguaPorFecha(fecha);
-        cont.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No hay comidas registradas para el ${partes[2]}/${partes[1]}/${partes[0]}${aguaHist.vasos > 0 ? ` (💧 ${aguaHist.vasos} vasos de agua)` : ''}.</p>`;
+        cont.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No hay comidas registradas para el ${partes[2]}/${partes[1]}/${partes[0]}${aguaHist.vasos > 0 ? ` (💧 ${aguaHist.vasos} vasos de agua)` : ''}.</p>`;
+        const pastBtnEmpty = document.createElement('button');
+        pastBtnEmpty.type = 'button';
+        pastBtnEmpty.onclick = () => irACargarEnFecha(fecha);
+        pastBtnEmpty.className = 'w-full py-2.5 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-bold active:scale-95';
+        pastBtnEmpty.innerText = `📅 + Cargar comida olvidada del ${partes[2]}/${partes[1]}`;
+        cont.appendChild(pastBtnEmpty);
         return;
       }
 
@@ -3504,9 +3748,28 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         colBtn.className = 'w-full py-2.5 rounded-2xl border border-dashed border-violet-500/40 bg-violet-500/10 text-violet-300 text-xs font-bold active:scale-95';
         colBtn.innerText = '🍎 + Agregar Colación (entre comidas)';
         cont.appendChild(colBtn);
+      } else {
+        const pastBtn = document.createElement('button');
+        pastBtn.type = 'button';
+        pastBtn.onclick = () => irACargarEnFecha(fecha);
+        pastBtn.className = 'w-full py-2.5 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-bold active:scale-95';
+        pastBtn.innerText = `📅 + Cargar comida olvidada del ${partes[2]}/${partes[1]}`;
+        cont.appendChild(pastBtn);
       }
 
       hidratarMiniaturasFotos(cont);
+    }
+
+    function irACargarEnFecha(fechaStr) {
+      fechaPreseleccionada = fechaStr || fechaHoyLocal();
+      slotPreseleccionado = null;
+      const p = fechaPreseleccionada.split('-');
+      const banner = document.getElementById('targetSlotBanner');
+      const nameEl = document.getElementById('targetSlotName');
+      if (nameEl) nameEl.innerText = `📅 Día ${p[2]}/${p[1]}/${p[0]} (se guarda en esa fecha)`;
+      if (banner) banner.classList.remove('hidden');
+      cambiarSeccion('scanner');
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
     }
 
     function activarModoColacionesYIr() {
@@ -3521,7 +3784,6 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         getDiarioPorFecha(f).forEach(c => borrarFotoComidaDB(c.id));
         localStorage.removeItem(`nutrifit_diario_${f}`);
         localStorage.removeItem(`nutrifit_agua_${f}`);
-        if (f === fechaHoyLocal()) localStorage.removeItem(`nutrifit_diario_${new Date().toISOString().split('T')[0]}`);
         mostrarFeedbackBebida('');
         actualizarDashboardDiario();
         renderizarDiario();
