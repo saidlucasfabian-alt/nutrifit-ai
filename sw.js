@@ -1,5 +1,5 @@
-﻿// v14: busca primero la versión nueva en internet y fuerza recarga en clientes viejos
-const CACHE_NAME = 'nutrifit-v14';
+﻿// v15: busca primero la versión nueva en internet y fuerza recarga en clientes viejos
+const CACHE_NAME = 'nutrifit-v15';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
