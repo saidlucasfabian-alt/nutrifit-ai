@@ -36,7 +36,7 @@
           <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v16 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v17 ↻</button>
           </h1>
           <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
@@ -81,6 +81,15 @@
           </button>
         </div>
         <p class="text-[10px] text-slate-500">Guardá el archivo en Google Drive o WhatsApp para recuperar todo si cambiás de teléfono.</p>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 space-y-1">
+        <span class="text-xs font-bold text-white flex items-center gap-1.5">
+          <i class="fa-solid fa-bolt text-amber-400"></i> Accesos Rápidos (Tipo Widget)
+        </span>
+        <p class="text-[10px] text-slate-400 leading-relaxed">
+          En Android/Samsung, <strong>mantené apretado el ícono de NutriFit AI</strong> en tu pantalla de inicio y arrastrá afuera los accesos <strong>💧 +1 Agua</strong> y <strong>📷 Foto Plato</strong> para usarlos con 1 toque.
+        </p>
       </div>
 
       <div class="flex gap-2 pt-2">
@@ -157,6 +166,32 @@
               <div id="dashGrasBar" class="bg-rose-400 h-full rounded-full transition-all" style="width: 0%"></div>
             </div>
           </div>
+        </div>
+
+        <!-- Meta Diaria de Hidratación con Descuento (EFSA / NASEM / BHI) -->
+        <div class="mt-2 pt-2 border-t border-slate-800/80 space-y-1">
+          <div class="flex items-center justify-between gap-2 text-[10px]">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span id="dashAguaRestante" class="font-extrabold text-sky-300 truncate">💧 Faltan 2.60 L</span>
+              <span id="dashAguaDesglose" class="text-[9px] text-slate-400 truncate hidden sm:inline"></span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span id="dashAguaConsumida" class="text-slate-300 font-semibold">0.00 / 2.60 L</span>
+              <button type="button" onclick="sumarVasoBebida('agua')" class="px-1.5 py-0.5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 font-extrabold text-[10px] active:scale-95" title="Sumar 1 vaso de agua">+💧</button>
+            </div>
+          </div>
+          <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div id="dashAguaBar" class="bg-sky-400 h-full rounded-full transition-all" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast de Acceso Rápido / Shortcut (💧 +1 Agua / 📷 Foto) -->
+      <div id="toastAccesoRapido" class="hidden bg-sky-500/15 border border-sky-400/50 rounded-2xl p-3 flex items-center justify-between gap-2 text-xs text-sky-100 shadow-lg">
+        <span id="toastAccesoTexto" class="font-bold"></span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="btnToastCamara" type="button" onclick="document.getElementById('cameraInput').click(); document.getElementById('toastAccesoRapido').classList.add('hidden');" class="hidden bg-emerald-500 text-slate-950 font-extrabold px-3 py-1.5 rounded-xl text-xs active:scale-95">📷 Abrir Cámara</button>
+          <button type="button" onclick="document.getElementById('toastAccesoRapido').classList.add('hidden')" class="text-slate-300 px-1.5 font-bold">✕</button>
         </div>
       </div>
 
@@ -798,6 +833,11 @@
         <button type="button" onclick="cerrarModalConfigBebidas()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
       </div>
 
+      <label class="bg-sky-500/10 border border-sky-500/30 rounded-2xl p-2.5 flex items-center gap-2.5 text-[11px] text-sky-100 cursor-pointer">
+        <input type="checkbox" id="chkContarInfusiones" onchange="toggleContarInfusionesEnMeta(this.checked)" class="rounded accent-sky-400 w-4 h-4 shrink-0">
+        <span><strong>Contar Mate, Té y Café sin azúcar</strong> en la meta diaria de agua <span class="text-slate-400 block text-[10px]">Avalado por EFSA / NASEM / BHI (alcohol y gaseosas comunes nunca suman)</span></span>
+      </label>
+
       <div id="listaConfigBebidas" class="space-y-2.5 overflow-y-auto pr-1 flex-1"></div>
 
       <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3 space-y-2">
@@ -1226,6 +1266,7 @@
       fechaDiarioSeleccionada = fechaActiva;
       actualizarBadgeTurnoActual();
       actualizarDashboardDiario();
+      procesarAccionUrlShortcut();
       verificarControlSemanalObligatorio(true);
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) { verificarCambioDeDia(); actualizarBadgeTurnoActual(); verificarControlSemanalObligatorio(false); }
@@ -1423,6 +1464,7 @@
         else estadoWhtr = `<span class="text-rose-400 font-bold">${med.whtr} (Riesgo alto)</span>`;
       }
       const protKg = (perfil.proteinas / (perfil.peso || 75)).toFixed(1);
+      const metaAguaL = (calcularMetaAguaDiariaMl() / 1000).toFixed(2);
       box.innerHTML = `
         <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
           <span class="font-bold text-emerald-400">🩺 Evaluación Médica (ISSN + U.S. Navy)</span>
@@ -1435,6 +1477,7 @@
           <div><span class="text-slate-400">Masa Magra:</span> <strong class="text-emerald-400">${med.lbm !== null ? med.lbm + ' kg' : '-'}</strong></div>
           <div class="col-span-2"><span class="text-slate-400">Índice Cintura/Altura:</span> ${estadoWhtr}</div>
           <div class="col-span-2 text-slate-400">Proteína objetivo: <strong class="text-blue-400">${perfil.proteinas}g/día (${protKg} g/kg)</strong> • Dosis ISSN: 20–40g cada 3–4h</div>
+          <div class="col-span-2 text-slate-400">💧 Meta hídrica diaria: <strong class="text-sky-300">${metaAguaL} L/día</strong> <span class="text-[10px]">(30–35 ml/kg + actividad${perfil.objetivo === 'definicion_perder_grasa' ? ' + apoyo déficit' : ''} • EFSA/BHI)</span></div>
         </div>
       `;
     }
@@ -1494,11 +1537,11 @@
 
       fechas.forEach(f => {
         const comidas = getDiarioPorFecha(f);
-        const agua = getAguaPorFecha(f);
-        if (agua.vasos > 0) {
+        const hidDia = calcularHidratacionPorFecha(f);
+        if (hidDia.totalEfectivoMl > 0) {
           diasConAgua++;
-          sumAguaMl += agua.totalMl;
-          sumAguaVasos += agua.vasos;
+          sumAguaMl += hidDia.totalEfectivoMl;
+          sumAguaVasos += hidDia.vasosAgua;
         }
         const ingestasSolidas = comidas.filter(c => !c.esBloqueHidratacion && !c.esSoloBebida);
         const bloquesLiq = comidas.filter(c => c.esBloqueHidratacion || c.esSoloBebida);
@@ -1549,7 +1592,7 @@
       const promPrincipales = diasConComida ? Math.round((totalPrincipales / divCom) * 10) / 10 : 0;
       const promColaciones = diasConComida ? Math.round((totalColaciones / divCom) * 10) / 10 : 0;
 
-      const metaAguaMl = Math.max(2000, Math.round((Number(perfil.peso) || 75) * 33));
+      const metaAguaMl = calcularMetaAguaDiariaMl();
       const pctCal = perfil.caloriasMeta ? Math.round((promCal / perfil.caloriasMeta) * 100) : 0;
       const pctProt = perfil.proteinas ? Math.round((promProt / perfil.proteinas) * 100) : 0;
       const pctCarb = perfil.carbos ? Math.round((promCarb / perfil.carbos) * 100) : 0;
@@ -3043,12 +3086,129 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }, 0);
     }
 
+    // CÁLCULO MÉDICO DE META HÍDRICA DIARIA (30-35 ml/kg + ACTIVIDAD + DÉFICIT • EFSA / NASEM / BHI)
+    function contarInfusionesEnMetaAgua() {
+      const saved = localStorage.getItem('nutrifit_contar_infusiones');
+      return saved === null ? true : saved === '1';
+    }
+
+    function toggleContarInfusionesEnMeta(activo) {
+      localStorage.setItem('nutrifit_contar_infusiones', activo ? '1' : '0');
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function calcularMetaAguaDiariaMl() {
+      const peso = Number(perfil.peso) || 75;
+      const med = calcularMetricasMedicas(perfil);
+      // En IMC >= 30 se usa 30 ml/kg (el tejido adiposo retiene menos agua); en resto 35 ml/kg
+      const basePorKg = (med.imc && med.imc >= 30) ? 30 : 35;
+      let meta = peso * basePorKg;
+      const extrasAct = { sedentario: 0, ligero: 250, moderado: 450, intenso: 750 };
+      meta += (extrasAct[perfil.actividad] !== undefined ? extrasAct[perfil.actividad] : 350);
+      if (perfil.objetivo === 'definicion_perder_grasa') meta += 250; // Apoyo saciedad pre-comida en pérdida de peso
+      meta = Math.round(meta / 50) * 50;
+      return Math.min(4500, Math.max(2000, meta));
+    }
+
+    function factorHidratacionBebida(bebidaId) {
+      if (bebidaId === 'agua') return 1.0;
+      if (!contarInfusionesEnMetaAgua()) return 0;
+      // Basado en Beverage Hydration Index (Maughan) + EFSA/NASEM:
+      // Té, mate y café hidratan casi igual que el agua (efecto diurético leve no genera pérdida neta).
+      // Alcohol (cerveza/vino) y gaseosas azucaradas NO suman a la meta saludable.
+      const factores = {
+        te: 1.0,
+        mate: 0.9,
+        cafe: 0.9,
+        cafe_leche: 0.85,
+        jugo_light: 0.85,
+        gaseosa_light: 0.85,
+        cerveza: 0,
+        vino: 0,
+        gaseosa_comun: 0,
+        general: 0
+      };
+      return factores[bebidaId] !== undefined ? factores[bebidaId] : 0;
+    }
+
+    function calcularHidratacionPorFecha(fechaStr) {
+      const f = fechaStr || fechaHoyLocal();
+      const metaMl = calcularMetaAguaDiariaMl();
+      const agua = getAguaPorFecha(f);
+      const aguaPuraMl = Number(agua.totalMl) || 0;
+      let infusionesMl = 0;
+      if (contarInfusionesEnMetaAgua()) {
+        const diario = getDiarioPorFecha(f);
+        diario.forEach(c => {
+          (c.bebidas || []).forEach(b => {
+            if (b.id === 'agua') return;
+            const factor = factorHidratacionBebida(b.id);
+            if (factor > 0) {
+              infusionesMl += Math.round((Number(b.mlUnit) || 250) * (Number(b.vasos) || 0) * factor);
+            }
+          });
+        });
+      }
+      const totalEfectivoMl = aguaPuraMl + infusionesMl;
+      const restanteMl = Math.max(0, metaMl - totalEfectivoMl);
+      const pct = metaMl > 0 ? Math.min(100, Math.round((totalEfectivoMl / metaMl) * 100)) : 0;
+      return { metaMl, aguaPuraMl, infusionesMl, totalEfectivoMl, restanteMl, pct, vasosAgua: agua.vasos };
+    }
+
+    function mostrarToastAccesoRapido(texto, mostrarCamara = false) {
+      const box = document.getElementById('toastAccesoRapido');
+      const txt = document.getElementById('toastAccesoTexto');
+      const btnCam = document.getElementById('btnToastCamara');
+      if (!box || !txt) return;
+      txt.innerText = texto;
+      if (btnCam) btnCam.classList.toggle('hidden', !mostrarCamara);
+      box.classList.remove('hidden');
+      if (!mostrarCamara) {
+        setTimeout(() => box.classList.add('hidden'), 6000);
+      }
+    }
+
+    function procesarAccionUrlShortcut() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const accion = (params.get('accion') || '').toLowerCase().trim();
+        if (!accion) return;
+        // Limpiar query para que recargar no vuelva a ejecutar la acción
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        cambiarSeccion('scanner');
+        if (accion === 'agua') {
+          sumarVasoBebida('agua');
+          const hid = calcularHidratacionPorFecha(fechaHoyLocal());
+          const restTxt = hid.restanteMl > 0 ? `Te faltan ${(hid.restanteMl / 1000).toFixed(2)} L` : '¡Meta diaria cumplida!';
+          mostrarToastAccesoRapido(`💧 +1 Vaso de Agua sumado (${(hid.totalEfectivoMl / 1000).toFixed(2)}/${(hid.metaMl / 1000).toFixed(2)} L) • ${restTxt}`, false);
+        } else if (accion === 'mate') {
+          sumarVasoBebida('mate');
+          const hid = calcularHidratacionPorFecha(fechaHoyLocal());
+          mostrarToastAccesoRapido(`🧉 +1 Mate sumado • Hidratación: ${(hid.totalEfectivoMl / 1000).toFixed(2)}/${(hid.metaMl / 1000).toFixed(2)} L`, false);
+        } else if (accion === 'colacion') {
+          activarModoColaciones();
+          mostrarToastAccesoRapido('🍎 Modo Colaciones listo para cargar foto, audio o texto.', false);
+        } else if (accion === 'foto') {
+          mostrarToastAccesoRapido('📷 Acceso directo a Foto listo:', true);
+          setTimeout(() => {
+            try { document.getElementById('cameraInput')?.click(); } catch (e) {}
+          }, 180);
+        }
+      } catch (e) {}
+    }
+
     function renderizarBebidasYAguaPanel() {
-      const agua = getAguaPorFecha(fechaHoyLocal());
+      const hoy = fechaHoyLocal();
+      const agua = getAguaPorFecha(hoy);
+      const hid = calcularHidratacionPorFecha(hoy);
       const txtEl = document.getElementById('aguaHoyTexto');
       if (txtEl) {
-        const litros = (agua.totalMl / 1000).toFixed(2);
-        txtEl.innerText = `💧 ${agua.vasos}v • ${litros}L`;
+        const litrosTot = (hid.totalEfectivoMl / 1000).toFixed(2);
+        const metaL = (hid.metaMl / 1000).toFixed(1);
+        txtEl.innerText = `💧 ${litrosTot}/${metaL}L`;
       }
 
       const grid = document.getElementById('gridBotonesBebidas');
@@ -3065,9 +3225,10 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         const btnRestar = vasos > 0
           ? `<button type="button" onclick="restarVasoBebida('${b.id}')" class="shrink-0 w-5 h-5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 font-black text-[11px] flex items-center justify-center active:scale-95" title="Restar 1">−</button>`
           : '';
+        const sumaHid = factorHidratacionBebida(b.id) > 0 && !b.esAgua;
         const subInfo = b.esAgua
           ? (vasos > 0 ? `<strong class="text-sky-300">${(agua.totalMl / 1000).toFixed(2)}L</strong>` : `${b.ml}ml`)
-          : `<strong class="${b.calorias === 0 ? 'text-sky-300' : 'text-amber-300'}">${b.calorias} kcal</strong>`;
+          : `<strong class="${b.calorias === 0 ? 'text-sky-300' : 'text-amber-300'}">${b.calorias} kcal</strong>${sumaHid ? ' <span class="text-sky-400">•💧</span>' : ''}`;
         return `
           <div class="rounded-xl border ${activoCls} px-2 py-1.5 flex items-center gap-1 transition">
             <button type="button" onclick="sumarVasoBebida('${b.id}')" class="flex-1 text-left min-w-0 active:scale-95">
@@ -3086,6 +3247,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     }
 
     function abrirModalConfigBebidas() {
+      const chk = document.getElementById('chkContarInfusiones');
+      if (chk) chk.checked = contarInfusionesEnMetaAgua();
       renderizarModalConfigBebidas();
       document.getElementById('modalConfigBebidas')?.classList.remove('hidden');
     }
@@ -4113,6 +4276,34 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('dashProtBar').style.width = Math.min(100, Math.round((totProt / perfil.proteinas) * 100)) + '%';
       document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / perfil.carbos) * 100)) + '%';
       document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
+
+      // Meta diaria de agua con descuento (tipo calorías)
+      const hid = calcularHidratacionPorFecha(fechaHoyLocal());
+      const restEl = document.getElementById('dashAguaRestante');
+      const consEl = document.getElementById('dashAguaConsumida');
+      const desgEl = document.getElementById('dashAguaDesglose');
+      const barAgua = document.getElementById('dashAguaBar');
+      if (restEl) {
+        if (hid.restanteMl <= 0) {
+          restEl.innerText = '✅ Meta hídrica cumplida';
+          restEl.className = 'font-extrabold text-emerald-400 truncate';
+        } else {
+          restEl.innerText = `💧 Faltan ${(hid.restanteMl / 1000).toFixed(2)} L`;
+          restEl.className = 'font-extrabold text-sky-300 truncate';
+        }
+      }
+      if (consEl) {
+        consEl.innerText = `${(hid.totalEfectivoMl / 1000).toFixed(2)} / ${(hid.metaMl / 1000).toFixed(2)} L`;
+      }
+      if (desgEl) {
+        desgEl.innerText = hid.infusionesMl > 0
+          ? `(Agua ${(hid.aguaPuraMl / 1000).toFixed(2)}L + Infus. ${(hid.infusionesMl / 1000).toFixed(2)}L)`
+          : '';
+      }
+      if (barAgua) {
+        barAgua.style.width = hid.pct + '%';
+        barAgua.className = (hid.restanteMl <= 0 ? 'bg-emerald-400' : 'bg-sky-400') + ' h-full rounded-full transition-all';
+      }
 
       renderizarBebidasYAguaPanel();
       renderizarResumenHoyPrincipal();
