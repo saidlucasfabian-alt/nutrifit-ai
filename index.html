@@ -36,7 +36,7 @@
           <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v15 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v16 ↻</button>
           </h1>
           <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
@@ -64,6 +64,23 @@
       <div>
         <label class="text-xs font-semibold text-slate-300 mb-1 block">Tu Clave de Gemini API:</label>
         <input type="password" id="inputApiKey" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-emerald-400 font-mono">
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 space-y-2">
+        <span class="text-xs font-bold text-white flex items-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-down text-sky-400"></i> Respaldo de tus Datos
+        </span>
+        <input type="text" id="inputNombreUsuario" placeholder="Tu nombre (ej: Lucas)" oninput="localStorage.setItem('nutrifit_usuario_nombre', this.value.trim())" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+        <input type="file" id="importBackupInput" accept="application/json,.json" class="hidden" onchange="importarRespaldoLocal(event)">
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="exportarRespaldoLocal()" class="bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 font-bold py-2 px-2.5 rounded-xl text-[11px] active:scale-95">
+            💾 Exportar (.json)
+          </button>
+          <button type="button" onclick="document.getElementById('importBackupInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-2 px-2.5 rounded-xl text-[11px] active:scale-95">
+            📥 Restaurar
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500">Guardá el archivo en Google Drive o WhatsApp para recuperar todo si cambiás de teléfono.</p>
       </div>
 
       <div class="flex gap-2 pt-2">
@@ -358,9 +375,14 @@
             </h2>
             <p id="fechaDiarioLabel" class="text-[11px] text-emerald-400 font-semibold mt-0.5">Hoy • Se reinicia automático a las 00:00</p>
           </div>
-          <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300 shrink-0">
-            Vaciar Día
-          </button>
+          <div class="flex items-center gap-2 shrink-0">
+            <button type="button" onclick="reagruparTodoElHistorial(false)" class="text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-2.5 py-1.5 rounded-xl active:scale-95" title="Reagrupar comidas cercanas de hoy y días anteriores">
+              🧩 Reagrupar
+            </button>
+            <button onclick="limpiarDiarioHoy()" class="text-[11px] text-rose-400 hover:text-rose-300">
+              Vaciar Día
+            </button>
+          </div>
         </div>
 
         <!-- Selector de fecha e historial de días anteriores -->
@@ -848,6 +870,7 @@
     let imagenThumbUrl = null;
     let ultimoResultado = null;
     let ultimaComidaAutoGuardadaId = null;
+    let ultimaSubItemAutoGuardadoId = null;
     let ultimaComidaAutoGuardadaFecha = null;
     let fechaPreseleccionada = null;
     let slotPreseleccionado = null;
@@ -867,9 +890,9 @@
     const INFO_TURNOS_COMIDA = {
       "Desayuno":    { orden: 1, icono: "🌅", franja: "04:00 – 10:59", horaDefault: "08:30", principal: true },
       "Almuerzo":    { orden: 2, icono: "☀️", franja: "11:00 – 14:59", horaDefault: "13:00", principal: true },
-      "Merienda":    { orden: 3, icono: "☕", franja: "15:00 – 19:29", horaDefault: "17:30", principal: true },
-      "Cena":        { orden: 4, icono: "🌙", franja: "19:30 – 03:59", horaDefault: "21:00", principal: true },
-      "Colaciones":  { orden: 5, icono: "🍎", franja: "Entre comidas", horaDefault: "16:00", principal: false },
+      "Merienda":    { orden: 3, icono: "☕", franja: "15:00 – 19:59", horaDefault: "17:30", principal: true },
+      "Cena":        { orden: 4, icono: "🌙", franja: "20:00 – 03:59", horaDefault: "21:00", principal: true },
+      "Colaciones":  { orden: 5, icono: "🍎", franja: "Entre comidas", horaDefault: "19:00", principal: false },
       "Hidratación": { orden: 6, icono: "💧", franja: "Colación líquida", horaDefault: "15:00", principal: false }
     };
 
@@ -917,8 +940,8 @@
       const mins = (h * 60) + m;
       if (mins >= 240 && mins < 660) return "Desayuno";   // 04:00 - 10:59
       if (mins >= 660 && mins < 900) return "Almuerzo";   // 11:00 - 14:59
-      if (mins >= 900 && mins < 1170) return "Merienda";  // 15:00 - 19:29
-      return "Cena";                                      // 19:30 - 03:59
+      if (mins >= 900 && mins < 1200) return "Merienda";  // 15:00 - 19:59
+      return "Cena";                                      // 20:00 - 03:59
     }
 
     function existeComidaPrincipalEnDiario(tiempo, diario, excluirId = null) {
@@ -1182,8 +1205,16 @@
       renderizarChipsCostumbres();
       renderizarChipsTurnosComida();
 
-      // Cargar clave API en input
+      // Cargar clave API y nombre de usuario para respaldo
       document.getElementById('inputApiKey').value = getApiKey();
+      const inpNom = document.getElementById('inputNombreUsuario');
+      if (inpNom) inpNom.value = localStorage.getItem('nutrifit_usuario_nombre') || '';
+
+      // Reagrupación retroactiva única de v16 (consolida comidas cercanas de hoy y días anteriores)
+      if (!localStorage.getItem('nutrifit_reagrupado_v16')) {
+        try { reagruparTodoElHistorial(true); } catch (e) {}
+        localStorage.setItem('nutrifit_reagrupado_v16', '1');
+      }
 
       // Cargar plan semanal y evaluaciones semanales guardadas
       cargarYRenderizarPlanGuardado();
@@ -1214,6 +1245,59 @@
         alert("Clave guardada con éxito.");
         toggleModalSettings();
       }
+    }
+
+    function exportarRespaldoLocal() {
+      const nombre = (localStorage.getItem('nutrifit_usuario_nombre') || 'usuario').replace(/[^a-zA-Z0-9_-]/g, '_');
+      const datos = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('nutrifit_') && k !== 'nutrifit_api_key') {
+          datos[k] = localStorage.getItem(k);
+        }
+      }
+      const payload = {
+        app: 'NutriFit AI',
+        version: 'v16',
+        usuario: nombre,
+        exportadoEn: new Date().toISOString(),
+        datos
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `nutrifit_${nombre}_${fechaHoyLocal()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function importarRespaldoLocal(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const datos = parsed.datos || parsed;
+          if (!datos || typeof datos !== 'object') throw new Error('Archivo inválido');
+          let cant = 0;
+          Object.entries(datos).forEach(([k, v]) => {
+            if (k.startsWith('nutrifit_') && typeof v === 'string') {
+              localStorage.setItem(k, v);
+              cant++;
+            }
+          });
+          alert(`✅ Respaldo restaurado (${cant} bloques de datos). La app se recargará para mostrar tu historial.`);
+          window.location.reload();
+        } catch (err) {
+          alert("No se pudo leer el archivo de respaldo: " + (err.message || "formato inválido"));
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
     }
 
     function cambiarSeccion(seccion) {
@@ -2146,19 +2230,33 @@
     // ANÁLISIS DIRECTO AUTÓNOMO CON GEMINI (FOTO, AUDIO O TEXTO)
     function construirPromptAnalisis(fuenteDesc) {
       const hora = horaActualLocal();
+      const fechaObj = fechaPreseleccionada || fechaHoyLocal();
+      const diarioObj = getDiarioPorFecha(fechaObj).filter(c => !c.esBloqueHidratacion && !c.esSoloBebida);
       const propuesto = slotPreseleccionado || detectarTiempoPorHora(hora);
-      const turnoAuto = resolverTiempoSinDuplicados(propuesto, hora, getDiarioHoy()).tiempo;
+      const turnoAuto = resolverTiempoSinDuplicados(propuesto, hora, diarioObj).tiempo;
       const metaDesc = obtenerEtiquetaMetaObjetivo().texto;
+      const resumenPrevias = diarioObj.length
+        ? diarioObj.map(c => `- ID ${c.id}: ${c.tiempo} (${c.hora}${c.horaFin ? '-' + c.horaFin : ''} hs) → "${c.plato}"`).join('\n')
+        : 'Ninguna comida sólida cargada todavía en este día.';
       return `
 Sos un nutricionista deportivo de élite especializado en composición corporal (método Ezequiel Vedrovnik + guías médicas ISSN: 20-40g proteína por ingesta).
 Objetivo actual del usuario: ${metaDesc} (meta diaria ${perfil.caloriasMeta} kcal).
 ${fuenteDesc}
-La hora de registro actual es ${hora} hs (categoría estricta por horario sin duplicar comidas principales: "${turnoAuto}", sin importar si es comida salada o dulce).
+Hora actual de carga: ${hora} hs (categoría sugerida por horario: "${turnoAuto}").
+Comidas ya cargadas hoy:
+${resumenPrevias}
+
+REGLA DE AGRUPACIÓN INTELIGENTE (MUY IMPORTANTE):
+- Si este alimento/bebida/postre/entrada forma parte de una misma comida ya iniciada hoy (por ejemplo: picada + plato principal + postre + bebida dentro de la Cena 20:00-00:30 o del Almuerzo 11:00-14:59, o 2 fotos de la misma Colación dentro de 60 minutos), devolvé "agrupar_con_id" con el ID numérico de esa comida y "tiempo_comida" igual al de esa comida.
+- Si es una comida o colación separada en otro momento del día, devolvé "agrupar_con_id": null.
+- Clasificá "rol_en_comida" en una palabra corta: "Entrada", "Principal", "Postre", "Bebida" o "Colación".
 Si no se especifican gramos exactos en un audio o texto, estimá porciones típicas estándar (ej: Argentina) en gramos reales y calculá sus calorías y macros.
 Devolvé ÚNICAMENTE un JSON válido con esta estructura:
 {
   "plato": "Nombre representativo del plato",
   "tiempo_comida": "${turnoAuto}",
+  "agrupar_con_id": null,
+  "rol_en_comida": "Principal",
   "ingredientes": [
     {
       "nombre": "Alimento",
@@ -2661,7 +2759,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       // Si es una bebida o infusión aislada fuera de horario de comida, NO la forzamos a una comida vieja:
       // se guarda en un bloque compacto cronológico de "Hidratación" (Opción A).
       const candidatos = diario.filter(c => !c.esBloqueHidratacion && !c.esSoloBebida).map((c, idx) => {
-        const diff = minutosPasadosDesde(c.hora, hora);
+        const diff = minutosPasadosDesde(c.horaFin || c.hora, hora);
         const esReciente = (diff <= 90) || (diff >= 1410);
         const mismoPreSlot = slotPreseleccionado && normalizarTiempoComida(c.tiempo) === normalizarTiempoComida(slotPreseleccionado);
         const distReal = Math.min(diff, 1440 - diff);
@@ -3101,23 +3199,349 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       });
     }
 
+    // MOTOR HÍBRIDO DE CONSOLIDACIÓN DE COMIDAS (FRANJAS + PROXIMIDAD + IA + REAGRUPACIÓN RETROACTIVA)
+    function distanciaMinutosCircular(horaA, horaB) {
+      const d = minutosPasadosDesde(horaA, horaB);
+      if (d >= 9000) return 9999;
+      return Math.min(d, 1440 - d);
+    }
+
+    function asegurarSubItems(comida) {
+      if (!comida) return [];
+      if (!Array.isArray(comida.subItems) || comida.subItems.length === 0) {
+        const bebidas = Array.isArray(comida.bebidas) ? comida.bebidas : [];
+        let bebCal = 0, bebProt = 0, bebCarb = 0, bebGras = 0;
+        bebidas.forEach(b => {
+          const v = Number(b.vasos) || 0;
+          bebCal += (Number(b.caloriasUnit) || 0) * v;
+          bebProt += (Number(b.proteinasUnit) || 0) * v;
+          bebCarb += (Number(b.carbosUnit) || 0) * v;
+          bebGras += (Number(b.grasasUnit) || 0) * v;
+        });
+        comida.subItems = [{
+          id: comida.id,
+          hora: comida.hora || horaActualLocal(),
+          plato: comida.plato || 'Comida',
+          rol: comida.rol || '',
+          calorias: Math.max(0, Math.round((Number(comida.calorias) || 0) - bebCal)),
+          proteinas: Math.max(0, Math.round((Number(comida.proteinas) || 0) - bebProt)),
+          carbos: Math.max(0, Math.round((Number(comida.carbos) || 0) - bebCarb)),
+          grasas: Math.max(0, Math.round((Number(comida.grasas) || 0) - bebGras)),
+          ingredientes: Array.isArray(comida.ingredientes) ? comida.ingredientes : [],
+          tieneFoto: Boolean(comida.tieneFoto)
+        }];
+      }
+      return comida.subItems;
+    }
+
+    function recalcularTotalesDeComidaConsolidada(comida) {
+      if (!comida || !Array.isArray(comida.subItems) || comida.subItems.length === 0) return comida;
+      comida.subItems.sort((a, b) => {
+        const ka = claveOrdenCronologico(a.hora, comida.tiempo);
+        const kb = claveOrdenCronologico(b.hora, comida.tiempo);
+        return ka !== kb ? ka - kb : (a.id || 0) - (b.id || 0);
+      });
+
+      let cal = 0, prot = 0, carb = 0, gras = 0;
+      comida.subItems.forEach(s => {
+        cal += Number(s.calorias) || 0;
+        prot += Number(s.proteinas) || 0;
+        carb += Number(s.carbos) || 0;
+        gras += Number(s.grasas) || 0;
+      });
+      (comida.bebidas || []).forEach(b => {
+        const v = Number(b.vasos) || 0;
+        cal += (Number(b.caloriasUnit) || 0) * v;
+        prot += (Number(b.proteinasUnit) || 0) * v;
+        carb += (Number(b.carbosUnit) || 0) * v;
+        gras += (Number(b.grasasUnit) || 0) * v;
+      });
+
+      comida.calorias = Math.round(cal);
+      comida.proteinas = Math.round(prot);
+      comida.carbos = Math.round(carb);
+      comida.grasas = Math.round(gras);
+      comida.hora = comida.subItems[0].hora || comida.hora;
+      const ultimaHora = comida.subItems[comida.subItems.length - 1].hora;
+      comida.horaFin = (comida.subItems.length > 1 && ultimaHora && ultimaHora !== comida.hora) ? ultimaHora : null;
+
+      const nombres = comida.subItems.map(s => (s.plato || '').trim()).filter(Boolean);
+      if (nombres.length <= 2) {
+        comida.plato = nombres.join(' + ') || 'Comida';
+      } else {
+        comida.plato = `${nombres[0]} + ${nombres[1]} (+${nombres.length - 2})`;
+      }
+
+      const conFoto = comida.subItems.find(s => s.tieneFoto);
+      comida.tieneFoto = Boolean(conFoto);
+      comida.fotoPrincipalId = conFoto ? conFoto.id : comida.id;
+      return comida;
+    }
+
+    function buscarBloqueParaAgrupar(diario, nuevoItem, sugerenciaAiId = null, forzarColacion = false) {
+      if (!Array.isArray(diario) || diario.length === 0) return null;
+      const solidas = diario.filter(c => !c.esBloqueHidratacion && !c.esSoloBebida);
+      if (solidas.length === 0) return null;
+
+      const hora = nuevoItem.hora || horaActualLocal();
+      const tNorm = normalizarTiempoComida(nuevoItem.tiempo || detectarTiempoPorHora(hora));
+      const turnoPorHora = detectarTiempoPorHora(hora);
+
+      // 1. Si el usuario apretó explícitamente Colaciones o es Colaciones: agrupa con otra Colación dentro de <= 60 min (ej. 19:00 y 19:45)
+      if (forzarColacion || tNorm === "Colaciones") {
+        const colCercanas = solidas.filter(c => normalizarTiempoComida(c.tiempo) === "Colaciones").map(c => ({
+          c, dist: distanciaMinutosCircular(c.horaFin || c.hora, hora)
+        })).filter(x => x.dist <= 60);
+        if (colCercanas.length > 0) {
+          colCercanas.sort((a, b) => a.dist - b.dist);
+          return colCercanas[0].c;
+        }
+        if (forzarColacion) return null;
+      }
+
+      // 2. Sugerencia explícita de la IA (validada con cercanía temporal)
+      if (sugerenciaAiId) {
+        const matchAi = solidas.find(c => String(c.id) === String(sugerenciaAiId));
+        if (matchAi) {
+          const tAi = normalizarTiempoComida(matchAi.tiempo);
+          const distAi = distanciaMinutosCircular(matchAi.horaFin || matchAi.hora, hora);
+          const maxVentana = (tAi === 'Cena') ? 210 : (tAi === 'Almuerzo' ? 150 : (tAi === 'Colaciones' ? 60 : 90));
+          if (distAi <= maxVentana) return matchAi;
+        }
+      }
+
+      // 3. Regla híbrida: franja horaria + proximidad temporal para comidas principales
+      // - Cena (20:00–03:59): agrupa picada + principal + postre + foto de bebida hasta 180 min desde el último ítem
+      // - Almuerzo (11:00–14:59): agrupa entrada + principal + postre + bebida hasta 150 min
+      // - Desayuno (04:00–10:59) y Merienda (15:00–19:59): agrupa ítems dentro de <= 90 min
+      const comidaMismoTurno = solidas.find(c => normalizarTiempoComida(c.tiempo) === turnoPorHora);
+      if (comidaMismoTurno) {
+        const dist = distanciaMinutosCircular(comidaMismoTurno.horaFin || comidaMismoTurno.hora, hora);
+        if (turnoPorHora === "Cena" && dist <= 180) return comidaMismoTurno;
+        if (turnoPorHora === "Almuerzo" && dist <= 150) return comidaMismoTurno;
+        if ((turnoPorHora === "Desayuno" || turnoPorHora === "Merienda") && dist <= 90) return comidaMismoTurno;
+      }
+
+      // 4. Si ya había una Colación reciente (<= 60 min) y no arrancó todavía una comida principal nueva (ej. 19:00 y 19:45), agrupar en esa Colación
+      const colReciente = solidas.filter(c => normalizarTiempoComida(c.tiempo) === "Colaciones").map(c => ({
+        c, dist: distanciaMinutosCircular(c.horaFin || c.hora, hora)
+      })).filter(x => x.dist <= 60);
+      if (colReciente.length > 0 && turnoPorHora !== "Cena" && turnoPorHora !== "Almuerzo") {
+        colReciente.sort((a, b) => a.dist - b.dist);
+        return colReciente[0].c;
+      }
+
+      return null;
+    }
+
+    function fusionarSubItemEnBloque(bloqueDestino, subItem, bebidasExtra = []) {
+      asegurarSubItems(bloqueDestino);
+      bloqueDestino.subItems.push({
+        id: subItem.id,
+        hora: subItem.hora || horaActualLocal(),
+        plato: (subItem.plato || '').trim() || 'Plato',
+        rol: subItem.rol || '',
+        calorias: Math.round(Number(subItem.calorias) || 0),
+        proteinas: Math.round(Number(subItem.proteinas) || 0),
+        carbos: Math.round(Number(subItem.carbos) || 0),
+        grasas: Math.round(Number(subItem.grasas) || 0),
+        ingredientes: Array.isArray(subItem.ingredientes) ? subItem.ingredientes : [],
+        tieneFoto: Boolean(subItem.tieneFoto)
+      });
+      if (Array.isArray(bebidasExtra) && bebidasExtra.length > 0) {
+        bebidasExtra.forEach(b => {
+          const mock = {
+            id: b.id, nombre: b.nombre, icono: b.icono, ml: b.mlUnit,
+            calorias: b.caloriasUnit, carbos: b.carbosUnit, proteinas: b.proteinasUnit, grasas: b.grasasUnit
+          };
+          aplicarDeltaBebidaEnComida(bloqueDestino, mock, b.vasos || 1);
+        });
+      }
+      recalcularTotalesDeComidaConsolidada(bloqueDestino);
+      return bloqueDestino;
+    }
+
+    function reagruparDiarioDeUnDia(diario) {
+      if (!Array.isArray(diario) || diario.length <= 1) return { lista: diario || [], fusionados: 0 };
+      const hidrataciones = diario.filter(c => c.esBloqueHidratacion || c.esSoloBebida);
+      const solidas = ordenarComidasCronologicamente(diario.filter(c => !c.esBloqueHidratacion && !c.esSoloBebida));
+
+      // Descomponemos en ítems atómicos preservando cada foto y bebida asociada
+      const atomicos = [];
+      solidas.forEach(c => {
+        if (Array.isArray(c.subItems) && c.subItems.length > 0) {
+          c.subItems.forEach((s, idx) => {
+            atomicos.push({
+              ...s,
+              tiempo: normalizarTiempoComida(c.tiempo),
+              bebidasExtra: idx === 0 ? (c.bebidas || []) : []
+            });
+          });
+        } else {
+          let bebCal = 0, bebProt = 0, bebCarb = 0, bebGras = 0;
+          (c.bebidas || []).forEach(b => {
+            const v = Number(b.vasos) || 0;
+            bebCal += (Number(b.caloriasUnit) || 0) * v;
+            bebProt += (Number(b.proteinasUnit) || 0) * v;
+            bebCarb += (Number(b.carbosUnit) || 0) * v;
+            bebGras += (Number(b.grasasUnit) || 0) * v;
+          });
+          atomicos.push({
+            id: c.id,
+            tiempo: normalizarTiempoComida(c.tiempo),
+            hora: c.hora || INFO_TURNOS_COMIDA[c.tiempo]?.horaDefault || "12:00",
+            plato: c.plato,
+            rol: c.rol || '',
+            calorias: Math.max(0, Math.round((Number(c.calorias) || 0) - bebCal)),
+            proteinas: Math.max(0, Math.round((Number(c.proteinas) || 0) - bebProt)),
+            carbos: Math.max(0, Math.round((Number(c.carbos) || 0) - bebCarb)),
+            grasas: Math.max(0, Math.round((Number(c.grasas) || 0) - bebGras)),
+            ingredientes: c.ingredientes || [],
+            tieneFoto: Boolean(c.tieneFoto),
+            bebidasExtra: c.bebidas || []
+          });
+        }
+      });
+
+      atomicos.sort((a, b) => claveOrdenCronologico(a.hora, a.tiempo) - claveOrdenCronologico(b.hora, b.tiempo));
+
+      const consolidado = [];
+      let fusionados = 0;
+      atomicos.forEach(item => {
+        const esColExplicita = item.tiempo === 'Colaciones' && !['Cena', 'Almuerzo'].includes(detectarTiempoPorHora(item.hora));
+        const destino = buscarBloqueParaAgrupar(consolidado, item, null, esColExplicita);
+        if (destino) {
+          fusionarSubItemEnBloque(destino, item, item.bebidasExtra);
+          fusionados++;
+        } else {
+          const resol = resolverTiempoSinDuplicados(detectarTiempoPorHora(item.hora), item.hora, consolidado);
+          const nuevoBloque = {
+            id: item.id,
+            tiempo: item.tiempo === 'Colaciones' && !COMIDAS_PRINCIPALES.includes(resol.tiempo) ? 'Colaciones' : (item.tiempo === 'Colaciones' && ['Desayuno', 'Merienda'].includes(resol.tiempo) ? 'Colaciones' : resol.tiempo),
+            hora: item.hora,
+            plato: item.plato,
+            rol: item.rol || '',
+            calorias: item.calorias,
+            proteinas: item.proteinas,
+            carbos: item.carbos,
+            grasas: item.grasas,
+            ingredientes: item.ingredientes || [],
+            tieneFoto: Boolean(item.tieneFoto),
+            bebidas: []
+          };
+          if (item.bebidasExtra && item.bebidasExtra.length > 0) {
+            item.bebidasExtra.forEach(b => {
+              const mock = {
+                id: b.id, nombre: b.nombre, icono: b.icono, ml: b.mlUnit,
+                calorias: b.caloriasUnit, carbos: b.carbosUnit, proteinas: b.proteinasUnit, grasas: b.grasasUnit
+              };
+              aplicarDeltaBebidaEnComida(nuevoBloque, mock, b.vasos || 1);
+            });
+          }
+          consolidado.push(nuevoBloque);
+        }
+      });
+
+      return { lista: ordenarComidasCronologicamente([...consolidado, ...hidrataciones]), fusionados };
+    }
+
+    function reagruparTodoElHistorial(silencioso = false) {
+      let diasAfectados = 0;
+      let totalFusiones = 0;
+      const claves = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('nutrifit_diario_')) claves.push(k.replace('nutrifit_diario_', ''));
+      }
+      claves.forEach(fecha => {
+        const diario = getDiarioPorFecha(fecha);
+        if (diario.length > 1) {
+          const res = reagruparDiarioDeUnDia(diario);
+          if (res.fusionados > 0) {
+            setDiarioPorFecha(fecha, res.lista);
+            diasAfectados++;
+            totalFusiones += res.fusionados;
+          }
+        }
+      });
+      actualizarDashboardDiario();
+      renderizarDiario();
+      if (!silencioso) {
+        if (totalFusiones > 0) {
+          alert(`🧩 ¡Listo! Se consolidaron ${totalFusiones} registros cercanos en ${diasAfectados} día${diasAfectados === 1 ? '' : 's'} de tu historial.`);
+        } else {
+          alert("✅ Tu historial ya está consolidado y ordenado por comida.");
+        }
+      }
+    }
+
+    function separarSubItemDeComida(comidaId, subId, fechaStr) {
+      const f = fechaStr || fechaDiarioSeleccionada || fechaHoyLocal();
+      let diario = getDiarioPorFecha(f);
+      const padre = diario.find(x => x.id === comidaId);
+      if (!padre || !Array.isArray(padre.subItems)) return;
+      const sub = padre.subItems.find(s => s.id === subId);
+      if (!sub) return;
+
+      padre.subItems = padre.subItems.filter(s => s.id !== subId);
+      if (padre.subItems.length === 0) {
+        diario = diario.filter(x => x.id !== comidaId);
+      } else {
+        recalcularTotalesDeComidaConsolidada(padre);
+      }
+
+      diario.push({
+        id: sub.id,
+        tiempo: "Colaciones",
+        hora: sub.hora || padre.hora,
+        plato: sub.plato,
+        rol: sub.rol || '',
+        calorias: sub.calorias,
+        proteinas: sub.proteinas,
+        carbos: sub.carbos,
+        grasas: sub.grasas,
+        ingredientes: sub.ingredientes || [],
+        tieneFoto: Boolean(sub.tieneFoto)
+      });
+
+      setDiarioPorFecha(f, diario);
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
+    function borrarSubItemDeComida(comidaId, subId, fechaStr) {
+      if (!confirm("¿Quitar este ítem de la comida?")) return;
+      const f = fechaStr || fechaDiarioSeleccionada || fechaHoyLocal();
+      let diario = getDiarioPorFecha(f);
+      const padre = diario.find(x => x.id === comidaId);
+      if (!padre || !Array.isArray(padre.subItems)) return;
+      padre.subItems = padre.subItems.filter(s => s.id !== subId);
+      borrarFotoComidaDB(subId);
+      if (padre.subItems.length === 0) {
+        diario = diario.filter(x => x.id !== comidaId);
+      } else {
+        recalcularTotalesDeComidaConsolidada(padre);
+      }
+      setDiarioPorFecha(f, diario);
+      actualizarDashboardDiario();
+      renderizarDiario();
+    }
+
     async function autoGuardarComidaAnalizada(data, fechaDestino) {
       if (!data) return null;
       const fecha = fechaDestino || fechaPreseleccionada || fechaHoyLocal();
       const hora = data.hora || horaActualLocal();
       let diario = getDiarioPorFecha(fecha);
-      const resol = resolverTiempoSinDuplicados(data.tiempo_comida || detectarTiempoPorHora(hora), hora, diario);
-      data.tiempo_comida = resol.tiempo;
-      data.fecha = fecha;
-      data.hora = hora;
-
-      const id = Date.now();
+      const forzarCol = slotPreseleccionado === "Colaciones";
+      const subId = Date.now();
       const tieneFoto = Boolean(imagenThumbUrl);
-      const comida = {
-        id,
-        tiempo: resol.tiempo,
+
+      const nuevoItem = {
+        id: subId,
+        tiempo: forzarCol ? "Colaciones" : (data.tiempo_comida || detectarTiempoPorHora(hora)),
         hora,
         plato: (data.plato || '').trim() || 'Comida',
+        rol: data.rol_en_comida || '',
         calorias: Math.round(data.totales?.calorias || 0),
         proteinas: Math.round(data.totales?.proteinas_g || 0),
         carbos: Math.round(data.totales?.carbohidratos_g || 0),
@@ -3127,19 +3551,37 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       };
 
       if (tieneFoto) {
-        await guardarFotoComidaDB(id, imagenThumbUrl);
+        await guardarFotoComidaDB(subId, imagenThumbUrl);
       }
 
-      diario = absorberBebidasSueltasEnComida(comida, diario);
-      diario.push(comida);
+      const bloqueDestino = buscarBloqueParaAgrupar(diario, nuevoItem, data.agrupar_con_id || null, forzarCol);
+      let comidaGuardada;
+      if (bloqueDestino) {
+        fusionarSubItemEnBloque(bloqueDestino, nuevoItem);
+        comidaGuardada = bloqueDestino;
+        data.tiempo_comida = bloqueDestino.tiempo;
+        data.agrupadoEnExistente = true;
+      } else {
+        const resol = resolverTiempoSinDuplicados(nuevoItem.tiempo, hora, diario);
+        nuevoItem.tiempo = resol.tiempo;
+        data.tiempo_comida = resol.tiempo;
+        data.agrupadoEnExistente = false;
+        diario = absorberBebidasSueltasEnComida(nuevoItem, diario);
+        diario.push(nuevoItem);
+        comidaGuardada = nuevoItem;
+      }
+
+      data.fecha = fecha;
+      data.hora = hora;
       setDiarioPorFecha(fecha, diario);
 
-      ultimaComidaAutoGuardadaId = id;
+      ultimaComidaAutoGuardadaId = comidaGuardada.id;
+      ultimaSubItemAutoGuardadoId = subId;
       ultimaComidaAutoGuardadaFecha = fecha;
       fechaDiarioSeleccionada = fecha;
       actualizarDashboardDiario();
       renderizarDiario();
-      return comida;
+      return comidaGuardada;
     }
 
     function sincronizarAutoGuardadoEnVivo(notificarReasignacion = false) {
@@ -3155,6 +3597,61 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       if (idx === -1) return null;
       const c = diarioViejo[idx];
 
+      // Si se agrupó como subItem dentro de un bloque con varios platos, actualizamos ese subItem puntual
+      const esSubItemDentroDeBloque = Array.isArray(c.subItems) && c.subItems.length > 1 && ultimaSubItemAutoGuardadoId && c.subItems.some(s => s.id === ultimaSubItemAutoGuardadoId);
+
+      if (esSubItemDentroDeBloque && fechaNueva === fechaVieja && normalizarTiempoComida(tiempoSel) === normalizarTiempoComida(c.tiempo)) {
+        const sub = c.subItems.find(s => s.id === ultimaSubItemAutoGuardadoId);
+        sub.hora = horaNueva;
+        sub.plato = platoNuevo;
+        sub.calorias = Math.round(ultimoResultado.totales?.calorias || 0);
+        sub.proteinas = Math.round(ultimoResultado.totales?.proteinas_g || 0);
+        sub.carbos = Math.round(ultimoResultado.totales?.carbohidratos_g || 0);
+        sub.grasas = Math.round(ultimoResultado.totales?.grasas_g || 0);
+        sub.ingredientes = ultimoResultado.ingredientes || [];
+        recalcularTotalesDeComidaConsolidada(c);
+        setDiarioPorFecha(fechaVieja, diarioViejo);
+        ultimoResultado.hora = horaNueva;
+        actualizarDashboardDiario();
+        renderizarDiario();
+        return { tiempo: c.tiempo, reasignado: false, motivo: '' };
+      }
+
+      if (esSubItemDentroDeBloque) {
+        // El usuario cambió la fecha o la categoría -> sacamos el subItem del bloque original y lo movemos al nuevo destino
+        const sub = c.subItems.find(s => s.id === ultimaSubItemAutoGuardadoId);
+        c.subItems = c.subItems.filter(s => s.id !== ultimaSubItemAutoGuardadoId);
+        recalcularTotalesDeComidaConsolidada(c);
+        setDiarioPorFecha(fechaVieja, diarioViejo);
+
+        let diarioDest = getDiarioPorFecha(fechaNueva);
+        const resol = resolverTiempoSinDuplicados(tiempoSel, horaNueva, diarioDest);
+        const movido = {
+          id: sub.id,
+          tiempo: resol.tiempo,
+          hora: horaNueva,
+          plato: platoNuevo,
+          rol: sub.rol || '',
+          calorias: Math.round(ultimoResultado.totales?.calorias || 0),
+          proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
+          carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
+          grasas: Math.round(ultimoResultado.totales?.grasas_g || 0),
+          ingredientes: ultimoResultado.ingredientes || [],
+          tieneFoto: Boolean(sub.tieneFoto)
+        };
+        diarioDest.push(movido);
+        setDiarioPorFecha(fechaNueva, diarioDest);
+        ultimaComidaAutoGuardadaId = movido.id;
+        ultimaComidaAutoGuardadaFecha = fechaNueva;
+        ultimoResultado.fecha = fechaNueva;
+        ultimoResultado.hora = horaNueva;
+        ultimoResultado.tiempo_comida = resol.tiempo;
+        fechaDiarioSeleccionada = fechaNueva;
+        actualizarDashboardDiario();
+        renderizarDiario();
+        return resol;
+      }
+
       const diarioDestino = (fechaNueva === fechaVieja) ? diarioViejo : getDiarioPorFecha(fechaNueva);
       const resol = resolverTiempoSinDuplicados(tiempoSel, horaNueva, diarioDestino, c.id);
 
@@ -3166,6 +3663,9 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       c.carbos = Math.round(ultimoResultado.totales?.carbohidratos_g || 0);
       c.grasas = Math.round(ultimoResultado.totales?.grasas_g || 0);
       c.ingredientes = ultimoResultado.ingredientes || [];
+      if (Array.isArray(c.subItems) && c.subItems.length === 1) {
+        c.subItems[0] = { ...c.subItems[0], hora: horaNueva, plato: platoNuevo, calorias: c.calorias, proteinas: c.proteinas, carbos: c.carbos, grasas: c.grasas, ingredientes: c.ingredientes };
+      }
 
       if (fechaNueva !== fechaVieja) {
         diarioViejo = diarioViejo.filter(x => x.id !== c.id);
@@ -3202,11 +3702,20 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     function descartarAnalisisAutoGuardado() {
       if (ultimaComidaAutoGuardadaId && ultimaComidaAutoGuardadaFecha) {
         const f = ultimaComidaAutoGuardadaFecha;
-        const diario = getDiarioPorFecha(f).filter(x => x.id !== ultimaComidaAutoGuardadaId);
+        let diario = getDiarioPorFecha(f);
+        const padre = diario.find(x => x.id === ultimaComidaAutoGuardadaId);
+        if (padre && Array.isArray(padre.subItems) && padre.subItems.length > 1 && ultimaSubItemAutoGuardadoId) {
+          padre.subItems = padre.subItems.filter(s => s.id !== ultimaSubItemAutoGuardadoId);
+          recalcularTotalesDeComidaConsolidada(padre);
+          borrarFotoComidaDB(ultimaSubItemAutoGuardadoId);
+        } else {
+          diario = diario.filter(x => x.id !== ultimaComidaAutoGuardadaId);
+          borrarFotoComidaDB(ultimaSubItemAutoGuardadoId || ultimaComidaAutoGuardadaId);
+        }
         setDiarioPorFecha(f, diario);
-        borrarFotoComidaDB(ultimaComidaAutoGuardadaId);
       }
       ultimaComidaAutoGuardadaId = null;
+      ultimaSubItemAutoGuardadoId = null;
       ultimaComidaAutoGuardadaFecha = null;
       ultimoResultado = null;
       limpiarSlotPreseleccionado();
@@ -3216,6 +3725,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('analysisResult').classList.add('hidden');
       const dn = document.getElementById('dishName');
       if (dn) dn.value = '';
+      const gh = document.getElementById('guardarHoraComida');
+      if (gh) gh.value = '';
       const btnA = document.getElementById('btnAnalizar');
       if (btnA) { btnA.disabled = true; btnA.classList.add('hidden'); }
       const inpTxt = document.getElementById('inputTextoComida');
@@ -3240,13 +3751,12 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         const tieneFoto = Boolean(imagenThumbUrl);
 
         let diario = getDiarioPorFecha(fechaElegida);
-        resolucion = resolverTiempoSinDuplicados(tiempoSeleccionado, hora, diario);
-
-        const comida = {
+        const nuevoItem = {
           id,
-          tiempo: resolucion.tiempo,
+          tiempo: tiempoSeleccionado,
           hora,
           plato: nombrePlato,
+          rol: ultimoResultado.rol_en_comida || '',
           calorias: Math.round(ultimoResultado.totales?.calorias || 0),
           proteinas: Math.round(ultimoResultado.totales?.proteinas_g || 0),
           carbos: Math.round(ultimoResultado.totales?.carbohidratos_g || 0),
@@ -3259,13 +3769,22 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
           await guardarFotoComidaDB(id, imagenThumbUrl);
         }
 
-        diario = absorberBebidasSueltasEnComida(comida, diario);
-        diario.push(comida);
+        const bloqueDestino = buscarBloqueParaAgrupar(diario, nuevoItem, ultimoResultado.agrupar_con_id || null, tiempoSeleccionado === 'Colaciones');
+        if (bloqueDestino) {
+          fusionarSubItemEnBloque(bloqueDestino, nuevoItem);
+          resolucion = { tiempo: bloqueDestino.tiempo, reasignado: false, motivo: '' };
+        } else {
+          resolucion = resolverTiempoSinDuplicados(tiempoSeleccionado, hora, diario);
+          nuevoItem.tiempo = resolucion.tiempo;
+          diario = absorberBebidasSueltasEnComida(nuevoItem, diario);
+          diario.push(nuevoItem);
+        }
         setDiarioPorFecha(fechaElegida, diario);
         fechaDiarioSeleccionada = fechaElegida;
       }
 
       ultimaComidaAutoGuardadaId = null;
+      ultimaSubItemAutoGuardadoId = null;
       ultimaComidaAutoGuardadaFecha = null;
       ultimoResultado = null;
       limpiarSlotPreseleccionado();
@@ -3275,6 +3794,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('analysisResult').classList.add('hidden');
       const dn = document.getElementById('dishName');
       if (dn) dn.value = '';
+      const gh = document.getElementById('guardarHoraComida');
+      if (gh) gh.value = '';
       const btnA = document.getElementById('btnAnalizar');
       if (btnA) { btnA.disabled = true; btnA.classList.add('hidden'); }
       const inpTxt = document.getElementById('inputTextoComida');
@@ -3380,6 +3901,9 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }
       setDiarioPorFecha(f, diario.filter(x => x.id !== id));
       borrarFotoComidaDB(id);
+      if (target && Array.isArray(target.subItems)) {
+        target.subItems.forEach(s => borrarFotoComidaDB(s.id));
+      }
       cerrarEditorComida();
       actualizarDashboardDiario();
       renderizarDiario();
@@ -3420,9 +3944,44 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         `;
       }
 
+      const fotoIdPrincipal = c.fotoPrincipalId || c.id;
       const thumbHtml = c.tieneFoto
-        ? `<img data-foto-id="${c.id}" onclick="verFotoComida(${c.id}, this.dataset.titulo)" data-titulo="${(c.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0 cursor-pointer">`
+        ? `<img data-foto-id="${fotoIdPrincipal}" onclick="verFotoComida(${fotoIdPrincipal}, this.dataset.titulo)" data-titulo="${(c.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0 cursor-pointer">`
         : '';
+      const subItems = Array.isArray(c.subItems) ? c.subItems : [];
+      const tieneVarios = subItems.length > 1;
+      const rangoHora = (c.hora && c.horaFin && c.horaFin !== c.hora)
+        ? `${c.hora}–${c.horaFin} hs`
+        : (c.hora ? `${c.hora} hs` : '');
+      const horaTagRango = rangoHora ? `<span class="text-[10px] text-slate-400 font-semibold ml-1">🕐 ${rangoHora}</span>` : '';
+      const detId = `det_${c.id}_${Math.floor(Math.random() * 10000)}`;
+      const detalleHtml = tieneVarios
+        ? `
+          <div class="mt-2 pt-2 border-t border-slate-800/80">
+            <button type="button" onclick="document.getElementById('${detId}').classList.toggle('hidden')" class="text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1">
+              📋 Ver detalle de esta comida (${subItems.length} ítems) ▾
+            </button>
+            <div id="${detId}" class="hidden mt-1.5 space-y-1.5">
+              ${subItems.map(s => `
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl px-2 py-1.5 flex items-center justify-between gap-2 text-[11px]">
+                  <div class="flex items-center gap-2 min-w-0 flex-1">
+                    ${s.tieneFoto ? `<img data-foto-id="${s.id}" onclick="verFotoComida(${s.id}, this.dataset.titulo)" data-titulo="${(s.plato || '').replace(/"/g, '&quot;')}" alt="Foto" class="hidden w-9 h-9 rounded-lg object-cover border border-slate-700 shrink-0 cursor-pointer">` : ''}
+                    <div class="min-w-0">
+                      <div class="text-white font-semibold truncate">${s.rol ? `<span class="text-[9px] text-emerald-300 bg-emerald-500/15 px-1 py-0.5 rounded mr-1">${s.rol}</span>` : ''}${s.plato}</div>
+                      <div class="text-[10px] text-slate-400">🕐 ${s.hora || '--:--'} • <strong class="text-slate-200">${s.calorias} kcal</strong> (P:${s.proteinas}g C:${s.carbos}g G:${s.grasas}g)</div>
+                    </div>
+                  </div>
+                  <div class="flex gap-1 shrink-0">
+                    <button type="button" onclick="separarSubItemDeComida(${c.id}, ${s.id}, '${fechaStr}')" class="px-1.5 py-0.5 rounded bg-slate-800 text-violet-300 text-[10px] font-bold" title="Separar como Colación">↗</button>
+                    <button type="button" onclick="borrarSubItemDeComida(${c.id}, ${s.id}, '${fechaStr}')" class="px-1.5 py-0.5 rounded bg-slate-800 text-rose-400 text-[10px] font-bold" title="Quitar ítem">✕</button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `
+        : '';
+
       const bebidasHtml = bebidasArr.length > 0
         ? `<div class="flex flex-wrap gap-1 mt-1.5">` + bebidasArr.map(b => {
             const calBeb = Math.round((Number(b.caloriasUnit) || 0) * (Number(b.vasos) || 1));
@@ -3441,32 +4000,36 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         ? "text-violet-300 bg-violet-500/15"
         : "text-emerald-400 bg-emerald-500/10";
       return `
-        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-2.5">
-          ${thumbHtml}
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center flex-wrap gap-1">
-              <span class="text-[10px] font-bold ${badgeColor} uppercase tracking-wider px-2 py-0.5 rounded">${info.icono} ${tiempoNorm}</span>
-              ${horaTag}
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+          <div class="flex items-center justify-between gap-2.5">
+            ${thumbHtml}
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center flex-wrap gap-1">
+                <span class="text-[10px] font-bold ${badgeColor} uppercase tracking-wider px-2 py-0.5 rounded">${info.icono} ${tiempoNorm}</span>
+                ${tieneVarios ? `<span class="text-[9px] font-bold text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded">${subItems.length} platos</span>` : ''}
+                ${horaTagRango}
+              </div>
+              <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
+              <p class="text-[11px] text-slate-400 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                P: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
+                C: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
+                G: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
+              </p>
+              ${bebidasHtml}
             </div>
-            <h4 class="text-sm font-bold text-white mt-1 truncate">${c.plato}</h4>
-            <p class="text-[11px] text-slate-400 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-              P: <span class="text-blue-400 font-semibold">${c.proteinas}g</span> • 
-              C: <span class="text-amber-400 font-semibold">${c.carbos}g</span> • 
-              G: <span class="text-rose-400 font-semibold">${c.grasas}g</span>
-            </p>
-            ${bebidasHtml}
+            <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
+              <div>
+                <span class="text-base font-black text-white">${c.calorias}</span>
+                <span class="text-[10px] text-slate-400">kcal</span>
+              </div>
+              <div class="flex gap-1">
+                ${btnExtraHtml}
+                <button onclick="abrirEditorComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️</button>
+                <button onclick="borrarComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
+              </div>
+            </div>
           </div>
-          <div class="text-right flex flex-col items-end gap-1.5 shrink-0">
-            <div>
-              <span class="text-base font-black text-white">${c.calorias}</span>
-              <span class="text-[10px] text-slate-400">kcal</span>
-            </div>
-            <div class="flex gap-1">
-              ${btnExtraHtml}
-              <button onclick="abrirEditorComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-emerald-400 active:scale-95">✏️</button>
-              <button onclick="borrarComida(${c.id}, '${fechaStr}')" class="text-[11px] font-bold px-2 py-1 rounded-lg bg-slate-800 text-rose-400 active:scale-95">🗑️</button>
-            </div>
-          </div>
+          ${detalleHtml}
         </div>
       `;
     }
