@@ -1,5 +1,5 @@
-﻿// v18: busca primero la versión nueva en internet y fuerza recarga en clientes viejos
-const CACHE_NAME = 'nutrifit-v18';
+﻿// v19: busca primero la versión nueva en internet y fuerza recarga en clientes viejos
+const CACHE_NAME = 'nutrifit-v19';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -12,10 +12,6 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      .then((clients) => Promise.all(
-        clients.map((c) => ('navigate' in c ? c.navigate(c.url).catch(() => {}) : Promise.resolve()))
-      ))
   );
 });
 
