@@ -23,7 +23,7 @@
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="min-h-screen pb-24 select-none">
+<body class="min-h-screen pb-28 select-none">
 
   <!-- Header Superior -->
   <header class="border-b border-slate-800 bg-slate-900/95 backdrop-blur sticky top-0 z-50">
@@ -36,7 +36,7 @@
           <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v17 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v18 ↻</button>
           </h1>
           <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
@@ -116,60 +116,73 @@
       </button>
     </div>
 
-    <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL COMPACTA) -->
+    <!-- SECCIÓN 1: SCANNER IA (PANTALLA PRINCIPAL FASE 1) -->
     <div id="sec-scanner" class="space-y-3">
-      <!-- Tarjeta Resumen Rápido de Hoy (Compacta) -->
-      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-lg relative overflow-hidden">
-        <div class="flex items-center justify-between gap-2 mb-1">
+      <!-- Tira Semanal Interactiva (L M X J V S HOY) -->
+      <div id="tiraSemanalPrincipal" class="grid grid-cols-7 gap-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-1.5 shadow"></div>
+
+      <!-- Tarjeta Resumen Hero con Anillo + Macros + Agua + Presupuesto Semanal -->
+      <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl px-3.5 py-2.5 shadow-lg relative overflow-hidden space-y-2">
+        <div class="flex items-center justify-between gap-2">
           <span id="badgeMetaObjetivo" class="text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
             Meta Hipertrofia (+12%)
           </span>
-          <button onclick="cambiarSeccion('perfil')" class="text-[10px] text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1">
-            <i class="fa-solid fa-pen-to-square"></i> Ajustar
-          </button>
+          <div class="flex items-center gap-2">
+            <span id="badgeFechaPrincipal" class="text-[10px] font-bold text-slate-400">Hoy</span>
+            <button onclick="cambiarSeccion('perfil')" class="text-[10px] text-slate-400 hover:text-emerald-400 font-medium flex items-center gap-1">
+              <i class="fa-solid fa-pen-to-square"></i> Ajustar
+            </button>
+          </div>
         </div>
 
-        <div class="flex items-baseline justify-between gap-2">
-          <div class="flex items-baseline gap-1.5">
-            <span id="dashCalRestantes" class="text-2xl font-black text-white tracking-tight leading-none">2,982</span>
-            <span class="text-[11px] text-slate-400">kcal restantes</span>
+        <div class="grid grid-cols-[106px_1fr] gap-3 items-center">
+          <!-- Anillo SVG de Calorías -->
+          <div class="relative w-[104px] h-[104px] mx-auto flex items-center justify-center">
+            <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+              <circle cx="60" cy="60" r="48" fill="none" stroke="#1e293b" stroke-width="10"></circle>
+              <circle id="dashCalRingArc" cx="60" cy="60" r="48" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="301.59" stroke-dashoffset="301.59" style="transition: stroke-dashoffset 0.35s ease, stroke 0.3s ease;"></circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center leading-tight px-1">
+              <span id="dashCalRestantes" class="text-xl font-black text-white tracking-tight">2,982</span>
+              <span id="dashCalLabel" class="text-[9px] text-slate-400 font-semibold">kcal restantes</span>
+              <span id="dashCalConsumidas" class="text-[9px] text-emerald-400 font-bold mt-0.5">0 cons.</span>
+            </div>
           </div>
-          <span id="dashCalConsumidas" class="text-[11px] font-semibold text-slate-400">0 consumidas</span>
-        </div>
 
-        <!-- 3 Barras de Macros Principales -->
-        <div class="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-slate-800/80">
-          <div>
-            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
-              <span class="text-blue-400">Prot</span>
-              <span id="dashProtText" class="text-slate-300">0/150g</span>
+          <!-- 3 Barras de Macros Principales -->
+          <div class="space-y-1.5">
+            <div>
+              <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+                <span class="text-blue-400">Prot</span>
+                <span id="dashProtText" class="text-slate-300">0/150g</span>
+              </div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div id="dashProtBar" class="bg-blue-400 h-full rounded-full transition-all" style="width: 0%"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-              <div id="dashProtBar" class="bg-blue-400 h-full rounded-full transition-all" style="width: 0%"></div>
+            <div>
+              <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+                <span class="text-amber-400">Carbs</span>
+                <span id="dashCarbText" class="text-slate-300">0/427g</span>
+              </div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div id="dashCarbBar" class="bg-amber-400 h-full rounded-full transition-all" style="width: 0%"></div>
+              </div>
             </div>
-          </div>
-          <div>
-            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
-              <span class="text-amber-400">Carbs</span>
-              <span id="dashCarbText" class="text-slate-300">0/427g</span>
-            </div>
-            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-              <div id="dashCarbBar" class="bg-amber-400 h-full rounded-full transition-all" style="width: 0%"></div>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between text-[10px] font-semibold mb-0.5">
-              <span class="text-rose-400">Gras</span>
-              <span id="dashGrasText" class="text-slate-300">0/75g</span>
-            </div>
-            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-              <div id="dashGrasBar" class="bg-rose-400 h-full rounded-full transition-all" style="width: 0%"></div>
+            <div>
+              <div class="flex justify-between text-[10px] font-semibold mb-0.5">
+                <span class="text-rose-400">Gras</span>
+                <span id="dashGrasText" class="text-slate-300">0/75g</span>
+              </div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div id="dashGrasBar" class="bg-rose-400 h-full rounded-full transition-all" style="width: 0%"></div>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Meta Diaria de Hidratación con Descuento (EFSA / NASEM / BHI) -->
-        <div class="mt-2 pt-2 border-t border-slate-800/80 space-y-1">
+        <div class="pt-2 border-t border-slate-800/80 space-y-1">
           <div class="flex items-center justify-between gap-2 text-[10px]">
             <div class="flex items-center gap-1.5 min-w-0">
               <span id="dashAguaRestante" class="font-extrabold text-sky-300 truncate">💧 Faltan 2.60 L</span>
@@ -184,6 +197,9 @@
             <div id="dashAguaBar" class="bg-sky-400 h-full rounded-full transition-all" style="width: 0%"></div>
           </div>
         </div>
+
+        <!-- Presupuesto Calórico Semanal (Colchón Flexible) -->
+        <div id="dashPresupuestoSemanal" class="bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-1.5 text-[10px] text-slate-300 flex items-center justify-between gap-2"></div>
       </div>
 
       <!-- Toast de Acceso Rápido / Shortcut (💧 +1 Agua / 📷 Foto) -->
@@ -195,63 +211,17 @@
         </div>
       </div>
 
-      <!-- Tarjeta de Escaneo Compacta (Foto / Galería / Colaciones / Audio / Texto) -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
-        <div class="flex items-center justify-between gap-2">
-          <h2 class="text-xs font-bold text-white flex items-center gap-1.5">
-            <i class="fa-solid fa-camera text-emerald-400"></i>
-            Cargar Comida
-          </h2>
-          <span id="badgeTurnoActual" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🕐 Ahora</span>
-        </div>
+      <!-- Inputs ocultos para Cámara, Galería y Audio -->
+      <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
+      <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="manejarArchivo(event)">
+      <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="manejarArchivoAudio(event)">
 
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="manejarArchivo(event)">
-        <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="manejarArchivo(event)">
-        <input type="file" id="audioInput" accept="audio/*" class="hidden" onchange="manejarArchivoAudio(event)">
-
-        <!-- Banner si viene de una comida vacía o Colaciones -->
+      <!-- Tarjeta Activa de Análisis (solo aparece cuando hay foto, análisis o turno preseleccionado) -->
+      <div id="cardAnalisisActivo" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
+        <!-- Banner si viene de una comida vacía, Colaciones o fecha pasada -->
         <div id="targetSlotBanner" class="hidden bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-2.5 py-1.5 flex items-center justify-between text-[11px] text-emerald-300">
           <span>📌 Cargando para: <strong id="targetSlotName" class="text-emerald-400">Almuerzo</strong></span>
           <button type="button" onclick="limpiarSlotPreseleccionado()" class="text-slate-400 hover:text-white px-1">✕</button>
-        </div>
-
-        <!-- Botones compactos en 1 fila: Foto, Galería y Colaciones -->
-        <div class="grid grid-cols-3 gap-1.5">
-          <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition">
-            <i class="fa-solid fa-camera"></i> Foto
-          </button>
-          <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition">
-            <i class="fa-regular fa-image text-emerald-400"></i> Galería
-          </button>
-          <button type="button" onclick="activarModoColaciones()" class="bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 active:scale-95 text-violet-300 font-bold py-2 px-2 rounded-xl text-xs flex items-center justify-center gap-1 transition">
-            🍎 Colaciones
-          </button>
-        </div>
-
-        <!-- Carga compacta por Audio o Texto -->
-        <div id="seccionAudioScanner" class="bg-slate-950/70 border border-slate-800 rounded-xl p-2 space-y-1.5">
-          <div class="grid grid-cols-2 gap-1.5">
-            <button type="button" id="btnGrabarAudio" onclick="toggleGrabacionAudio()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1.5 transition">
-              <i class="fa-solid fa-microphone"></i> Grabar Audio
-            </button>
-            <button type="button" onclick="document.getElementById('audioInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-semibold py-1.5 px-2 rounded-lg text-[11px] flex items-center justify-center gap-1.5 transition">
-              <i class="fa-solid fa-file-audio text-amber-400"></i> Subir Audio
-            </button>
-          </div>
-          <div id="boxGrabandoAudio" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-lg p-2 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2 text-xs text-rose-300 font-bold">
-              <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span>Grabando... <span id="timerAudio">0s</span></span>
-            </div>
-            <div class="flex gap-1.5">
-              <button type="button" onclick="cancelarGrabacionAudio()" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-semibold">Cancelar</button>
-              <button type="button" onclick="detenerYAnalizarAudio()" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-extrabold">⏹️ Analizar</button>
-            </div>
-          </div>
-          <div class="flex gap-1.5">
-            <input id="inputTextoComida" type="text" placeholder="O escribí qué comiste (ej: 2 huevos, 1 tostada)" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-emerald-500 focus:outline-none">
-            <button type="button" onclick="analizarTextoComida()" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs active:scale-95">Analizar</button>
-          </div>
         </div>
 
         <!-- Preview de la foto -->
@@ -367,29 +337,36 @@
         </div>
       </div>
 
-      <!-- BEBIDAS E INFUSIONES RÁPIDAS (COMPACTA, AGUA COMO UN BOTÓN MÁS) -->
+      <!-- BEBIDAS E INFUSIONES EN 1 FILA DESLIZABLE + DESPLEGABLE -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
         <div class="flex items-center justify-between gap-2">
           <div class="flex items-center gap-2 min-w-0">
             <h2 class="text-xs font-bold text-white flex items-center gap-1.5 shrink-0">
               <i class="fa-solid fa-glass-water text-sky-400"></i> Bebidas
             </h2>
-            <span id="aguaHoyTexto" class="text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-full truncate">💧 0v • 0.00L</span>
+            <span id="aguaHoyTexto" class="text-[10px] font-bold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-full truncate">💧 0.00/2.6L</span>
           </div>
-          <button type="button" onclick="abrirModalConfigBebidas()" class="shrink-0 text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg active:scale-95">
-            ⚙️ Config
-          </button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btnToggleBebidasMas" type="button" onclick="toggleExpandirBebidas()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 px-2 py-1 rounded-lg active:scale-95">
+              Más ▾
+            </button>
+            <button type="button" onclick="abrirModalConfigBebidas()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg active:scale-95">
+              ⚙️ Orden
+            </button>
+          </div>
         </div>
 
-        <!-- Botonera compacta de bebidas, agua e infusiones -->
-        <div id="gridBotonesBebidas" class="grid grid-cols-3 sm:grid-cols-4 gap-1.5"></div>
+        <!-- 1 fila compacta horizontal (favoritas primero según el orden configurado) -->
+        <div id="filaBebidasRapidas" class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5"></div>
+        <!-- Grilla completa desplegable al tocar Más ▾ -->
+        <div id="gridBotonesBebidas" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-800/80"></div>
         <div id="feedbackBebidaReciente" class="hidden text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2.5 py-1.5 font-semibold"></div>
       </div>
 
       <!-- LO DEL DÍA EN LA PANTALLA PRINCIPAL -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
         <div class="flex items-center justify-between">
-          <h2 class="text-xs font-bold text-white flex items-center gap-1.5">
+          <h2 id="tituloLoDeHoy" class="text-xs font-bold text-white flex items-center gap-1.5">
             <i class="fa-solid fa-clock text-emerald-400"></i> Lo de Hoy
           </h2>
           <button type="button" onclick="cambiarSeccion('diario')" class="text-[11px] text-emerald-400 font-bold hover:underline">
@@ -553,7 +530,10 @@
             </h2>
             <p class="text-xs text-slate-400">3 opciones por comida, cambios con IA y equivalencias</p>
           </div>
-          <div class="flex gap-1.5">
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="cambiarSeccion('cuestionario')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-bold px-2.5 py-2 rounded-xl text-[11px] flex items-center gap-1 transition" title="Configurar gustos y alimentos rechazados">
+              ❤️ Gustos
+            </button>
             <button type="button" id="btnAdaptarHoy" onclick="adaptarRestoDelDiaConIA()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold px-2.5 py-2 rounded-xl text-[11px] flex items-center gap-1 transition" title="Reajusta lo que te falta comer hoy según tu Diario">
               <i class="fa-solid fa-bolt"></i> Adaptar HOY
             </button>
@@ -606,9 +586,14 @@
     <!-- SECCIÓN 5: PERFIL FISIOLÓGICO, MEDIDAS MÉDICAS Y EVOLUCIÓN SEMANAL -->
     <div id="sec-perfil" class="hidden space-y-5">
       <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-        <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-user text-emerald-400"></i> Perfil, Medidas & Metas Médicas
-        </h2>
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-user text-emerald-400"></i> Perfil, Medidas & Metas
+          </h2>
+          <button type="button" onclick="cambiarSeccion('cuestionario')" class="text-[11px] font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 px-2.5 py-1.5 rounded-xl active:scale-95">
+            ❤️ Costumbres
+          </button>
+        </div>
 
         <form id="profileForm" onsubmit="event.preventDefault(); guardarPerfilLocal();" class="space-y-3 text-xs">
           <div class="grid grid-cols-2 gap-3">
@@ -732,29 +717,91 @@
 
   </main>
 
-  <!-- BARRA DE NAVEGACIÓN INFERIOR NATIVA (DOCK MÓVIL) -->
-  <nav class="fixed bottom-0 inset-x-0 h-16 bg-slate-900/95 backdrop-blur border-t border-slate-800 flex items-center justify-around px-2 z-40">
-    <button onclick="cambiarSeccion('scanner')" id="mob-scanner" class="flex flex-col items-center gap-1 text-emerald-400">
-      <i class="fa-solid fa-camera text-base"></i>
-      <span class="text-[10px] font-bold">Scanner</span>
+  <!-- BARRA DE NAVEGACIÓN INFERIOR NATIVA CON BOTÓN CENTRAL (+) -->
+  <nav class="fixed bottom-0 inset-x-0 h-16 bg-slate-900/95 backdrop-blur border-t border-slate-800 grid grid-cols-5 items-center px-1 z-40">
+    <button onclick="cambiarSeccion('scanner')" id="mob-scanner" class="flex flex-col items-center gap-0.5 text-emerald-400">
+      <i class="fa-solid fa-house text-base"></i>
+      <span class="text-[10px] font-bold">Hoy</span>
     </button>
-    <button onclick="cambiarSeccion('diario')" id="mob-diario" class="flex flex-col items-center gap-1 text-slate-400">
+    <button onclick="cambiarSeccion('diario')" id="mob-diario" class="flex flex-col items-center gap-0.5 text-slate-400">
       <i class="fa-solid fa-calendar-check text-base"></i>
       <span class="text-[10px] font-medium">Diario</span>
     </button>
-    <button onclick="cambiarSeccion('cuestionario')" id="mob-cuestionario" class="flex flex-col items-center gap-1 text-slate-400">
-      <i class="fa-solid fa-clipboard-question text-base"></i>
-      <span class="text-[10px] font-medium">Costumbres</span>
-    </button>
-    <button onclick="cambiarSeccion('dieta')" id="mob-dieta" class="flex flex-col items-center gap-1 text-slate-400">
+    <div class="flex items-center justify-center">
+      <button type="button" id="btnDockCargaRapida" onclick="abrirModalCargaRapida()" class="-mt-6 w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 shadow-lg shadow-emerald-500/35 border-4 border-[#0b1120] flex items-center justify-center text-xl font-black transition" aria-label="Cargar comida rápido">
+        <i class="fa-solid fa-camera"></i>
+      </button>
+    </div>
+    <button onclick="cambiarSeccion('dieta')" id="mob-dieta" class="flex flex-col items-center gap-0.5 text-slate-400">
       <i class="fa-solid fa-utensils text-base"></i>
       <span class="text-[10px] font-medium">Dieta</span>
     </button>
-    <button onclick="cambiarSeccion('perfil')" id="mob-perfil" class="flex flex-col items-center gap-1 text-slate-400">
+    <button onclick="cambiarSeccion('perfil')" id="mob-perfil" class="flex flex-col items-center gap-0.5 text-slate-400">
       <i class="fa-solid fa-user text-base"></i>
       <span class="text-[10px] font-medium">Perfil</span>
     </button>
   </nav>
+
+  <!-- BOTTOM SHEET CARGA RÁPIDA (+) Y REPETIR PLATO FRECUENTE -->
+  <div id="modalCargaRapida" onclick="if(event.target === this) cerrarModalCargaRapida();" class="hidden fixed inset-0 z-[65] bg-black/75 backdrop-blur-sm flex items-end sm:items-center justify-center p-2">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-t-3xl sm:rounded-3xl p-4 space-y-3 shadow-2xl max-h-[88vh] overflow-y-auto">
+      <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto"></div>
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h3 class="text-sm font-extrabold text-white">Cargar Comida Rápido</h3>
+          <span id="badgeTurnoActual" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">🕐 Ahora</span>
+        </div>
+        <button type="button" onclick="cerrarModalCargaRapida()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+      </div>
+
+      <!-- Foto y Galería -->
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" onclick="cerrarModalCargaRapida(); document.getElementById('cameraInput').click()" class="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-extrabold py-3 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-camera text-sm"></i> Tomar Foto
+        </button>
+        <button type="button" onclick="cerrarModalCargaRapida(); document.getElementById('galleryInput').click()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-bold py-3 px-3 rounded-2xl text-xs flex items-center justify-center gap-2 border border-slate-700">
+          <i class="fa-regular fa-image text-emerald-400 text-sm"></i> Galería
+        </button>
+      </div>
+
+      <!-- Audio, Subir Audio y Colación -->
+      <div class="grid grid-cols-3 gap-1.5">
+        <button type="button" id="btnGrabarAudio" onclick="toggleGrabacionAudio()" class="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 active:scale-95 text-amber-300 font-bold py-2 px-2 rounded-xl text-[11px] flex items-center justify-center gap-1">
+          <i class="fa-solid fa-microphone"></i> Audio
+        </button>
+        <button type="button" onclick="cerrarModalCargaRapida(); document.getElementById('audioInput').click()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-slate-200 font-semibold py-2 px-2 rounded-xl text-[11px] flex items-center justify-center gap-1">
+          <i class="fa-solid fa-file-audio text-amber-400"></i> Subir
+        </button>
+        <button type="button" onclick="cerrarModalCargaRapida(); activarModoColaciones()" class="bg-violet-500/15 hover:bg-violet-500/25 border border-violet-500/30 active:scale-95 text-violet-300 font-bold py-2 px-2 rounded-xl text-[11px] flex items-center justify-center gap-1">
+          🍎 Colación
+        </button>
+      </div>
+
+      <div id="boxGrabandoAudio" class="hidden bg-rose-500/10 border border-rose-500/30 rounded-xl p-2 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 text-xs text-rose-300 font-bold">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          <span>Grabando... <span id="timerAudio">0s</span></span>
+        </div>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="cancelarGrabacionAudio()" class="px-2 py-1 rounded-lg bg-slate-800 text-slate-300 text-[11px] font-semibold">Cancelar</button>
+          <button type="button" onclick="detenerYAnalizarAudio()" class="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 text-[11px] font-extrabold">⏹️ Analizar</button>
+        </div>
+      </div>
+
+      <div id="seccionAudioScanner" class="flex gap-1.5">
+        <input id="inputTextoComida" type="text" onkeydown="if(event.key==='Enter'){ event.preventDefault(); analizarTextoComida(); }" placeholder="Escribí qué comiste (ej: 2 huevos, 1 tostada)" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none">
+        <button type="button" onclick="analizarTextoComida()" class="px-3 py-2 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs active:scale-95">Analizar</button>
+      </div>
+
+      <!-- Repetir plato frecuente (1 toque • 0 tokens de IA) -->
+      <div class="pt-2 border-t border-slate-800 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-amber-300">⭐ Repetir plato frecuente <span class="text-[10px] text-slate-400 font-normal">(1 toque • 0 tokens)</span></span>
+        </div>
+        <div id="listaPlatosFrecuentes" class="space-y-1.5"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- MODAL EDITAR COMIDA -->
   <div id="modalEditarComida" class="hidden fixed inset-0 z-[60] bg-black/70 flex items-end sm:items-center justify-center p-3">
@@ -787,9 +834,17 @@
         <label class="text-[11px] text-slate-400">Hora
           <input id="editHora" type="time" onchange="alCambiarHoraEdicion(this.value)" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-emerald-400 font-bold">
         </label>
-        <label class="text-[11px] text-slate-400 col-span-2">Porción comida (%)
-          <input id="editPorcion" type="number" min="0" step="5" oninput="escalarPorcion()" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-amber-400 font-bold">
-        </label>
+        <div class="col-span-2 space-y-1.5">
+          <label class="text-[11px] text-slate-400 block">Porción comida (%)
+            <input id="editPorcion" type="number" min="0" step="5" oninput="escalarPorcion()" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-amber-400 font-bold">
+          </label>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="aplicarPorcionRapida(50)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-amber-300 border border-slate-700 active:scale-95">50%</button>
+            <button type="button" onclick="aplicarPorcionRapida(75)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-amber-300 border border-slate-700 active:scale-95">75%</button>
+            <button type="button" onclick="aplicarPorcionRapida(100)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-emerald-400 border border-slate-700 active:scale-95">100%</button>
+            <button type="button" onclick="aplicarPorcionRapida(150)" class="py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-sky-300 border border-slate-700 active:scale-95">150%</button>
+          </div>
+        </div>
         <label class="text-[11px] text-slate-400">Calorías (kcal)
           <input id="editCal" type="number" min="0" class="w-full mt-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white">
         </label>
@@ -828,7 +883,7 @@
           <h3 class="text-base font-extrabold text-white flex items-center gap-2">
             🥤 Configurar Bebidas y Vasos
           </h3>
-          <p class="text-[11px] text-slate-400">Ajustá ml, calorías y carbohidratos por vaso o agregá nuevas.</p>
+          <p class="text-[11px] text-slate-400">Ordená tus favoritas primero (▲ ▼) y ajustá ml, kcal y carbohidratos.</p>
         </div>
         <button type="button" onclick="cerrarModalConfigBebidas()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
       </div>
@@ -1010,9 +1065,13 @@
       const el = document.getElementById('badgeTurnoActual');
       if (!el) return;
       const hora = horaActualLocal();
-      const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(hora), hora, getDiarioHoy());
-      const ico = INFO_TURNOS_COMIDA[res.tiempo]?.icono || "🕐";
-      el.innerText = `${ico} Ahora (${hora}): ${res.tiempo}`;
+      const targetFecha = fechaPreseleccionada || fechaPrincipalSeleccionada || fechaHoyLocal();
+      const esHoy = (targetFecha === fechaHoyLocal());
+      const res = resolverTiempoSinDuplicados(detectarTiempoPorHora(hora), hora, getDiarioPorFecha(targetFecha));
+      const turnoShow = slotPreseleccionado || res.tiempo;
+      const ico = INFO_TURNOS_COMIDA[turnoShow]?.icono || "🕐";
+      const fechaPrefix = esHoy ? `Ahora (${hora})` : targetFecha.split('-').reverse().slice(0, 2).join('/');
+      el.innerText = `${ico} ${fechaPrefix}: ${turnoShow}`;
     }
 
     function alCambiarHoraGuardar(horaVal) {
@@ -1207,6 +1266,9 @@
     let setNoDeseados = new Set(["Hígado / Achuras", "Mariscos", "Picante"]);
     let comidasActivas = ["Almuerzo", "Merienda", "Cena"];
     let controlPospuestoHoy = false;
+    let fechaPrincipalSeleccionada = null;
+    let bebidasExpandido = false;
+    let platosFrecuentesCache = [];
 
     window.addEventListener('DOMContentLoaded', () => {
       // Cargar perfil local
@@ -1263,6 +1325,7 @@
 
       // Cargar diario de hoy y activar vigilancia de cambio de día (00:00), horario y control semanal
       fechaActiva = fechaHoyLocal();
+      fechaPrincipalSeleccionada = fechaActiva;
       fechaDiarioSeleccionada = fechaActiva;
       actualizarBadgeTurnoActual();
       actualizarDashboardDiario();
@@ -2228,6 +2291,17 @@
       return canvas.toDataURL('image/jpeg', calidad);
     }
 
+    function syncVisibilidadCardAnalisis() {
+      const card = document.getElementById('cardAnalisisActivo');
+      if (!card) return;
+      const ids = ['targetSlotBanner', 'previewContainer', 'loadingIndicator', 'analysisResult'];
+      const hayActivo = ids.some(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains('hidden');
+      });
+      card.classList.toggle('hidden', !hayActivo);
+    }
+
     function manejarArchivo(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -2243,6 +2317,7 @@
           document.getElementById('previewContainer').classList.remove('hidden');
           const btnA = document.getElementById('btnAnalizar');
           if (btnA) { btnA.disabled = false; btnA.classList.remove('hidden'); }
+          syncVisibilidadCardAnalisis();
           // Auto-calcula automáticamente ni bien sacás o elegís la foto
           analizarFotoAutonoma();
         };
@@ -2254,6 +2329,9 @@
 
     function activarModoColaciones() {
       slotPreseleccionado = "Colaciones";
+      if (!fechaPreseleccionada && fechaPrincipalSeleccionada) {
+        fechaPreseleccionada = fechaPrincipalSeleccionada;
+      }
       const hora = horaActualLocal();
       const sel = document.getElementById('guardarTiempoComida');
       const hInp = document.getElementById('guardarHoraComida');
@@ -2263,10 +2341,12 @@
       const nameEl = document.getElementById('targetSlotName');
       if (nameEl) nameEl.innerText = `🍎 Colaciones (${hora} hs)`;
       if (banner) banner.classList.remove('hidden');
+      syncVisibilidadCardAnalisis();
+      abrirModalCargaRapida();
       const txtInp = document.getElementById('inputTextoComida');
       if (txtInp) {
         txtInp.placeholder = "Ej: una manzana, puñado de almendras, yogur, barrita...";
-        txtInp.focus();
+        setTimeout(() => txtInp.focus(), 60);
       }
     }
 
@@ -2337,10 +2417,12 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         document.getElementById('previewContainer').classList.add('hidden');
       }
 
+      cerrarModalCargaRapida();
       btn.disabled = true;
       if (loadingTitle) loadingTitle.innerText = loadingMsg || "Analizando plato con Gemini AI...";
       loading.classList.remove('hidden');
       resultBox.classList.add('hidden');
+      syncVisibilidadCardAnalisis();
 
       const apiKey = getApiKey();
       const modelos = [
@@ -2375,7 +2457,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
             if (texto.endsWith("```")) texto = texto.substring(0, texto.length - 3);
 
             const horaAhora = horaActualLocal();
-            const fechaObjetivo = fechaPreseleccionada || fechaHoyLocal();
+            const fechaObjetivo = fechaPreseleccionada || fechaPrincipalSeleccionada || fechaHoyLocal();
             ultimoResultado = JSON.parse(texto.trim());
             ultimoResultado.hora = horaAhora;
             ultimoResultado.fecha = fechaObjetivo;
@@ -2398,6 +2480,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
       btn.disabled = !imagenBase64;
       loading.classList.add('hidden');
+      syncVisibilidadCardAnalisis();
 
       if (!exito) {
         alert("No se pudo conectar con la IA de Google: " + (ultimoError || "Verificá tu conexión o clave de API."));
@@ -2524,6 +2607,8 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       fechaPreseleccionada = null;
       const b = document.getElementById('targetSlotBanner');
       if (b) b.classList.add('hidden');
+      syncVisibilidadCardAnalisis();
+      actualizarBadgeTurnoActual();
     }
 
     function mostrarResultados(data) {
@@ -2591,6 +2676,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       }
 
       document.getElementById('analysisResult').classList.remove('hidden');
+      syncVisibilidadCardAnalisis();
     }
 
     function recalcularTotalesScan() {
@@ -2914,7 +3000,9 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const catalogo = obtenerCatalogoBebidas();
       const bebida = catalogo.find(b => b.id === bebidaId);
       if (!bebida) return;
-      const hoy = fechaHoyLocal();
+      const hoy = fechaPrincipalSeleccionada || fechaHoyLocal();
+      const esHoy = (hoy === fechaHoyLocal());
+      const sufFecha = esHoy ? 'hoy' : hoy.split('-').reverse().slice(0, 2).join('/');
       const hora = horaOverride || horaActualLocal();
       const diario = getDiarioPorFecha(hoy);
 
@@ -2947,7 +3035,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         aplicarDeltaBebidaEnComida(bloque, bebida, 1);
         setDiarioPorFecha(hoy, diario);
 
-        mostrarFeedbackBebida(`💧 Agua registrada (${hora} hs): ${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} (${(agua.totalMl / 1000).toFixed(2)} L) hoy.`);
+        mostrarFeedbackBebida(`💧 Agua registrada (${hora} hs): ${agua.vasos} vaso${agua.vasos === 1 ? '' : 's'} (${(agua.totalMl / 1000).toFixed(2)} L) ${sufFecha}.`);
         fechaDiarioSeleccionada = hoy;
         actualizarDashboardDiario();
         renderizarDiario();
@@ -2997,7 +3085,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     }
 
     function restarVasoBebida(bebidaId, comidaIdExplicita = null, fechaOverride = null) {
-      const f = fechaOverride || fechaHoyLocal();
+      const f = fechaOverride || fechaPrincipalSeleccionada || fechaHoyLocal();
       const catalogo = obtenerCatalogoBebidas();
       const bebida = catalogo.find(b => b.id === bebidaId);
       if (!bebida) return;
@@ -3078,12 +3166,17 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       restarVasoBebida(bebidaId, comidaId, fechaStr);
     }
 
-    function contarVasosBebidaHoy(bebidaId) {
-      if (bebidaId === 'agua') return getAguaPorFecha(fechaHoyLocal()).vasos;
-      return getDiarioHoy().reduce((acc, c) => {
+    function contarVasosBebidaEnFecha(bebidaId, fechaStr = null) {
+      const f = fechaStr || fechaPrincipalSeleccionada || fechaHoyLocal();
+      if (bebidaId === 'agua') return getAguaPorFecha(f).vasos;
+      return getDiarioPorFecha(f).reduce((acc, c) => {
         const b = (c.bebidas || []).find(x => x.id === bebidaId);
         return acc + (b ? (Number(b.vasos) || 0) : 0);
       }, 0);
+    }
+
+    function contarVasosBebidaHoy(bebidaId) {
+      return contarVasosBebidaEnFecha(bebidaId, fechaHoyLocal());
     }
 
     // CÁLCULO MÉDICO DE META HÍDRICA DIARIA (30-35 ml/kg + ACTIVIDAD + DÉFICIT • EFSA / NASEM / BHI)
@@ -3200,10 +3293,18 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       } catch (e) {}
     }
 
+    function toggleExpandirBebidas() {
+      bebidasExpandido = !bebidasExpandido;
+      const grid = document.getElementById('gridBotonesBebidas');
+      const btn = document.getElementById('btnToggleBebidasMas');
+      if (grid) grid.classList.toggle('hidden', !bebidasExpandido);
+      if (btn) btn.innerText = bebidasExpandido ? 'Menos ▴' : 'Más ▾';
+    }
+
     function renderizarBebidasYAguaPanel() {
-      const hoy = fechaHoyLocal();
-      const agua = getAguaPorFecha(hoy);
-      const hid = calcularHidratacionPorFecha(hoy);
+      const fechaRef = fechaPrincipalSeleccionada || fechaHoyLocal();
+      const agua = getAguaPorFecha(fechaRef);
+      const hid = calcularHidratacionPorFecha(fechaRef);
       const txtEl = document.getElementById('aguaHoyTexto');
       if (txtEl) {
         const litrosTot = (hid.totalEfectivoMl / 1000).toFixed(2);
@@ -3211,11 +3312,38 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         txtEl.innerText = `💧 ${litrosTot}/${metaL}L`;
       }
 
+      const catalogo = obtenerCatalogoBebidas();
+
+      const fila = document.getElementById('filaBebidasRapidas');
+      if (fila) {
+        fila.innerHTML = catalogo.map(b => {
+          const vasos = b.esAgua ? agua.vasos : contarVasosBebidaEnFecha(b.id, fechaRef);
+          const activoCls = vasos > 0
+            ? (b.esAgua ? 'border-sky-400/70 bg-sky-500/20 text-white' : 'border-emerald-500/60 bg-emerald-500/15 text-white')
+            : 'border-slate-800 bg-slate-950 text-slate-200 hover:border-slate-700';
+          const badgeHtml = vasos > 0
+            ? `<span class="text-[9px] font-black px-1 py-0.5 rounded ${b.esAgua ? 'bg-sky-400 text-slate-950' : 'bg-emerald-500 text-slate-950'} leading-none">x${vasos}</span>`
+            : '';
+          const btnRestar = vasos > 0
+            ? `<button type="button" onclick="restarVasoBebida('${b.id}')" class="w-5 h-5 rounded-md bg-slate-900 border border-slate-700 text-slate-300 font-black text-[11px] flex items-center justify-center active:scale-95" title="Restar 1">−</button>`
+            : '';
+          return `
+            <div class="shrink-0 rounded-xl border ${activoCls} px-2 py-1.5 flex items-center gap-1 transition">
+              <button type="button" onclick="sumarVasoBebida('${b.id}')" class="flex items-center gap-1 text-[11px] font-bold whitespace-nowrap active:scale-95">
+                <span>${b.icono || '🥤'}</span>
+                <span>${b.nombre}</span>
+                ${badgeHtml}
+              </button>
+              ${btnRestar}
+            </div>
+          `;
+        }).join('');
+      }
+
       const grid = document.getElementById('gridBotonesBebidas');
       if (!grid) return;
-      const catalogo = obtenerCatalogoBebidas();
       grid.innerHTML = catalogo.map(b => {
-        const vasos = b.esAgua ? agua.vasos : contarVasosBebidaHoy(b.id);
+        const vasos = b.esAgua ? agua.vasos : contarVasosBebidaEnFecha(b.id, fechaRef);
         const activoCls = vasos > 0
           ? (b.esAgua ? 'border-sky-400/60 bg-sky-500/15' : 'border-emerald-500/50 bg-emerald-500/10')
           : 'border-slate-800 bg-slate-950';
@@ -3257,6 +3385,18 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('modalConfigBebidas')?.classList.add('hidden');
     }
 
+    function moverBebidaConfig(idx, delta) {
+      const lista = leerCatalogoDesdeModal();
+      const targetIdx = idx + delta;
+      if (!Array.isArray(lista) || idx < 0 || idx >= lista.length || targetIdx < 0 || targetIdx >= lista.length) return;
+      const tmp = lista[idx];
+      lista[idx] = lista[targetIdx];
+      lista[targetIdx] = tmp;
+      guardarCatalogoBebidas(lista);
+      renderizarModalConfigBebidas();
+      renderizarBebidasYAguaPanel();
+    }
+
     function renderizarModalConfigBebidas() {
       const cont = document.getElementById('listaConfigBebidas');
       if (!cont) return;
@@ -3264,9 +3404,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       cont.innerHTML = lista.map((b, idx) => `
         <div class="bg-slate-950 border border-slate-800 rounded-2xl p-2.5 space-y-2 text-xs" data-beb-idx="${idx}" data-beb-id="${b.id}" data-beb-agua="${b.esAgua ? '1' : '0'}">
           <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-0.5 shrink-0">
+              <button type="button" onclick="moverBebidaConfig(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="px-1.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 disabled:opacity-30 text-[10px] font-black active:scale-95" title="Subir orden">▲</button>
+              <button type="button" onclick="moverBebidaConfig(${idx}, 1)" ${idx === lista.length - 1 ? 'disabled' : ''} class="px-1.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 disabled:opacity-30 text-[10px] font-black active:scale-95" title="Bajar orden">▼</button>
+            </div>
             <input type="text" data-field="icono" value="${(b.icono || '🥤').replace(/"/g, '&quot;')}" maxlength="4" class="w-10 bg-slate-900 border border-slate-700 rounded-lg px-1.5 py-1 text-center text-white">
-            <input type="text" data-field="nombre" value="${(b.nombre || '').replace(/"/g, '&quot;')}" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 font-bold text-white">
-            ${b.esAgua ? '<span class="text-[10px] text-sky-400 font-bold px-1.5">Agua</span>' : `<button type="button" onclick="eliminarBebidaConfig('${b.id}')" class="px-2 py-1 rounded-lg bg-slate-900 text-rose-400 text-[11px] font-bold" title="Eliminar bebida">🗑️</button>`}
+            <input type="text" data-field="nombre" value="${(b.nombre || '').replace(/"/g, '&quot;')}" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 font-bold text-white min-w-0">
+            ${b.esAgua ? '<span class="text-[10px] text-sky-400 font-bold px-1.5 shrink-0">Agua</span>' : `<button type="button" onclick="eliminarBebidaConfig('${b.id}')" class="px-2 py-1 rounded-lg bg-slate-900 text-rose-400 text-[11px] font-bold shrink-0" title="Eliminar bebida">🗑️</button>`}
           </div>
           <div class="grid grid-cols-3 gap-1.5 text-[11px]">
             <label class="text-slate-400">ml/vaso
@@ -3350,6 +3494,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
     function guardarConfigBebidasModal() {
       const lista = leerCatalogoDesdeModal();
       guardarCatalogoBebidas(lista);
+      renderizarBebidasYAguaPanel();
       cerrarModalConfigBebidas();
     }
 
@@ -3886,6 +4031,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       imagenThumbUrl = null;
       document.getElementById('previewContainer').classList.add('hidden');
       document.getElementById('analysisResult').classList.add('hidden');
+      syncVisibilidadCardAnalisis();
       const dn = document.getElementById('dishName');
       if (dn) dn.value = '';
       const gh = document.getElementById('guardarHoraComida');
@@ -3906,7 +4052,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         const resSync = sincronizarAutoGuardadoEnVivo(false);
         if (resSync) resolucion = resSync;
       } else {
-        const fechaElegida = document.getElementById('guardarFechaComida')?.value || fechaPreseleccionada || fechaHoyLocal();
+        const fechaElegida = document.getElementById('guardarFechaComida')?.value || fechaPreseleccionada || fechaPrincipalSeleccionada || fechaHoyLocal();
         const tiempoSeleccionado = document.getElementById('guardarTiempoComida').value;
         const hora = document.getElementById('guardarHoraComida')?.value || ultimoResultado.hora || horaActualLocal();
         const nombrePlato = (document.getElementById('dishName').value || '').trim() || ultimoResultado.plato || 'Comida';
@@ -3955,6 +4101,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       imagenThumbUrl = null;
       document.getElementById('previewContainer').classList.add('hidden');
       document.getElementById('analysisResult').classList.add('hidden');
+      syncVisibilidadCardAnalisis();
       const dn = document.getElementById('dishName');
       if (dn) dn.value = '';
       const gh = document.getElementById('guardarHoraComida');
@@ -4008,6 +4155,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       document.getElementById('editProt').value = Math.round((base.proteinas || 0) * f);
       document.getElementById('editCarb').value = Math.round((base.carbos || 0) * f);
       document.getElementById('editGras').value = Math.round((base.grasas || 0) * f);
+    }
+
+    function aplicarPorcionRapida(pct) {
+      const inp = document.getElementById('editPorcion');
+      if (!inp) return;
+      inp.value = pct;
+      escalarPorcion();
     }
 
     function guardarEdicionComida() {
@@ -4197,19 +4351,241 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       `;
     }
 
-    function renderizarResumenHoyPrincipal() {
-      const cont = document.getElementById('listaResumenHoyPrincipal');
+    function seleccionarDiaPrincipal(fechaStr) {
+      const hoy = fechaHoyLocal();
+      fechaPrincipalSeleccionada = (!fechaStr || fechaStr === hoy) ? hoy : fechaStr;
+      fechaDiarioSeleccionada = fechaPrincipalSeleccionada;
+      actualizarDashboardDiario();
+    }
+
+    function calcularPresupuestoSemanal(fechaFinStr = null) {
+      const fin = fechaFinStr || fechaHoyLocal();
+      const [y, m, d] = fin.split('-').map(Number);
+      const base = new Date(y, (m || 1) - 1, d || 1, 12, 0, 0);
+      const metaCal = Math.max(1, Number(perfil.caloriasMeta) || 2000);
+      let dias = 0;
+      let totalConsumido = 0;
+      for (let i = 6; i >= 0; i--) {
+        const dt = new Date(base);
+        dt.setDate(base.getDate() - i);
+        const f = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        const diario = getDiarioPorFecha(f);
+        const calDia = diario.reduce((s, c) => s + (Number(c.calorias) || 0), 0);
+        if (diario.length > 0 && calDia > 0) {
+          dias++;
+          totalConsumido += calDia;
+        }
+      }
+      const metaAcum = dias * metaCal;
+      const balance = Math.round(metaAcum - totalConsumido);
+      const promDia = dias > 0 ? Math.round(totalConsumido / dias) : 0;
+      return { dias, totalConsumido, metaAcum, balance, promDia, metaCal };
+    }
+
+    function renderizarTiraSemanalPrincipal() {
+      const cont = document.getElementById('tiraSemanalPrincipal');
       if (!cont) return;
       const hoy = fechaHoyLocal();
+      const activa = fechaPrincipalSeleccionada || hoy;
+      const metaCal = Math.max(1, Number(perfil.caloriasMeta) || 2000);
+      const diaLetras = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
+      let html = '';
+      for (let delta = -6; delta <= 0; delta++) {
+        const f = fechaRelativaLocal(delta);
+        const [yy, mm, dd] = f.split('-').map(Number);
+        const dt = new Date(yy, (mm || 1) - 1, dd || 1, 12, 0, 0);
+        const esHoy = (f === hoy);
+        const esAct = (f === activa);
+        const label = esHoy ? 'HOY' : diaLetras[dt.getDay()];
+        const diario = getDiarioPorFecha(f);
+        const cal = diario.reduce((s, c) => s + (Number(c.calorias) || 0), 0);
+        const dotCls = (cal <= 0 && diario.length === 0)
+          ? 'bg-slate-600'
+          : (Math.abs(cal - metaCal) / metaCal <= 0.12 ? 'bg-emerald-400' : 'bg-amber-400');
+        const btnCls = esAct
+          ? 'bg-emerald-500/20 border-emerald-400/70 text-white shadow-sm shadow-emerald-950/50'
+          : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700';
+        html += `
+          <button type="button" onclick="seleccionarDiaPrincipal('${f}')" class="rounded-xl border py-1.5 px-0.5 flex flex-col items-center justify-center gap-0.5 transition active:scale-95 ${btnCls}" data-strip-fecha="${f}">
+            <span class="text-[9px] font-bold tracking-wide ${esAct ? 'text-emerald-300' : 'text-slate-500'}">${label}</span>
+            <span class="text-xs font-black leading-none">${dt.getDate()}</span>
+            <span class="w-1.5 h-1.5 rounded-full ${dotCls} mt-0.5"></span>
+          </button>
+        `;
+      }
+      cont.innerHTML = html;
+    }
+
+    function obtenerPlatosFrecuentes(maxItems = 5) {
+      const fechas = listarFechasConDiario().slice(0, 45);
+      const mapa = new Map();
+      fechas.forEach(f => {
+        const diario = getDiarioPorFecha(f);
+        diario.forEach(c => {
+          if (!c || c.esSoloBebida || c.esBloqueHidratacion || c.tiempo === 'Hidratación') return;
+          const items = (Array.isArray(c.subItems) && c.subItems.length > 0)
+            ? c.subItems
+            : (() => {
+                const bebidas = Array.isArray(c.bebidas) ? c.bebidas : [];
+                let bebCal = 0, bebProt = 0, bebCarb = 0, bebGras = 0;
+                bebidas.forEach(b => {
+                  const v = Number(b.vasos) || 0;
+                  bebCal += (Number(b.caloriasUnit) || 0) * v;
+                  bebProt += (Number(b.proteinasUnit) || 0) * v;
+                  bebCarb += (Number(b.carbosUnit) || 0) * v;
+                  bebGras += (Number(b.grasasUnit) || 0) * v;
+                });
+                return [{
+                  id: c.id,
+                  plato: c.plato,
+                  calorias: Math.max(0, Math.round((Number(c.calorias) || 0) - bebCal)),
+                  proteinas: Math.max(0, Math.round((Number(c.proteinas) || 0) - bebProt)),
+                  carbos: Math.max(0, Math.round((Number(c.carbos) || 0) - bebCarb)),
+                  grasas: Math.max(0, Math.round((Number(c.grasas) || 0) - bebGras)),
+                  ingredientes: Array.isArray(c.ingredientes) ? c.ingredientes : []
+                }];
+              })();
+          items.forEach(it => {
+            const nombre = (it.plato || '').trim();
+            const cal = Math.round(Number(it.calorias) || 0);
+            if (!nombre || cal <= 0) return;
+            const key = nombre.toLowerCase().replace(/\s+/g, ' ');
+            const prev = mapa.get(key);
+            const scoreFecha = f;
+            if (!prev) {
+              mapa.set(key, {
+                plato: nombre,
+                calorias: cal,
+                proteinas: Math.round(Number(it.proteinas) || 0),
+                carbos: Math.round(Number(it.carbos) || 0),
+                grasas: Math.round(Number(it.grasas) || 0),
+                ingredientes: Array.isArray(it.ingredientes) ? it.ingredientes : [],
+                count: 1,
+                lastDate: scoreFecha
+              });
+            } else {
+              prev.count += 1;
+              if (scoreFecha > prev.lastDate) {
+                prev.lastDate = scoreFecha;
+                prev.calorias = cal;
+                prev.proteinas = Math.round(Number(it.proteinas) || 0);
+                prev.carbos = Math.round(Number(it.carbos) || 0);
+                prev.grasas = Math.round(Number(it.grasas) || 0);
+                prev.ingredientes = Array.isArray(it.ingredientes) ? it.ingredientes : prev.ingredientes;
+              }
+            }
+          });
+        });
+      });
+      return [...mapa.values()]
+        .sort((a, b) => (b.count !== a.count ? b.count - a.count : b.lastDate.localeCompare(a.lastDate)))
+        .slice(0, maxItems);
+    }
+
+    function renderizarPlatosFrecuentesModal() {
+      const cont = document.getElementById('listaPlatosFrecuentes');
+      if (!cont) return;
+      platosFrecuentesCache = obtenerPlatosFrecuentes(5);
+      if (platosFrecuentesCache.length === 0) {
+        cont.innerHTML = `<div class="text-[11px] text-slate-500 text-center py-2.5 bg-slate-950/60 border border-dashed border-slate-800 rounded-xl">Cuando registres tus primeras comidas aparecerán acá para repetirlas en 1 toque (0 tokens).</div>`;
+        return;
+      }
+      cont.innerHTML = platosFrecuentesCache.map((p, idx) => {
+        const nomSafe = (p.plato || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const badgeVeces = p.count > 1 ? `<span class="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">x${p.count}</span>` : `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Reciente</span>`;
+        return `
+          <button type="button" onclick="repetirPlatoFrecuente(${idx})" class="w-full text-left bg-slate-950 hover:bg-slate-800/80 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between gap-2 active:scale-[0.99] transition">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-white truncate">${nomSafe}</span>
+                ${badgeVeces}
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5">${p.calorias} kcal • ${p.proteinas}g prot • ${p.carbos}g carb</div>
+            </div>
+            <span class="text-[10px] font-black px-2 py-1 rounded-lg bg-emerald-500 text-slate-950 shrink-0">+ Cargar</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function repetirPlatoFrecuente(idx) {
+      const item = platosFrecuentesCache[idx];
+      if (!item) return;
+      const fechaTarget = fechaPreseleccionada || fechaPrincipalSeleccionada || fechaHoyLocal();
+      const hora = horaActualLocal();
+      const propuesto = slotPreseleccionado || detectarTiempoPorHora(hora);
+      const id = Date.now();
+      const nuevoItem = {
+        id,
+        tiempo: propuesto,
+        hora,
+        plato: item.plato,
+        rol: '',
+        calorias: Math.round(Number(item.calorias) || 0),
+        proteinas: Math.round(Number(item.proteinas) || 0),
+        carbos: Math.round(Number(item.carbos) || 0),
+        grasas: Math.round(Number(item.grasas) || 0),
+        ingredientes: Array.isArray(item.ingredientes) ? JSON.parse(JSON.stringify(item.ingredientes)) : [],
+        tieneFoto: false
+      };
+
+      let diario = getDiarioPorFecha(fechaTarget);
+      const bloqueDestino = buscarBloqueParaAgrupar(diario, nuevoItem, null, propuesto === 'Colaciones');
+      let tiempoFinal = propuesto;
+      let consolidado = false;
+      if (bloqueDestino) {
+        fusionarSubItemEnBloque(bloqueDestino, nuevoItem);
+        tiempoFinal = bloqueDestino.tiempo;
+        consolidado = true;
+      } else {
+        const resol = resolverTiempoSinDuplicados(propuesto, hora, diario);
+        nuevoItem.tiempo = resol.tiempo;
+        tiempoFinal = resol.tiempo;
+        diario = absorberBebidasSueltasEnComida(nuevoItem, diario);
+        diario.push(nuevoItem);
+      }
+      setDiarioPorFecha(fechaTarget, diario);
+      fechaDiarioSeleccionada = fechaTarget;
+      limpiarSlotPreseleccionado();
+      cerrarModalCargaRapida();
+      actualizarDashboardDiario();
+      renderizarDiario();
+      mostrarToastAccesoRapido(
+        consolidado
+          ? `⚡ Sumado a ${tiempoFinal}: ${item.plato} (${item.calorias} kcal • 0 tokens)`
+          : `⚡ ${item.plato} (${item.calorias} kcal) cargado en ${tiempoFinal}`,
+        false
+      );
+    }
+
+    function abrirModalCargaRapida() {
+      actualizarBadgeTurnoActual();
+      renderizarPlatosFrecuentesModal();
+      document.getElementById('modalCargaRapida')?.classList.remove('hidden');
+    }
+
+    function cerrarModalCargaRapida() {
+      document.getElementById('modalCargaRapida')?.classList.add('hidden');
+    }
+
+    function renderizarResumenHoyPrincipal(fechaOverride = null) {
+      const cont = document.getElementById('listaResumenHoyPrincipal');
+      if (!cont) return;
+      const hoy = fechaOverride || fechaPrincipalSeleccionada || fechaHoyLocal();
+      const esHoy = (hoy === fechaHoyLocal());
       const comidas = ordenarComidasCronologicamente(getDiarioPorFecha(hoy));
       const agua = getAguaPorFecha(hoy);
       const slots = obtenerComidasEstablecidas().filter(s => COMIDAS_PRINCIPALES.includes(s));
       const turnoAhora = resolverTiempoSinDuplicados(detectarTiempoPorHora(horaActualLocal()), horaActualLocal(), comidas).tiempo;
 
       if (comidas.length === 0 && agua.vasos === 0) {
-        cont.innerHTML = `
+        cont.innerHTML = esHoy ? `
           <div class="text-xs text-slate-400 text-center py-3 border border-dashed border-slate-800 rounded-2xl">
-            Todavía no cargaste nada hoy (${turnoAhora} en curso).<br>Sacá una foto, grabá un audio o sumá bebidas arriba.
+            Todavía no cargaste nada hoy (${turnoAhora} en curso).<br>Tocá <strong>+</strong> abajo para sacar foto, audio o repetir un plato.
+          </div>
+        ` : `
+          <div class="text-xs text-slate-400 text-center py-3 border border-dashed border-slate-800 rounded-2xl">
+            Sin registros en esta fecha.<br>Tocá <strong>+</strong> abajo si querés cargar algo de ese día.
           </div>
         `;
         return;
@@ -4219,7 +4595,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const faltantes = slots.filter(s => !existeComidaPrincipalEnDiario(s, comidas));
       if (faltantes.length > 0) {
         html += `<div class="flex flex-wrap gap-1.5 pt-1">` + faltantes.map(s =>
-          `<button type="button" onclick="irACargarSlot('${s}', 'foto')" class="text-[10px] font-bold px-2.5 py-1.5 rounded-xl bg-slate-950 border border-dashed border-slate-700 text-slate-300">+ ${INFO_TURNOS_COMIDA[s]?.icono || ''} ${s}</button>`
+          `<button type="button" onclick="irACargarSlot('${s}', 'foto', '${hoy}')" class="text-[10px] font-bold px-2.5 py-1.5 rounded-xl bg-slate-950 border border-dashed border-slate-700 text-slate-300">+ ${INFO_TURNOS_COMIDA[s]?.icono || ''} ${s}</button>`
         ).join('') + `</div>`;
       }
       cont.innerHTML = html;
@@ -4231,18 +4607,18 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       if (obj === "definicion_perder_grasa") {
         return {
           texto: "🔥 Meta Pérdida de Grasa (-20%)",
-          cls: "text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/25"
+          cls: "text-[9px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/25"
         };
       }
       if (obj === "mantenimiento") {
         return {
           texto: "⚖️ Meta Mantenimiento (Equilibrio)",
-          cls: "text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/25"
+          cls: "text-[9px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/25"
         };
       }
       return {
         texto: "💪 Meta Hipertrofia (+12%)",
-        cls: "text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20"
+        cls: "text-[9px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20"
       };
     }
 
@@ -4256,29 +4632,61 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
 
     function actualizarDashboardDiario() {
       renderizarObjetivoPanelPrincipal();
-      const comidas = getDiarioHoy();
+      const hoyReal = fechaHoyLocal();
+      const fechaRef = fechaPrincipalSeleccionada || hoyReal;
+      const esHoy = (fechaRef === hoyReal);
+      const fechaCorta = fechaRef.split('-').reverse().slice(0, 2).join('/');
+
+      const badgeFecha = document.getElementById('badgeFechaPrincipal');
+      if (badgeFecha) badgeFecha.innerText = esHoy ? 'Hoy' : fechaCorta;
+      const tituloHoy = document.getElementById('tituloLoDeHoy');
+      if (tituloHoy) tituloHoy.innerText = esHoy ? '🥗 Lo de Hoy' : `📅 Registros del ${fechaCorta}`;
+
+      const comidas = getDiarioPorFecha(fechaRef);
       let totCal = 0, totProt = 0, totCarb = 0, totGras = 0;
       comidas.forEach(c => {
-        totCal += c.calorias;
-        totProt += c.proteinas;
-        totCarb += c.carbos;
-        totGras += c.grasas;
+        totCal += Number(c.calorias) || 0;
+        totProt += Number(c.proteinas) || 0;
+        totCarb += Number(c.carbos) || 0;
+        totGras += Number(c.grasas) || 0;
       });
 
-      const restCal = Math.max(0, perfil.caloriasMeta - totCal);
-      document.getElementById('dashCalRestantes').innerText = restCal.toLocaleString();
-      document.getElementById('dashCalConsumidas').innerText = `${totCal.toLocaleString()} consumidas`;
+      const metaCal = Math.max(1, Number(perfil.caloriasMeta) || 2000);
+      const excedido = totCal > metaCal;
+      const calEl = document.getElementById('dashCalRestantes');
+      const lblEl = document.getElementById('dashCalLabel');
+      const consCalEl = document.getElementById('dashCalConsumidas');
+      if (calEl) {
+        calEl.innerText = excedido
+          ? `+${Math.round(totCal - metaCal).toLocaleString()}`
+          : Math.round(metaCal - totCal).toLocaleString();
+        calEl.className = `text-xl font-black tracking-tight ${excedido ? 'text-rose-400' : 'text-white'}`;
+      }
+      if (lblEl) lblEl.innerText = excedido ? 'kcal extra' : 'kcal restantes';
+      if (consCalEl) consCalEl.innerText = `${Math.round(totCal).toLocaleString()} cons.`;
 
-      document.getElementById('dashProtText').innerText = `${Math.round(totProt)}/${perfil.proteinas}g`;
-      document.getElementById('dashCarbText').innerText = `${Math.round(totCarb)}/${perfil.carbos}g`;
-      document.getElementById('dashGrasText').innerText = `${Math.round(totGras)}/${perfil.grasas}g`;
+      const ringArc = document.getElementById('dashCalRingArc');
+      if (ringArc) {
+        const C = 301.59;
+        const ratio = totCal / metaCal;
+        const clamped = Math.max(0, Math.min(1, ratio));
+        ringArc.style.strokeDashoffset = (C * (1 - clamped)).toFixed(2);
+        ringArc.setAttribute('stroke', ratio > 1.08 ? '#f43f5e' : (ratio > 0.95 ? '#f59e0b' : '#10b981'));
+      }
 
-      document.getElementById('dashProtBar').style.width = Math.min(100, Math.round((totProt / perfil.proteinas) * 100)) + '%';
-      document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / perfil.carbos) * 100)) + '%';
-      document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / perfil.grasas) * 100)) + '%';
+      const metaProt = Math.max(1, Number(perfil.proteinas) || 150);
+      const metaCarb = Math.max(1, Number(perfil.carbos) || 200);
+      const metaGras = Math.max(1, Number(perfil.grasas) || 70);
+      document.getElementById('dashProtText').innerText = `${Math.round(totProt)}/${metaProt}g`;
+      document.getElementById('dashCarbText').innerText = `${Math.round(totCarb)}/${metaCarb}g`;
+      document.getElementById('dashGrasText').innerText = `${Math.round(totGras)}/${metaGras}g`;
+
+      document.getElementById('dashProtBar').style.width = Math.min(100, Math.round((totProt / metaProt) * 100)) + '%';
+      document.getElementById('dashCarbBar').style.width = Math.min(100, Math.round((totCarb / metaCarb) * 100)) + '%';
+      document.getElementById('dashGrasBar').style.width = Math.min(100, Math.round((totGras / metaGras) * 100)) + '%';
 
       // Meta diaria de agua con descuento (tipo calorías)
-      const hid = calcularHidratacionPorFecha(fechaHoyLocal());
+      const hid = calcularHidratacionPorFecha(fechaRef);
       const restEl = document.getElementById('dashAguaRestante');
       const consEl = document.getElementById('dashAguaConsumida');
       const desgEl = document.getElementById('dashAguaDesglose');
@@ -4305,8 +4713,21 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
         barAgua.className = (hid.restanteMl <= 0 ? 'bg-emerald-400' : 'bg-sky-400') + ' h-full rounded-full transition-all';
       }
 
+      const presEl = document.getElementById('dashPresupuestoSemanal');
+      if (presEl) {
+        const pw = calcularPresupuestoSemanal(hoyReal);
+        if (pw.dias === 0) {
+          presEl.innerHTML = `<span class="text-slate-400">📅 Presupuesto semanal</span><span class="font-bold text-slate-300">Sin registros en 7 días</span>`;
+        } else if (pw.balance >= 0) {
+          presEl.innerHTML = `<span class="text-slate-400">📅 Semanal (${pw.dias}d • prom ${pw.promDia} kcal)</span><span class="font-extrabold text-emerald-400">+${pw.balance.toLocaleString()} kcal a favor</span>`;
+        } else {
+          presEl.innerHTML = `<span class="text-slate-400">📅 Semanal (${pw.dias}d • prom ${pw.promDia} kcal)</span><span class="font-extrabold text-amber-400">${Math.abs(pw.balance).toLocaleString()} kcal sobre meta</span>`;
+        }
+      }
+
+      renderizarTiraSemanalPrincipal();
       renderizarBebidasYAguaPanel();
-      renderizarResumenHoyPrincipal();
+      renderizarResumenHoyPrincipal(fechaRef);
       actualizarBadgeTurnoActual();
       renderizarPanelBalanceSemanal();
     }
@@ -4315,6 +4736,7 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const hoy = fechaHoyLocal();
       if (fechaActiva && fechaActiva !== hoy) {
         if (fechaDiarioSeleccionada === fechaActiva) fechaDiarioSeleccionada = hoy;
+        if (fechaPrincipalSeleccionada === fechaActiva) fechaPrincipalSeleccionada = hoy;
         fechaActiva = hoy;
         limpiarSlotPreseleccionado();
         actualizarDashboardDiario();
@@ -4335,9 +4757,11 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       return ["Desayuno", "Almuerzo", "Merienda", "Cena"];
     }
 
-    function irACargarSlot(slot, modo) {
+    function irACargarSlot(slot, modo, fechaOverride = null) {
       const slotNorm = normalizarTiempoComida(slot);
       slotPreseleccionado = slotNorm;
+      if (fechaOverride) fechaPreseleccionada = fechaOverride;
+      else if (fechaPrincipalSeleccionada) fechaPreseleccionada = fechaPrincipalSeleccionada;
       const sel = document.getElementById('guardarTiempoComida');
       if (sel) sel.value = slotNorm;
       const hInp = document.getElementById('guardarHoraComida');
@@ -4351,14 +4775,13 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const nameEl = document.getElementById('targetSlotName');
       if (nameEl) nameEl.innerText = slotNorm;
       if (banner) banner.classList.remove('hidden');
+      syncVisibilidadCardAnalisis();
 
       cambiarSeccion('scanner');
+      abrirModalCargaRapida();
       setTimeout(() => {
         if (modo === 'audio') {
-          const box = document.getElementById('seccionAudioScanner');
-          if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          document.getElementById('inputTextoComida')?.focus();
         }
       }, 80);
     }
@@ -4522,7 +4945,9 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       const nameEl = document.getElementById('targetSlotName');
       if (nameEl) nameEl.innerText = `📅 Día ${p[2]}/${p[1]}/${p[0]} (se guarda en esa fecha)`;
       if (banner) banner.classList.remove('hidden');
+      syncVisibilidadCardAnalisis();
       cambiarSeccion('scanner');
+      abrirModalCargaRapida();
       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 60);
     }
 
