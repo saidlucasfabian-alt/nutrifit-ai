@@ -36,7 +36,7 @@
           <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-1.5">
             NutriFit AI
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MÓVIL</span>
-            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v19 ↻</button>
+            <button type="button" onclick="forzarActualizacionApp()" class="text-[10px] font-bold bg-slate-800 hover:bg-slate-700 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700 active:scale-95" title="Actualizar app">v20 ↻</button>
           </h1>
           <p class="text-[10px] text-slate-400 leading-tight">Método Vedrovnik + Google AI Pro</p>
         </div>
@@ -373,6 +373,9 @@
         <div id="gridBotonesBebidas" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-800/80"></div>
         <div id="feedbackBebidaReciente" class="hidden text-[10px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-2.5 py-1.5 font-semibold"></div>
       </div>
+
+      <!-- MINI CHECK-IN DIARIO (3 SEGUNDOS: ENTRENO, PASOS, SUEÑO, HAMBRE, PESO) -->
+      <div id="cardCheckinDiario" class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2"></div>
 
       <!-- LO DEL DÍA EN LA PANTALLA PRINCIPAL -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-lg space-y-2">
@@ -723,6 +726,7 @@
           </select>
         </div>
         <div id="panelBalanceSemanal" class="space-y-2.5"></div>
+        <div id="panelCoachingAdaptativo" class="space-y-2.5"></div>
         <div id="graficosEvolucionPanel" class="space-y-3"></div>
         <div id="resumenEvolucionSemanal" class="space-y-2"></div>
         <div id="listaEvaluacionesSemanales" class="space-y-2"></div>
@@ -1508,20 +1512,28 @@
 
       const actFactors = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725 };
       const tdee = med.bmr * (actFactors[perfil.actividad] || 1.55);
+      let caloriasBase = Math.round(tdee);
 
       if (perfil.objetivo === "ganar_masa_muscular") {
-        perfil.caloriasMeta = Math.round(tdee * 1.12); // +12% superávit limpio
+        caloriasBase = Math.round(tdee * 1.12); // +12% superávit limpio
         perfil.proteinas = Math.round(perfil.peso * 2.0); // ISSN: 1.6-2.2 g/kg
         perfil.grasas = Math.round(perfil.peso * 1.0);
       } else if (perfil.objetivo === "definicion_perder_grasa") {
-        perfil.caloriasMeta = Math.round(tdee * 0.80); // -20% déficit
+        caloriasBase = Math.round(tdee * 0.80); // -20% déficit
         perfil.proteinas = Math.round(perfil.lbm ? perfil.lbm * 2.5 : perfil.peso * 2.3); // ISSN déficit: 2.3-3.1 g/kg magro/total
         perfil.grasas = Math.round(perfil.peso * 0.8);
       } else {
-        perfil.caloriasMeta = Math.round(tdee);
+        caloriasBase = Math.round(tdee);
         perfil.proteinas = Math.round(perfil.peso * 1.8);
         perfil.grasas = Math.round(perfil.peso * 0.9);
       }
+
+      perfil.tdeeTeorico = Math.round(tdee);
+      perfil.caloriasBaseTeorica = caloriasBase;
+      const ajusteAdapt = Math.max(-500, Math.min(500, Math.round(Number(perfil.ajusteAdaptativoKcal) || 0)));
+      perfil.ajusteAdaptativoKcal = ajusteAdapt;
+      const pisoSeguro = Math.max(1200, Math.round(med.bmr * 0.95));
+      perfil.caloriasMeta = ajusteAdapt === 0 ? caloriasBase : Math.max(pisoSeguro, caloriasBase + ajusteAdapt);
 
       const calProt = perfil.proteinas * 4;
       const calGras = perfil.grasas * 9;
@@ -1530,6 +1542,26 @@
       localStorage.setItem("nutrifit_profile", JSON.stringify(perfil));
       renderizarPanelMedico();
       actualizarDashboardDiario();
+    }
+
+    function aplicarAjusteCaloricoAdaptativo(deltaKcal) {
+      const d = Math.round(Number(deltaKcal) || 0);
+      if (!d) return;
+      const actual = Number(perfil.ajusteAdaptativoKcal) || 0;
+      perfil.ajusteAdaptativoKcal = Math.max(-500, Math.min(500, actual + d));
+      recalcularPerfilSilencioso();
+      renderizarEvaluacionesSemanales();
+      mostrarToastAccesoRapido(
+        `⚡ Meta adaptativa actualizada: ${perfil.caloriasMeta.toLocaleString()} kcal/día (${perfil.ajusteAdaptativoKcal > 0 ? '+' : ''}${perfil.ajusteAdaptativoKcal} kcal vs teórico)`,
+        false
+      );
+    }
+
+    function restablecerAjusteAdaptativo() {
+      perfil.ajusteAdaptativoKcal = 0;
+      recalcularPerfilSilencioso();
+      renderizarEvaluacionesSemanales();
+      mostrarToastAccesoRapido(`↺ Meta restablecida al cálculo teórico (${perfil.caloriasMeta.toLocaleString()} kcal/día)`, false);
     }
 
     function renderizarPanelMedico() {
@@ -1601,6 +1633,407 @@
       return [...preferidos, ...extraPermitidos].slice(0, maxItems);
     }
 
+    // FASE 3 (v20): MINI CHECK-IN DIARIO (ENTRENO, PASOS, SUEÑO, HAMBRE, PESO) + PESO TENDENCIA EWMA + TDEE ADAPTATIVO
+    function diasEntreFechasLocal(fechaA, fechaB) {
+      const [ya, ma, da] = (fechaA || fechaHoyLocal()).split('-').map(Number);
+      const [yb, mb, db] = (fechaB || fechaHoyLocal()).split('-').map(Number);
+      const ta = new Date(ya, (ma || 1) - 1, da || 1, 12, 0, 0).getTime();
+      const tb = new Date(yb, (mb || 1) - 1, db || 1, 12, 0, 0).getTime();
+      return Math.round((tb - ta) / 86400000);
+    }
+
+    function getCheckinPorFecha(fechaStr) {
+      const f = fechaStr || fechaHoyLocal();
+      const def = { entreno: '', pasos: '', sueno: null, hambre: null, peso: null };
+      try {
+        const raw = localStorage.getItem(`nutrifit_checkin_${f}`);
+        if (raw) return { ...def, ...JSON.parse(raw) };
+      } catch (_) {}
+      return def;
+    }
+
+    function setCheckinPorFecha(fechaStr, obj) {
+      const f = fechaStr || fechaHoyLocal();
+      localStorage.setItem(`nutrifit_checkin_${f}`, JSON.stringify(obj));
+    }
+
+    function guardarPesajeRapido(fechaStr, pesoKg) {
+      const f = fechaStr || fechaHoyLocal();
+      const p = Math.round(Number(pesoKg) * 10) / 10;
+      if (!Number.isFinite(p) || p < 30 || p > 300) return false;
+
+      let pesajes = [];
+      try { pesajes = JSON.parse(localStorage.getItem('nutrifit_pesajes') || '[]'); } catch (_) {}
+      if (!Array.isArray(pesajes)) pesajes = [];
+      const idx = pesajes.findIndex(x => x && x.fecha === f);
+      if (idx !== -1) pesajes[idx].peso = p;
+      else pesajes.push({ fecha: f, peso: p });
+      pesajes.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+      localStorage.setItem('nutrifit_pesajes', JSON.stringify(pesajes));
+
+      const ck = getCheckinPorFecha(f);
+      ck.peso = p;
+      setCheckinPorFecha(f, ck);
+
+      try {
+        const evals = JSON.parse(localStorage.getItem('nutrifit_evaluaciones') || '[]');
+        const evIdx = Array.isArray(evals) ? evals.findIndex(x => x && x.fecha === f) : -1;
+        if (evIdx !== -1) {
+          evals[evIdx].peso = p;
+          localStorage.setItem('nutrifit_evaluaciones', JSON.stringify(evals));
+        }
+      } catch (_) {}
+
+      if (f === fechaHoyLocal()) {
+        const inpPeso = document.getElementById('peso');
+        if (inpPeso) inpPeso.value = p;
+        recalcularPerfilSilencioso();
+      } else {
+        actualizarDashboardDiario();
+      }
+      renderizarEvaluacionesSemanales();
+      return true;
+    }
+
+    function toggleBoxPesoRapidoCheckin() {
+      const box = document.getElementById('boxPesoRapidoCheckin');
+      if (!box) return;
+      box.classList.toggle('hidden');
+      if (!box.classList.contains('hidden')) {
+        const f = fechaPrincipalSeleccionada || fechaHoyLocal();
+        const ck = getCheckinPorFecha(f);
+        const inp = document.getElementById('inputPesoRapidoCheckin');
+        if (inp) {
+          inp.value = ck.peso || perfil.peso || '';
+          inp.focus();
+        }
+      }
+    }
+
+    function guardarPesoDesdeCheckin() {
+      const inp = document.getElementById('inputPesoRapidoCheckin');
+      const val = parseFloat(inp?.value);
+      if (!Number.isFinite(val) || val < 30 || val > 300) {
+        alert('Ingresá un peso válido en kg (ej: 74.8).');
+        return;
+      }
+      const f = fechaPrincipalSeleccionada || fechaHoyLocal();
+      guardarPesajeRapido(f, val);
+      document.getElementById('boxPesoRapidoCheckin')?.classList.add('hidden');
+      const fechaLbl = f === fechaHoyLocal() ? 'hoy' : f.split('-').reverse().slice(0, 2).join('/');
+      mostrarToastAccesoRapido(`⚖️ Peso ${val.toFixed(1)} kg guardado (${fechaLbl})`, false);
+    }
+
+    function ciclarCheckinCampo(campo) {
+      const f = fechaPrincipalSeleccionada || fechaHoyLocal();
+      const ck = getCheckinPorFecha(f);
+      const ciclos = {
+        entreno: ['', 'fuerza', 'cardio', 'ambos', 'descanso'],
+        pasos: ['', '<5k', '5-8k', '8-10k', '10k+'],
+        sueno: [null, 1, 2, 3, 4, 5],
+        hambre: [null, 1, 2, 3, 4, 5]
+      };
+      const seq = ciclos[campo];
+      if (!seq) return;
+      const curIdx = seq.indexOf(ck[campo] !== undefined ? ck[campo] : seq[0]);
+      ck[campo] = seq[(curIdx + 1) % seq.length];
+      setCheckinPorFecha(f, ck);
+      renderizarCheckinDiario(f);
+      renderizarPanelBalanceSemanal();
+      renderizarPanelCoachingAdaptativo();
+    }
+
+    function renderizarCheckinDiario(fechaOverride = null) {
+      const cont = document.getElementById('cardCheckinDiario');
+      if (!cont) return;
+      const f = fechaOverride || fechaPrincipalSeleccionada || fechaHoyLocal();
+      const esHoy = (f === fechaHoyLocal());
+      const ck = getCheckinPorFecha(f);
+
+      const entrenoMap = {
+        '': { lbl: 'Entreno', cls: 'bg-slate-950 border-slate-800 text-slate-400' },
+        fuerza: { lbl: 'Fuerza', cls: 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300' },
+        cardio: { lbl: 'Cardio', cls: 'bg-sky-500/15 border-sky-500/50 text-sky-300' },
+        ambos: { lbl: 'Fuerza+Cardio', cls: 'bg-emerald-500/20 border-emerald-400/60 text-white' },
+        descanso: { lbl: 'Descanso', cls: 'bg-slate-800 border-slate-600 text-slate-200' }
+      };
+      const ent = entrenoMap[ck.entreno || ''] || entrenoMap[''];
+      const pasActivo = Boolean(ck.pasos);
+      const sueActivo = ck.sueno !== null && ck.sueno !== undefined;
+      const hamActivo = ck.hambre !== null && ck.hambre !== undefined;
+      const pesActivo = ck.peso !== null && ck.peso !== undefined && Number(ck.peso) > 0;
+
+      const fechaCorta = esHoy ? 'Hoy' : f.split('-').reverse().slice(0, 2).join('/');
+      cont.innerHTML = `
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-xs font-bold text-white flex items-center gap-1.5">⚡ Check-in rápido <span class="text-[10px] font-semibold text-slate-400">(${fechaCorta})</span></span>
+          <span class="text-[9px] text-slate-500">Tocá cada chip para cambiar</span>
+        </div>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button type="button" onclick="ciclarCheckinCampo('entreno')" data-checkin-btn="entreno" class="shrink-0 rounded-xl border px-2 py-1.5 text-[11px] font-bold whitespace-nowrap active:scale-95 transition ${ent.cls}">🏋️ ${ent.lbl}</button>
+          <button type="button" onclick="ciclarCheckinCampo('pasos')" data-checkin-btn="pasos" class="shrink-0 rounded-xl border px-2 py-1.5 text-[11px] font-bold whitespace-nowrap active:scale-95 transition ${pasActivo ? 'bg-sky-500/15 border-sky-500/50 text-sky-200' : 'bg-slate-950 border-slate-800 text-slate-400'}">👟 ${pasActivo ? ck.pasos : 'Pasos'}</button>
+          <button type="button" onclick="ciclarCheckinCampo('sueno')" data-checkin-btn="sueno" class="shrink-0 rounded-xl border px-2 py-1.5 text-[11px] font-bold whitespace-nowrap active:scale-95 transition ${sueActivo ? (ck.sueno <= 2 ? 'bg-amber-500/15 border-amber-500/50 text-amber-300' : 'bg-indigo-500/15 border-indigo-400/50 text-indigo-200') : 'bg-slate-950 border-slate-800 text-slate-400'}">😴 ${sueActivo ? `${ck.sueno}/5` : 'Sueño'}</button>
+          <button type="button" onclick="ciclarCheckinCampo('hambre')" data-checkin-btn="hambre" class="shrink-0 rounded-xl border px-2 py-1.5 text-[11px] font-bold whitespace-nowrap active:scale-95 transition ${hamActivo ? (ck.hambre >= 4 ? 'bg-amber-500/15 border-amber-500/50 text-amber-300' : 'bg-violet-500/15 border-violet-400/50 text-violet-200') : 'bg-slate-950 border-slate-800 text-slate-400'}">🍽️ ${hamActivo ? `Hambre ${ck.hambre}/5` : 'Hambre'}</button>
+          <button type="button" onclick="toggleBoxPesoRapidoCheckin()" data-checkin-btn="peso" class="shrink-0 rounded-xl border px-2 py-1.5 text-[11px] font-bold whitespace-nowrap active:scale-95 transition ${pesActivo ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-300' : 'bg-slate-950 border-slate-800 text-slate-400'}">⚖️ ${pesActivo ? `${Number(ck.peso).toFixed(1)}kg` : 'Peso'}</button>
+        </div>
+        <div id="boxPesoRapidoCheckin" class="hidden flex items-center gap-1.5 pt-1 border-t border-slate-800/80">
+          <input id="inputPesoRapidoCheckin" type="number" step="0.1" min="30" max="300" placeholder="Ej: 74.8" onkeydown="if(event.key==='Enter'){ event.preventDefault(); guardarPesoDesdeCheckin(); }" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-bold focus:border-emerald-500 focus:outline-none">
+          <button type="button" onclick="guardarPesoDesdeCheckin()" class="px-3 py-1.5 rounded-xl bg-emerald-500 text-slate-950 font-extrabold text-xs active:scale-95">Guardar</button>
+        </div>
+      `;
+    }
+
+    function obtenerHistorialPesosUnificado() {
+      const mapa = new Map();
+      let evals = [];
+      let pesajes = [];
+      try { evals = JSON.parse(localStorage.getItem('nutrifit_evaluaciones') || '[]'); } catch (_) {}
+      try { pesajes = JSON.parse(localStorage.getItem('nutrifit_pesajes') || '[]'); } catch (_) {}
+      (Array.isArray(evals) ? evals : []).forEach(e => {
+        if (!e || !e.fecha || !(Number(e.peso) > 0)) return;
+        const cint = (e.cintura !== null && e.cintura !== undefined && Number(e.cintura) > 0) ? Math.round(Number(e.cintura) * 10) / 10 : null;
+        mapa.set(e.fecha, { fecha: e.fecha, peso: Math.round(Number(e.peso) * 10) / 10, cintura: cint });
+      });
+      (Array.isArray(pesajes) ? pesajes : []).forEach(p => {
+        if (!p || !p.fecha || !(Number(p.peso) > 0)) return;
+        const prev = mapa.get(p.fecha);
+        mapa.set(p.fecha, {
+          fecha: p.fecha,
+          peso: Math.round(Number(p.peso) * 10) / 10,
+          cintura: prev ? prev.cintura : null
+        });
+      });
+      return [...mapa.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+    }
+
+    function calcularSeriePesoTendencia() {
+      const raw = obtenerHistorialPesosUnificado();
+      if (raw.length === 0) {
+        return { serie: [], totalPuntos: 0, pesoActual: Number(perfil.peso) || null, pesoTendencia: null, deltaAguaVsTendencia: 0, diasTranscurridos: 0, cambioSemanalKg: 0, deltaCintura: null };
+      }
+      const serie = [];
+      let tend = raw[0].peso;
+      raw.forEach((p, idx) => {
+        if (idx === 0) {
+          tend = p.peso;
+        } else {
+          const dDias = Math.max(1, diasEntreFechasLocal(raw[idx - 1].fecha, p.fecha));
+          const alpha = Math.min(0.55, Math.max(0.22, 1 - Math.exp(-dDias / 4.5)));
+          tend = tend + alpha * (p.peso - tend);
+        }
+        serie.push({ ...p, tendencia: Math.round(tend * 100) / 100 });
+      });
+
+      const prim = serie[0];
+      const ult = serie[serie.length - 1];
+      const diasTotal = serie.length >= 2 ? Math.max(1, diasEntreFechasLocal(prim.fecha, ult.fecha)) : 0;
+      const cambioSem = diasTotal >= 3 ? Math.round(((ult.tendencia - prim.tendencia) / diasTotal) * 7 * 100) / 100 : 0;
+      const conCint = serie.filter(x => x.cintura !== null);
+      const dCint = conCint.length >= 2 ? Math.round((conCint[conCint.length - 1].cintura - conCint[0].cintura) * 10) / 10 : null;
+      return {
+        serie,
+        totalPuntos: serie.length,
+        pesoActual: ult.peso,
+        pesoTendencia: Math.round(ult.tendencia * 10) / 10,
+        deltaAguaVsTendencia: Math.round((ult.peso - ult.tendencia) * 10) / 10,
+        diasTranscurridos: diasTotal,
+        cambioSemanalKg: cambioSem,
+        deltaCintura: dCint
+      };
+    }
+
+    function calcularCoachingAdaptativo() {
+      const tendInfo = calcularSeriePesoTendencia();
+      const med = calcularMetricasMedicas(perfil);
+      const actFactors = { sedentario: 1.2, ligero: 1.375, moderado: 1.55, intenso: 1.725 };
+      const tdeeTeorico = Math.round(med.bmr * (actFactors[perfil.actividad] || 1.55));
+
+      const hoy = fechaHoyLocal();
+      const metaActual = Math.max(1, Number(perfil.caloriasMeta) || tdeeTeorico);
+      let sumCal14 = 0, diasCal14d = 0, diasDentroMeta = 0;
+      for (let i = 13; i >= 0; i--) {
+        const f = fechaRelativaLocal(-i);
+        const diario = getDiarioPorFecha(f);
+        const calDia = diario.reduce((s, c) => s + (Number(c.calorias) || 0), 0);
+        if (diario.length > 0 && calDia > 0) {
+          diasCal14d++;
+          sumCal14 += calDia;
+          if (Math.abs(calDia - metaActual) / metaActual <= 0.12) diasDentroMeta++;
+        }
+      }
+      const promCal14d = diasCal14d > 0 ? Math.round(sumCal14 / diasCal14d) : 0;
+      const adherenciaPct = diasCal14d > 0 ? Math.round((diasDentroMeta / diasCal14d) * 100) : 0;
+
+      const serie = tendInfo.serie;
+      if (serie.length < 2 || diasCal14d < 4 || tendInfo.diasTranscurridos < 7) {
+        return {
+          listo: false,
+          tdeeTeorico,
+          tdeeAdaptativo: null,
+          promCal14d,
+          diasCal14d,
+          adherenciaPct,
+          pesoActual: tendInfo.pesoActual,
+          pesoTendencia: tendInfo.pesoTendencia,
+          deltaAguaVsTendencia: tendInfo.deltaAguaVsTendencia,
+          diasTranscurridos: tendInfo.diasTranscurridos,
+          totalPuntos: tendInfo.totalPuntos,
+          cambioSemanalKg: tendInfo.cambioSemanalKg,
+          ajusteSugerido: 0,
+          estado: 'info',
+          titulo: 'Calibrando tu TDEE real',
+          detalle: `Necesitás al menos 2 pesajes separados por ≥7 días (${tendInfo.totalPuntos} cargados, ${tendInfo.diasTranscurridos}d) y ≥4 días de comidas en 2 semanas (${diasCal14d}/4). Cargá pesajes rápidos desde ⚡ Check-in.`,
+          accionPasos: ''
+        };
+      }
+
+      const ult = serie[serie.length - 1];
+      const candidatosRef = serie.slice(0, -1).filter(p => {
+        const d = diasEntreFechasLocal(p.fecha, ult.fecha);
+        return d >= 10 && d <= 28;
+      });
+      const ref = candidatosRef.length > 0
+        ? candidatosRef.sort((a, b) => Math.abs(diasEntreFechasLocal(a.fecha, ult.fecha) - 14) - Math.abs(diasEntreFechasLocal(b.fecha, ult.fecha) - 14))[0]
+        : serie[0];
+      const diasInt = Math.max(7, diasEntreFechasLocal(ref.fecha, ult.fecha));
+      const cambioDiaKg = (ult.tendencia - ref.tendencia) / diasInt;
+      const cambioSemanalKg = Math.round(cambioDiaKg * 7 * 100) / 100;
+      const tdeeRaw = Math.round(promCal14d - (cambioDiaKg * 7700));
+      const tdeeAdaptativo = Math.max(Math.round(med.bmr * 1.05), Math.min(Math.round(tdeeTeorico * 1.4), tdeeRaw));
+
+      const cintVentana = (ult.cintura !== null && ref.cintura !== null)
+        ? Math.round((ult.cintura - ref.cintura) * 10) / 10
+        : tendInfo.deltaCintura;
+
+      let ajusteSugerido = 0, estado = 'ok', titulo = '', detalle = '', accionPasos = '';
+      const obj = perfil.objetivo || 'ganar_masa_muscular';
+
+      if (obj === 'definicion_perder_grasa') {
+        if (diasInt >= 10 && cambioSemanalKg > -0.15) {
+          if (cintVentana !== null && cintVentana <= -0.5) {
+            titulo = `Recomposición activa (${cintVentana} cm cintura)`;
+            detalle = `Aunque tu tendencia de peso varió ${cambioSemanalKg >= 0 ? '+' : ''}${cambioSemanalKg} kg/sem, bajaste cintura cumpliendo calorías. Mantené esta meta antes de recortar.`;
+          } else if (adherenciaPct >= 65) {
+            ajusteSugerido = -120;
+            estado = 'warn';
+            titulo = 'Meseta detectada en pérdida de grasa';
+            detalle = `Con ${adherenciaPct}% de adherencia (${promCal14d} kcal/día), tu tendencia varió ${cambioSemanalKg >= 0 ? '+' : ''}${cambioSemanalKg} kg/sem y tu TDEE real ronda ~${tdeeAdaptativo} kcal. Conviene ajustar -120 kcal/día.`;
+            accionPasos = 'Alternativa: mantener calorías y sumar +2.000 pasos diarios.';
+          } else {
+            estado = 'info';
+            titulo = `Adherencia al ${adherenciaPct}% antes de recortar`;
+            detalle = `Registraste ${promCal14d} kcal/día (${diasCal14d}d). Antes de bajar calorías, sostené ≥75% de días dentro de tu meta actual.`;
+          }
+        } else if (cambioSemanalKg < -(tendInfo.pesoActual * 0.011)) {
+          ajusteSugerido = 120;
+          estado = 'warn';
+          titulo = 'Déficit muy agresivo: protegé masa magra';
+          detalle = `Bajás ${Math.abs(cambioSemanalKg)} kg/sem (>1.1% peso). Subir +120 kcal/día evita fatiga y pérdida muscular.`;
+        } else {
+          titulo = `Ritmo saludable (${cambioSemanalKg} kg/sem)`;
+          detalle = `Tu tendencia responde bien con ${promCal14d} kcal/día (TDEE real estimado ~${tdeeAdaptativo} kcal).`;
+        }
+      } else if (obj === 'ganar_masa_muscular') {
+        if (diasInt >= 10 && cambioSemanalKg < 0.08 && adherenciaPct >= 65) {
+          ajusteSugerido = 130;
+          estado = 'info';
+          titulo = 'Superávit insuficiente para hipertrofia';
+          detalle = `Con ${promCal14d} kcal/día (${adherenciaPct}% adherencia) tu tendencia subió ${cambioSemanalKg} kg/sem y tu TDEE real es ~${tdeeAdaptativo} kcal. Podés sumar +130 kcal/día.`;
+        } else if (cambioSemanalKg > (tendInfo.pesoActual * 0.005)) {
+          ajusteSugerido = -100;
+          estado = 'warn';
+          titulo = 'Suba rápida: moderar superávit';
+          detalle = `Subís +${cambioSemanalKg} kg/sem; moderar -100 kcal/día optimiza ganancia magra con menos grasa.`;
+        } else {
+          titulo = `Volumen limpio en marcha (+${cambioSemanalKg} kg/sem)`;
+          detalle = `TDEE real estimado ~${tdeeAdaptativo} kcal/día con ${adherenciaPct}% adherencia.`;
+        }
+      } else {
+        if (diasInt >= 10 && Math.abs(cambioSemanalKg) > 0.25 && adherenciaPct >= 65) {
+          ajusteSugerido = cambioSemanalKg > 0 ? -100 : 100;
+          estado = 'info';
+          titulo = 'Calibración de mantenimiento';
+          detalle = `Tendencia ${cambioSemanalKg > 0 ? '+' : ''}${cambioSemanalKg} kg/sem; tu equilibrio real está en ~${tdeeAdaptativo} kcal/día.`;
+        } else {
+          titulo = 'Peso en equilibrio estable';
+          detalle = `Tendencia ${cambioSemanalKg >= 0 ? '+' : ''}${cambioSemanalKg} kg/sem • TDEE real ~${tdeeAdaptativo} kcal.`;
+        }
+      }
+
+      return {
+        listo: true,
+        tdeeTeorico,
+        tdeeAdaptativo,
+        promCal14d,
+        diasCal14d,
+        adherenciaPct,
+        pesoActual: tendInfo.pesoActual,
+        pesoTendencia: tendInfo.pesoTendencia,
+        deltaAguaVsTendencia: tendInfo.deltaAguaVsTendencia,
+        diasTranscurridos: diasInt,
+        totalPuntos: tendInfo.totalPuntos,
+        cambioSemanalKg,
+        ajusteSugerido,
+        estado,
+        titulo,
+        detalle,
+        accionPasos
+      };
+    }
+
+    function renderizarPanelCoachingAdaptativo() {
+      const box = document.getElementById('panelCoachingAdaptativo');
+      if (!box) return;
+      const c = calcularCoachingAdaptativo();
+      const ajusteAct = Number(perfil.ajusteAdaptativoKcal) || 0;
+      const boxCls = c.estado === 'warn'
+        ? 'border-amber-500/35 bg-amber-500/10'
+        : (c.estado === 'ok' ? 'border-emerald-500/35 bg-emerald-500/10' : 'border-sky-500/35 bg-sky-500/10');
+      const aguaTxt = Math.abs(c.deltaAguaVsTendencia) >= 0.4
+        ? `${c.deltaAguaVsTendencia > 0 ? '+' : ''}${c.deltaAguaVsTendencia}kg agua/glucógeno`
+        : 'Estable';
+
+      box.innerHTML = `
+        <div class="bg-slate-950 border border-indigo-500/35 rounded-2xl p-3.5 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <span class="text-xs font-extrabold text-indigo-300 block">🧠 Coaching Adaptativo (MacroFactor EWMA)</span>
+              <span class="text-[10px] text-slate-400">Peso Tendencia + TDEE real calibrado</span>
+            </div>
+            ${ajusteAct !== 0 ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-400/40 text-indigo-200">${ajusteAct > 0 ? '+' : ''}${ajusteAct} kcal aplic.</span>` : ''}
+          </div>
+
+          <div class="grid grid-cols-3 gap-1.5 text-center text-[10px]">
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-2">
+              <span class="text-slate-400 block">Peso Real</span>
+              <strong class="text-white text-xs">${c.pesoActual !== null ? `${c.pesoActual} kg` : '-'}</strong>
+              <span class="block text-[8.5px] ${Math.abs(c.deltaAguaVsTendencia) >= 0.4 ? 'text-sky-300' : 'text-slate-500'}">${aguaTxt}</span>
+            </div>
+            <div class="bg-slate-900 border border-amber-500/30 rounded-xl p-2">
+              <span class="text-amber-300 block font-bold">Tendencia</span>
+              <strong class="text-white text-xs">${c.pesoTendencia !== null ? `${c.pesoTendencia} kg` : '-'}</strong>
+              <span class="block text-[8.5px] text-slate-400">${c.listo ? `${c.cambioSemanalKg >= 0 ? '+' : ''}${c.cambioSemanalKg} kg/sem` : `${c.totalPuntos} pesajes`}</span>
+            </div>
+            <div class="bg-slate-900 border border-indigo-500/30 rounded-xl p-2">
+              <span class="text-indigo-300 block font-bold">TDEE Real</span>
+              <strong class="text-white text-xs">${c.tdeeAdaptativo !== null ? `${c.tdeeAdaptativo}` : `~${c.tdeeTeorico}`}</strong>
+              <span class="block text-[8.5px] text-slate-400">${c.tdeeAdaptativo !== null ? `Teórico ${c.tdeeTeorico}` : 'Teórico base'}</span>
+            </div>
+          </div>
+
+          <div class="border rounded-xl p-2.5 text-[11px] space-y-1.5 ${boxCls}">
+            <div class="font-extrabold text-white">${c.estado === 'warn' ? '⚠️' : (c.estado === 'ok' ? '✅' : '🧭')} ${c.titulo}</div>
+            <p class="text-slate-200/90 leading-relaxed">${c.detalle}</p>
+            ${c.accionPasos ? `<p class="text-[10px] font-bold text-sky-300">👟 ${c.accionPasos}</p>` : ''}
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              ${c.ajusteSugerido !== 0 ? `<button type="button" onclick="aplicarAjusteCaloricoAdaptativo(${c.ajusteSugerido})" class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-[11px] active:scale-95">⚡ Aplicar ${c.ajusteSugerido > 0 ? '+' : ''}${c.ajusteSugerido} kcal/día</button>` : ''}
+              ${ajusteAct !== 0 ? `<button type="button" onclick="restablecerAjusteAdaptativo()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-bold text-[10px] active:scale-95">↺ Volver a meta teórica</button>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     function calcularBalanceSemanal(fechaFinStr) {
       const fechas = obtenerFechasUltimos7Dias(fechaFinStr || fechaHoyLocal());
       const slotsConfig = obtenerComidasEstablecidas();
@@ -1617,12 +2050,18 @@
       let sumAguaMl = 0, sumAguaVasos = 0, sumCalBebidas = 0;
       let totalPrincipales = 0, totalColaciones = 0, totalBloquesLiq = 0;
       let diasExcesoColaciones = 0, diasSalteados = 0;
+      let diasCheckin = 0, diasEntreno = 0, suenoSum = 0, suenoCount = 0, hambreSum = 0, hambreCount = 0;
+      let pasosAltoDias = 0, pasosBajoDias = 0;
+      let colMalSuenoSum = 0, diasMalSueno = 0, colBuenSuenoSum = 0, diasBuenSueno = 0;
+      let hambreMalSuenoSum = 0, hambreMalSuenoN = 0, hambreBuenSuenoSum = 0, hambreBuenSuenoN = 0;
+      let protEntrenoSum = 0, protEntrenoDias = 0;
       const bebidasCaloricasFreq = {};
       const metaCalRef = Math.max(1, Number(perfil.caloriasMeta) || 2000);
 
       fechas.forEach(f => {
         const comidas = getDiarioPorFecha(f);
         const hidDia = calcularHidratacionPorFecha(f);
+        const ck = getCheckinPorFecha(f);
         if (hidDia.totalEfectivoMl > 0) {
           diasConAgua++;
           sumAguaMl += hidDia.totalEfectivoMl;
@@ -1634,22 +2073,46 @@
           diasConAyuno++;
         }
 
+        const tieneCk = Boolean(ck.entreno || ck.pasos || ck.sueno !== null || ck.hambre !== null || ck.peso !== null);
+        if (tieneCk) diasCheckin++;
+        const entrenoActivo = Boolean(ck.entreno && ck.entreno !== 'descanso');
+        if (entrenoActivo) diasEntreno++;
+        if (ck.pasos === '8-10k' || ck.pasos === '10k+') pasosAltoDias++;
+        if (ck.pasos === '<5k') pasosBajoDias++;
+        if (ck.sueno !== null && ck.sueno !== undefined) {
+          const sn = Number(ck.sueno);
+          if (sn >= 1 && sn <= 5) {
+            suenoSum += sn;
+            suenoCount++;
+          }
+        }
+        if (ck.hambre !== null && ck.hambre !== undefined) {
+          const hm = Number(ck.hambre);
+          if (hm >= 1 && hm <= 5) {
+            hambreSum += hm;
+            hambreCount++;
+          }
+        }
+
         const ingestasSolidas = comidas.filter(c => !c.esBloqueHidratacion && !c.esSoloBebida);
         const bloquesLiq = comidas.filter(c => c.esBloqueHidratacion || c.esSoloBebida);
         totalBloquesLiq += bloquesLiq.length;
 
+        let colacionesDia = 0;
+        let protDia = 0;
         if (comidas.length > 0) {
           let calDia = 0, sodDia = 0;
           if (ingestasSolidas.length > 0 || comidas.some(c => (c.calorias || 0) > 0)) {
             diasConComida++;
           }
           let principalesDia = new Set();
-          let colacionesDia = 0;
           comidas.forEach(c => {
             const cc = Number(c.calorias) || 0;
+            const cp = Number(c.proteinas) || 0;
             calDia += cc;
+            protDia += cp;
             sumCal += cc;
-            sumProt += Number(c.proteinas) || 0;
+            sumProt += cp;
             sumCarb += Number(c.carbos) || 0;
             sumGras += Number(c.grasas) || 0;
             sumFibra += Number(c.fibra) || 0;
@@ -1687,12 +2150,28 @@
           });
           if (sodDia > 2300) diasSodioAlto++;
           if (calDia > 0 && Math.abs(calDia - metaCalRef) / metaCalRef <= 0.12) diasEnMetaCal++;
+          if (entrenoActivo && ingestasSolidas.length > 0) {
+            protEntrenoSum += protDia;
+            protEntrenoDias++;
+          }
           if (ingestasSolidas.length > 0) {
             totalPrincipales += principalesDia.size;
             totalColaciones += colacionesDia;
             if (colacionesDia >= 3) diasExcesoColaciones++;
             if (principalesDia.size < metaPrincipalesDia) diasSalteados++;
           }
+        }
+
+        const suenoVal = Number(ck.sueno);
+        const hambreVal = Number(ck.hambre);
+        if (ck.sueno !== null && suenoVal >= 1 && suenoVal <= 2) {
+          diasMalSueno++;
+          colMalSuenoSum += colacionesDia;
+          if (ck.hambre !== null && hambreVal >= 1) { hambreMalSuenoSum += hambreVal; hambreMalSuenoN++; }
+        } else if (ck.sueno !== null && suenoVal >= 4) {
+          diasBuenSueno++;
+          colBuenSuenoSum += colacionesDia;
+          if (ck.hambre !== null && hambreVal >= 1) { hambreBuenSuenoSum += hambreVal; hambreBuenSuenoN++; }
         }
       });
 
@@ -1872,11 +2351,49 @@
         }
       }
 
+      // 7. Correlación cruzada de hábitos (Check-in: Sueño / Hambre / Entreno / Pasos vs Colaciones)
+      const promSueno = suenoCount > 0 ? Math.round((suenoSum / suenoCount) * 10) / 10 : null;
+      const promHambre = hambreCount > 0 ? Math.round((hambreSum / hambreCount) * 10) / 10 : null;
+      if (diasMalSueno >= 1 && diasBuenSueno >= 1) {
+        const pColMal = colMalSuenoSum / diasMalSueno;
+        const pColBuen = colBuenSuenoSum / diasBuenSueno;
+        const pHamMal = hambreMalSuenoN > 0 ? (hambreMalSuenoSum / hambreMalSuenoN) : 0;
+        const pHamBuen = hambreBuenSuenoN > 0 ? (hambreBuenSuenoSum / hambreBuenSuenoN) : 0;
+        if (pColMal >= pColBuen + 0.8 || (hambreMalSuenoN > 0 && hambreBuenSuenoN > 0 && pHamMal >= pHamBuen + 0.8)) {
+          recomendacionesHabitos.push({
+            tipo: 'warn',
+            titulo: `Correlación sueño–apetito (${Math.round(pColMal * 10) / 10} col/día con sueño ≤2)`,
+            texto: `Tus días con poco descanso muestran más hambre y colaciones (${Math.round(pColMal * 10) / 10} vs ${Math.round(pColBuen * 10) / 10} cuando dormís bien). Priorizá 7h+ de sueño y agua pre-comidas.`
+          });
+        }
+      } else if (diasMalSueno >= 2 && promColaciones >= 1.5) {
+        recomendacionesHabitos.push({
+          tipo: 'warn',
+          titulo: `Poco sueño sumando colaciones (${diasMalSueno} días ≤2/5)`,
+          texto: `El descanso corto dispara el hambre nocturno. Sumá infusiones cálidas o proteína saciante para cortar picoteos.`
+        });
+      }
+      if (protEntrenoDias >= 2 && (protEntrenoSum / protEntrenoDias) < (perfil.proteinas * 0.9)) {
+        recomendacionesMacros.push({
+          tipo: 'info',
+          titulo: `Días de entreno con proteína justa (${Math.round(protEntrenoSum / protEntrenoDias)}g vs ${perfil.proteinas}g)`,
+          texto: `En tus días de entrenamiento conviene llegar completo a tu meta proteica para optimizar recuperación.`
+        });
+      }
+      if (pasosBajoDias >= 3 && pctCal > 105) {
+        recomendacionesHabitos.push({
+          tipo: 'info',
+          titulo: `Pocos pasos (<5k en ${pasosBajoDias}d) con calorías sobre meta`,
+          texto: `Sumar 2.000–3.000 pasos diarios facilita crear déficit sin recortar comida.`
+        });
+      }
+
       return {
         fechaFin: fechaFinStr || fechaHoyLocal(),
         diasConComida,
         diasConAgua,
         diasEnMetaCal,
+        diasCheckin, diasEntreno, promSueno, promHambre, pasosAltoDias, pasosBajoDias,
         promCal, promProt, promCarb, promGras,
         promFibra, metaFibra, promSodio, diasSodioAlto,
         promSaciedad, pctNatural, pctUltraprocesado, calNovaTotal,
@@ -1982,6 +2499,7 @@
             </div>
           </div>
           ${b.calNovaTotal > 0 ? `<div class="text-[10px] text-slate-300 bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between"><span>🥗 Calidad NOVA semanal</span><strong class="text-white">${novaTxtSem}</strong></div>` : ''}
+          ${b.diasCheckin > 0 ? `<div class="text-[10px] text-slate-300 bg-slate-900/70 border border-slate-800 rounded-xl px-2.5 py-1.5 flex flex-wrap items-center justify-between gap-2"><span>⚡ Hábitos (${b.diasCheckin}d)</span><span class="font-bold text-white">🏋️ ${b.diasEntreno}d • 😴 ${b.promSueno !== null ? `${b.promSueno}/5` : '-'} • 🍽️ ${b.promHambre !== null ? `${b.promHambre}/5` : '-'} • 👟 ${b.pasosAltoDias}d altos</span></div>` : ''}
 
           <div class="space-y-1.5">
             <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Ajustes de Macros y Alimentos (según tus gustos)</span>
@@ -2033,6 +2551,17 @@
       else lista.push(registro);
 
       localStorage.setItem("nutrifit_evaluaciones", JSON.stringify(lista));
+      try {
+        let pesajes = JSON.parse(localStorage.getItem('nutrifit_pesajes') || '[]');
+        if (!Array.isArray(pesajes)) pesajes = [];
+        const pIdx = pesajes.findIndex(x => x && x.fecha === hoy);
+        const pVal = Math.round(Number(perfil.peso) * 10) / 10;
+        if (pVal >= 30 && pVal <= 300) {
+          if (pIdx !== -1) pesajes[pIdx].peso = pVal;
+          else pesajes.push({ fecha: hoy, peso: pVal });
+          localStorage.setItem('nutrifit_pesajes', JSON.stringify(pesajes));
+        }
+      } catch (_) {}
       controlPospuestoHoy = false;
       renderizarEvaluacionesSemanales();
       ocultarAlertasControl();
@@ -2186,18 +2715,19 @@
         `;
       }).join('');
 
-      let evals = [];
-      try { evals = JSON.parse(localStorage.getItem('nutrifit_evaluaciones') || '[]'); } catch (_) {}
-      evals = evals.filter(e => e && Number(e.peso) > 0).sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
+      let evalInfo = calcularSeriePesoTendencia();
+      let evals = evalInfo.serie;
 
       let evoBodyHtml = '';
       if (evals.length === 0) {
-        evoBodyHtml = `<div class="text-[11px] text-slate-400 text-center py-4 border border-dashed border-slate-800 rounded-xl">Guardá al menos 1 registro semanal arriba para graficar la curva de Peso y Cintura.</div>`;
+        evoBodyHtml = `<div class="text-[11px] text-slate-400 text-center py-4 border border-dashed border-slate-800 rounded-xl">Cargá al menos 1 pesaje desde ⚡ Check-in o Registrar Semana para graficar Peso Real vs Tendencia.</div>`;
       } else {
         const ptsPeso = evals.map(e => Number(e.peso));
+        const ptsTend = evals.map(e => Number(e.tendencia));
         const ptsCint = evals.map(e => (e.cintura !== null && e.cintura !== undefined && Number(e.cintura) > 0) ? Number(e.cintura) : null);
         const hayCintura = ptsCint.some(v => v !== null);
-        const wMin = Math.min(...ptsPeso), wMax = Math.max(...ptsPeso);
+        const todosPesos = [...ptsPeso, ...ptsTend];
+        const wMin = Math.min(...todosPesos), wMax = Math.max(...todosPesos);
         const wSpan = Math.max(0.8, wMax - wMin);
         const wLow = wMin - wSpan * 0.25, wHigh = wMax + wSpan * 0.25;
         const cintValid = ptsCint.filter(v => v !== null);
@@ -2212,11 +2742,12 @@
         const yCint = (v) => gPadT + innerH - ((v - cLow) / Math.max(0.1, cHigh - cLow)) * innerH;
 
         const polyPeso = evals.map((e, i) => `${xFor(i).toFixed(1)},${yPeso(Number(e.peso)).toFixed(1)}`).join(' ');
+        const polyTend = evals.map((e, i) => `${xFor(i).toFixed(1)},${yPeso(Number(e.tendencia)).toFixed(1)}`).join(' ');
         const circlesPeso = evals.map((e, i) => {
           const cx = xFor(i).toFixed(1), cy = yPeso(Number(e.peso)).toFixed(1);
           const fShort = (e.fecha || '').split('-').reverse().slice(0, 2).join('/');
-          return `<circle cx="${cx}" cy="${cy}" r="3.5" fill="#10b981" stroke="#0f172a" stroke-width="1.5" />` +
-            `<text x="${cx}" y="${Math.max(10, Number(cy) - 6).toFixed(1)}" text-anchor="middle" fill="#6ee7b7" font-size="8" font-weight="800">${Number(e.peso).toFixed(1)}</text>` +
+          return `<circle cx="${cx}" cy="${cy}" r="3.2" fill="#10b981" stroke="#0f172a" stroke-width="1.3" />` +
+            `<text x="${cx}" y="${Math.max(10, Number(cy) - 6).toFixed(1)}" text-anchor="middle" fill="#6ee7b7" font-size="7.5" font-weight="800">${Number(e.peso).toFixed(1)}</text>` +
             `<text x="${cx}" y="${gH - 6}" text-anchor="middle" fill="#94a3b8" font-size="8">${fShort}</text>`;
         }).join('');
 
@@ -2224,23 +2755,25 @@
         if (hayCintura) {
           const cintCoords = evals.map((e, i) => ptsCint[i] !== null ? { x: xFor(i), y: yCint(ptsCint[i]), v: ptsCint[i] } : null).filter(Boolean);
           const polyCint = cintCoords.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-          const dotsCint = cintCoords.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3" fill="#38bdf8" stroke="#0f172a" stroke-width="1.2" />`).join('');
-          cintSvg = `${cintCoords.length > 1 ? `<polyline fill="none" stroke="#38bdf8" stroke-width="2" stroke-dasharray="3,2" points="${polyCint}" />` : ''}${dotsCint}`;
+          const dotsCint = cintCoords.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.8" fill="#38bdf8" stroke="#0f172a" stroke-width="1.2" />`).join('');
+          cintSvg = `${cintCoords.length > 1 ? `<polyline fill="none" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="3,2" points="${polyCint}" />` : ''}${dotsCint}`;
         }
 
-        const ultP = ptsPeso[ptsPeso.length - 1], iniP = ptsPeso[0];
-        const dP = Math.round((ultP - iniP) * 10) / 10;
+        const ultP = ptsPeso[ptsPeso.length - 1], ultT = ptsTend[ptsTend.length - 1];
+        const dT = Math.round((ultT - ptsTend[0]) * 10) / 10;
         evoBodyHtml = `
-          <svg viewBox="0 0 ${gW} ${gH}" class="w-full h-auto overflow-visible" role="img" aria-label="Evolución semanal de peso y cintura">
+          <svg viewBox="0 0 ${gW} ${gH}" class="w-full h-auto overflow-visible" role="img" aria-label="Evolución semanal de peso real, tendencia y cintura">
             <line x1="${gPadX}" y1="${(gPadT + innerH).toFixed(1)}" x2="${gW - gPadX}" y2="${(gPadT + innerH).toFixed(1)}" stroke="#334155" stroke-width="1" />
-            ${evals.length > 1 ? `<polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyPeso}" />` : ''}
+            ${evals.length > 1 ? `<polyline fill="none" stroke="#10b981" stroke-width="1.8" opacity="0.65" points="${polyPeso}" />` : ''}
+            ${evals.length > 1 ? `<polyline fill="none" stroke="#f59e0b" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" points="${polyTend}" />` : ''}
             ${cintSvg}
             ${circlesPeso}
           </svg>
-          <div class="flex items-center justify-between text-[10px] text-slate-300 pt-1">
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span>Peso (${ultP} kg • ${dP > 0 ? '+' : ''}${dP} kg)</span>
-              ${hayCintura ? `<span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>Cintura (${cintValid[cintValid.length - 1]} cm)</span>` : ''}
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-300 pt-1">
+            <div class="flex flex-wrap items-center gap-2.5">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Real (${ultP}kg)</span>
+              <span class="flex items-center gap-1 text-amber-300 font-bold"><span class="w-2.5 h-2 rounded-full bg-amber-400 inline-block"></span>Tendencia (${ultT.toFixed(1)}kg • ${dT > 0 ? '+' : ''}${dT})</span>
+              ${hayCintura ? `<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-400 inline-block"></span>Cintura (${cintValid[cintValid.length - 1]}cm)</span>` : ''}
             </div>
             <span class="text-slate-400">${evals.length} reg.</span>
           </div>
@@ -2269,6 +2802,7 @@
 
     function renderizarEvaluacionesSemanales() {
       renderizarPanelBalanceSemanal();
+      renderizarPanelCoachingAdaptativo();
       renderizarGraficosEvolucion();
       const subEl = document.getElementById('subtituloInicioSeguimiento');
       const resEl = document.getElementById('resumenEvolucionSemanal');
@@ -5438,9 +5972,11 @@ Regla: Devolvé SOLO el bloque JSON sin explicaciones ni markdown.
       renderizarCalidadYAyunoEnContenedor('dashCalidadYAyuno', comidas, fechaRef, false);
       renderizarTiraSemanalPrincipal();
       renderizarBebidasYAguaPanel();
+      renderizarCheckinDiario(fechaRef);
       renderizarResumenHoyPrincipal(fechaRef);
       actualizarBadgeTurnoActual();
       renderizarPanelBalanceSemanal();
+      renderizarPanelCoachingAdaptativo();
       renderizarGraficosEvolucion();
     }
 
